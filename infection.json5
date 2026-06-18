@@ -1,0 +1,88 @@
+{
+    $schema: "./vendor/infection/infection/resources/schema.json",
+    source: {
+        directories: [
+            "src"
+        ]
+    },
+    logs: {
+        summary: "build/infection-summary.log",
+        text: "build/infection.log"
+    },
+    phpUnit: {
+        configDir: ".",
+        customPath: "vendor/bin/phpunit"
+    },
+    initialTestsPhpOptions: "-d memory_limit=1G",
+    timeout: 30,
+    mutators: {
+        "@default": true,
+
+        // ──────────────────────────────────────────────────────────────────────
+        // Provably-equivalent mutants ignored for the gate only. Each was reviewed
+        // against the full suite and cannot be distinguished by any behavioural
+        // test. The full run (infection.full.json5) keeps them visible for audit.
+        // ──────────────────────────────────────────────────────────────────────
+
+        DecrementInteger: {
+            ignore: [
+                // The `$lastDot === 0` early-out and the resource offset are both
+                // re-checked by `$resource !== ''`; resource is always non-empty past
+                // the guard, so the verdict cannot change.
+                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
+            ],
+        },
+        IncrementInteger: {
+            ignore: [
+                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
+            ],
+        },
+        UnwrapSubstr: {
+            ignore: [
+                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
+            ],
+        },
+        ReturnRemoval: {
+            ignore: [
+                // isPlural('') returns false either way: the fall-through resolves to
+                // false via Str::singular('') === ''.
+                "SineMacula\\RouteLinter\\Inflection\\FrameworkInflector::isPlural",
+                // A clean report prints only the success line; every render* method
+                // early-returns on empty input, so dropping the guard changes nothing.
+                "SineMacula\\RouteLinter\\Output\\ConsoleLintReporter::report",
+                // The empty-resource / no-dot cases are still rejected by `$resource !== ''`.
+                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
+                // fileIsVendor(null): with no strict_types, str_contains(null, …) coerces
+                // null to '' and returns false — identical to the guarded return.
+                "SineMacula\\RouteLinter\\Sources\\RouterRouteSource::fileIsVendor",
+                // Re-registering the identical macro closure is a harmless no-op.
+                "SineMacula\\RouteLinter\\Support\\RouteLintMacros::register",
+            ],
+        },
+        UnwrapArrayFilter: {
+            ignore: [
+                // Empty segments dropped here are skipped again in the decompose step.
+                "SineMacula\\RouteLinter\\Rules\\Support\\SegmentNormaliser::normalise",
+            ],
+        },
+        UnwrapArrayValues: {
+            ignore: [
+                // Non-standard methods are sort()ed (which re-indexes) before implode.
+                "SineMacula\\RouteLinter\\Rules\\StandardMethodsRule::inspect",
+                // Intermediate re-indexing is irrelevant: the final foreach iterates
+                // values and never touches keys.
+                "SineMacula\\RouteLinter\\Rules\\Support\\SegmentNormaliser::normalise",
+                // The configured rule list is always a sequential array, so
+                // array_values() is a no-op before the variadic spread.
+                "SineMacula\\RouteLinter\\RouteLinterServiceProvider::resolveRules",
+            ],
+        },
+        TrueValue: {
+            ignore: [
+                // The duplicate-id guard uses isset() on the seen-id map; the stored
+                // value is never read, so true-vs-false cannot change the verdict.
+                "SineMacula\\RouteLinter\\RouteLintEngine::__construct",
+            ],
+        },
+    }
+}
