@@ -7,7 +7,7 @@ namespace SineMacula\RouteLinter\Contracts;
  *
  * Implementers enumerate every app-owned route after a full boot, excluding
  * vendor routes the application cannot change. The domain never reads the
- * framework router directly — all route sourcing flows through this port.
+ * framework router directly - all route sourcing flows through this port.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

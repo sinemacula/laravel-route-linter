@@ -7,7 +7,7 @@ namespace SineMacula\RouteLinter\Rules\Support;
  *
  * Answers two questions: is a given normalised candidate word a denylisted
  * action verb, and what RESTful rewrite hint is associated with it? The
- * denylist is the single global tuning surface — removing a verb from
+ * denylist is the single global tuning surface - removing a verb from
  * construction makes contains() return false for it, without needing per-route
  * exemptions.
  *
@@ -16,11 +16,7 @@ namespace SineMacula\RouteLinter\Rules\Support;
  */
 final class VerbDenylist
 {
-    /**
-     * Lowercase-indexed set of denylisted verbs, keyed by verb for O(1) lookup.
-     *
-     * @var array<string, true>
-     */
+    /** @var array<string, true> Lowercase-indexed set of denylisted verbs, keyed by verb for O(1) lookup. */
     private array $verbIndex;
 
     /**
@@ -30,8 +26,13 @@ final class VerbDenylist
      * @param  array<string, string>  $hints
      */
     public function __construct(
+
+        // The raw verbs to index for O(1) case-insensitive membership lookup
         array $verbs,
+
+        /** Per-verb RESTful-rewrite hints, keyed by the denylisted verb */
         private readonly array $hints,
+
     ) {
         $this->verbIndex = array_fill_keys(
             array_map('strtolower', $verbs),

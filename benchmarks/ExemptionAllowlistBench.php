@@ -14,7 +14,7 @@ use SineMacula\RouteLinter\ExemptionAllowlist;
  * compare and an `fnmatch()` wildcard test, so cost scales with allowlist size.
  * It is measured at a representative allowlist size along the observe path, the
  * suppress-hit path (an entry matches and covers the rule), and the
- * suppress-miss path (no entry matches — the full unbroken scan).
+ * suppress-miss path (no entry matches - the full unbroken scan).
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

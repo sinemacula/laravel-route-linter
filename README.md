@@ -10,8 +10,8 @@
 A deterministic, opt-in Artisan command that lints a Laravel application's route table against a fixed catalogue of
 RESTful URL conventions, and exits non-zero on error-severity violations so CI can gate on it.
 
-It reads the live route table (`Router::getRoutes()` after a full boot) plus its own config — no model versions, no
-probabilistic inference — so the same routes and config always produce the same verdict. It enforces the
+It reads the live route table (`Router::getRoutes()` after a full boot) plus its own config - no model versions, no
+probabilistic inference - so the same routes and config always produce the same verdict. It enforces the
 mechanically-checkable convention subset only; it is not a proof of true RESTfulness.
 
 ## How It Works
@@ -21,7 +21,7 @@ invocation walks the whole route table once:
 
 1. **Source** the app-owned routes from the live router, excluding vendor routes (the same set `route:list
    --except-vendor` reports).
-2. **Normalise** each route into a framework-free value object — its URI split into segments, its parameter names, and
+2. **Normalise** each route into a framework-free value object - its URI split into segments, its parameter names, and
    its HTTP methods.
 3. **Inspect** every route with the ordered rule set; each rule returns zero or more violations tagged `error` or
    `warning`.
@@ -34,7 +34,7 @@ A few principles hold across the surface:
 - **Opt-in and deterministic.** Nothing runs until you call `route:lint`, and the same route table plus the same config
   yields a byte-identical verdict on every run, independent of route-cache state.
 - **Every waiver is justified and per-rule.** Waivers require a written reason and target specific rules. Unused
-  waivers — and allowlist entries matching no live route — are surfaced as stale entries so they cannot rot (reported,
+  waivers - and allowlist entries matching no live route - are surfaced as stale entries so they cannot rot (reported,
   but they do not gate).
 - **Misconfiguration fails loud.** A malformed config value (a non-array where an array is expected, an exemption
   missing its reason) raises an `InvalidConfigurationException` rather than silently weakening the verdict.
@@ -54,7 +54,7 @@ A few principles hold across the surface:
 | R11  | warning  | Resource nesting no deeper than the configured number of collection levels (default three)  |
 
 > [!NOTE]
-> Rule IDs `R6` and `R10` are intentionally reserved/retired — IDs are kept stable across releases.
+> Rule IDs `R6` and `R10` are intentionally reserved/retired - IDs are kept stable across releases.
 
 ## Installation
 
@@ -80,21 +80,21 @@ step in CI.
 ## Waiving a Violation
 
 Every waiver requires a written reason and is **per-rule**. Unused waivers (and allowlist entries matching no live
-route) are surfaced as stale entries so they cannot rot — these are reported but do not gate.
+route) are surfaced as stale entries so they cannot rot - these are reported but do not gate.
 
-**Inline (preferred) — co-located at the route:**
+**Inline (preferred) - co-located at the route:**
 
 ```php
 Route::patch('photos/{photo}/edit', [PhotoController::class, 'edit'])
-    ->ignoreRouteLint(['R9'], 'legacy admin UI — BL-123');   // waives only R9 on this route
+    ->ignoreRouteLint(['R9'], 'legacy admin UI - BL-123');   // waives only R9 on this route
 
 Route::get('legacy/getStats', LegacyStatsController::class)
-    ->ignoreRouteLint([], 'frozen v1 contract — BL-200');    // [] = all rules
+    ->ignoreRouteLint([], 'frozen v1 contract - BL-200');    // [] = all rules
 ```
 
 Stored in the route action (survives `route:cache`).
 
-**Config allowlist — for routes you cannot annotate:**
+**Config allowlist - for routes you cannot annotate:**
 
 ```php
 // config/route-linter.php
@@ -106,7 +106,7 @@ Stored in the route action (survives `route:cache`).
 
 ## Tuning
 
-Removing a word from `verb_denylist` is **rule tuning**, not a per-route waiver — use it for legitimate domain-noun
+Removing a word from `verb_denylist` is **rule tuning**, not a per-route waiver - use it for legitimate domain-noun
 homographs (e.g. a real `transfer` resource). This is global and needs no reason. The maximum nesting depth enforced by
 R11 is set with `nesting_max_depth` (default `3`).
 
@@ -139,7 +139,7 @@ class NoSnakeCaseRule implements Rule
 {
     public function id(): string { return 'APP1'; }
 
-    public function severity(): Severity { return Severity::ERROR; }
+    public function severity(): Severity { return Severity::Error; }
 
     public function inspect(NormalisedRoute $route, RuleConfig $config): array
     {
@@ -156,13 +156,13 @@ class NoSnakeCaseRule implements Rule
 }
 ```
 
-Rule IDs must be unique — the engine rejects a duplicate at boot. Output rendering is a port too: bind your own
+Rule IDs must be unique - the engine rejects a duplicate at boot. Output rendering is a port too: bind your own
 `LintReporter` implementation (for example, to emit JSON or SARIF for CI) to replace the default console reporter.
 
 ## Determinism
 
 The same route table plus the same config yields a byte-identical verdict on every run, independent of route-cache
-state. It enforces the mechanically-checkable convention subset only — it is not a proof of true RESTfulness.
+state. It enforces the mechanically-checkable convention subset only - it is not a proof of true RESTfulness.
 
 ## Requirements
 
@@ -174,7 +174,7 @@ state. It enforces the mechanically-checkable convention subset only — it is n
 ```bash
 composer test                # Run the test suite in parallel using Paratest
 composer test:coverage       # With clover coverage report
-composer test:mutation       # Mutation-testing gate (Infection) — the enforced MSI floor
+composer test:mutation       # Mutation-testing gate (Infection) - the enforced MSI floor
 composer test:mutation:full  # Full mutation suite, no thresholds (scheduled audit run)
 composer check               # Static analysis and lint checks via qlty
 composer format              # Format the codebase via qlty

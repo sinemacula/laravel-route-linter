@@ -23,7 +23,12 @@ final class FrameworkInflector implements Inflector
      *
      * @param  array<int, string>  $uncountables
      */
-    public function __construct(private readonly array $uncountables = []) {}
+    public function __construct(
+
+        /** Words treated as already-plural, bypassing singularisation */
+        private readonly array $uncountables = [],
+
+    ) {}
 
     /**
      * Return the singular form of a word, honouring configured uncountables.

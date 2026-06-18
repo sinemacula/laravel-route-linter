@@ -16,9 +16,8 @@
     initialTestsPhpOptions: "-d memory_limit=1G",
     timeout: 30,
     mutators: {
-        // Full audit run: every @default mutator with no ignores, so provably-
-        // equivalent mutants stay visible. The gate (infection.json5) ignores the
-        // reviewed equivalents to keep the MSI threshold green.
+        // Full audit run: all @default mutators, no ignores, so provably-equivalent
+        // mutants stay visible. The gate (infection.json5) ignores the reviewed ones.
         "@default": true
     }
 }

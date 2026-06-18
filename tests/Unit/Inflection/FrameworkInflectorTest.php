@@ -104,14 +104,14 @@ class FrameworkInflectorTest extends TestCase
     }
 
     /**
-     * Test that isPlural() is case-insensitive for uncountable matching —
+     * Test that isPlural() is case-insensitive for uncountable matching -
      * 'DATA' (uppercase) must be treated as plural-safe when 'data' is
      * configured.
      *
      * Targets UnwrapStrToLower on the uncountable in_array check in isPlural():
      * without strtolower(), in_array('DATA', ['data']) returns false; the
      * method then delegates to Str::singular('DATA') which returns 'DATA'
-     * (unchanged), so Str::singular != word evaluates false — isPlural returns
+     * (unchanged), so Str::singular != word evaluates false - isPlural returns
      * false instead of the expected true.
      *
      * @return void

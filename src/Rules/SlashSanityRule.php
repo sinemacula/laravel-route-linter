@@ -40,7 +40,7 @@ final class SlashSanityRule implements Rule
     #[\Override]
     public function severity(): Severity
     {
-        return Severity::ERROR;
+        return Severity::Error;
     }
 
     /**

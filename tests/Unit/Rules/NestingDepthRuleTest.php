@@ -66,7 +66,7 @@ class NestingDepthRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R11', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
+        static::assertSame(Severity::Warning, $violations[0]->severity);
         static::assertSame($uri, $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -75,7 +75,7 @@ class NestingDepthRuleTest extends TestCase
      * Test that a three-collection-level route produces no R11 violation.
      *
      * users/{user}/posts/{post}/comments/{comment} has three literal resource
-     * segments: users, posts, comments — exactly at the threshold, so no
+     * segments: users, posts, comments - exactly at the threshold, so no
      * warning.
      *
      * @return void
@@ -111,7 +111,7 @@ class NestingDepthRuleTest extends TestCase
      */
     public function testApiVersionPrefixExcludedFromDepth(): void
     {
-        // Arrange — four resource levels with api/v1 prefix (flagged)
+        // Arrange - four resource levels with api/v1 prefix (flagged)
         $fourLevelUri   = 'api/v1/users/{user}/posts/{post}/comments/{comment}/likes/{like}';
         $fourLevelRoute = new NormalisedRoute(
             uri: $fourLevelUri,
@@ -121,7 +121,7 @@ class NestingDepthRuleTest extends TestCase
             parameters: ['user', 'post', 'comment', 'like'],
         );
 
-        // Arrange — three resource levels with api/v1 prefix (clean)
+        // Arrange - three resource levels with api/v1 prefix (clean)
         $threeLevelRoute = new NormalisedRoute(
             uri: 'api/v1/users/{user}/posts/{post}/comments/{comment}',
             methods: ['GET'],
@@ -134,11 +134,11 @@ class NestingDepthRuleTest extends TestCase
         $flaggedViolations = $this->rule->inspect($fourLevelRoute, $this->config);
         $cleanViolations   = $this->rule->inspect($threeLevelRoute, $this->config);
 
-        // Assert — four levels after prefix exclusion triggers warning
+        // Assert - four levels after prefix exclusion triggers warning
         static::assertCount(1, $flaggedViolations);
         static::assertSame($fourLevelUri, $flaggedViolations[0]->offendingSurface);
 
-        // Assert — three levels after prefix exclusion is clean
+        // Assert - three levels after prefix exclusion is clean
         static::assertEmpty($cleanViolations);
     }
 
@@ -156,7 +156,7 @@ class NestingDepthRuleTest extends TestCase
      */
     public function testFourLiteralsWithFewerParamsIsFlagged(): void
     {
-        // Arrange — four literal segments (users, posts, comments, tags) and two params
+        // Arrange - four literal segments (users, posts, comments, tags) and two params
         $uri   = 'users/{user}/posts/comments/tags';
         $route = new NormalisedRoute(
             uri: $uri,
@@ -169,10 +169,10 @@ class NestingDepthRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — four literal segments exceeds the threshold of three
+        // Assert - four literal segments exceeds the threshold of three
         static::assertCount(1, $violations);
         static::assertSame('R11', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
+        static::assertSame(Severity::Warning, $violations[0]->severity);
         static::assertSame($uri, $violations[0]->offendingSurface);
     }
 
@@ -188,7 +188,7 @@ class NestingDepthRuleTest extends TestCase
      */
     public function testParameterSegmentsAreNotCountedTowardDepth(): void
     {
-        // Arrange — three literal segments (users, posts, comments) and four params
+        // Arrange - three literal segments (users, posts, comments) and four params
         $route = new NormalisedRoute(
             uri: '{a}/{b}/users/{c}/posts/comments/{d}',
             methods: ['GET'],
@@ -200,7 +200,7 @@ class NestingDepthRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — only three literal segments; must not trigger R11
+        // Assert - only three literal segments; must not trigger R11
         static::assertEmpty($violations);
     }
 
@@ -217,7 +217,7 @@ class NestingDepthRuleTest extends TestCase
      */
     public function testSegmentContainingVersionStringIsCountedAsLiteral(): void
     {
-        // Arrange — 'xv2' looks version-like but is not a pure version token;
+        // Arrange - 'xv2' looks version-like but is not a pure version token;
         // four literals including 'xv2' must all be counted to trigger R11
         $uri   = 'users/posts/comments/xv2';
         $route = new NormalisedRoute(
@@ -231,7 +231,7 @@ class NestingDepthRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — all four segments are literal, depth = 4 > 3
+        // Assert - all four segments are literal, depth = 4 > 3
         static::assertCount(1, $violations);
         static::assertSame('R11', $violations[0]->ruleId);
         static::assertSame($uri, $violations[0]->offendingSurface);
@@ -250,7 +250,7 @@ class NestingDepthRuleTest extends TestCase
      */
     public function testVersionPrefixWithSuffixIsCountedAsLiteral(): void
     {
-        // Arrange — 'v2extra' starts with a version-like token but is not a pure version;
+        // Arrange - 'v2extra' starts with a version-like token but is not a pure version;
         // four literals including 'v2extra' must all be counted to trigger R11
         $uri   = 'users/posts/comments/v2extra';
         $route = new NormalisedRoute(
@@ -264,7 +264,7 @@ class NestingDepthRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — depth = 4 > 3; 'v2extra' must not be excluded
+        // Assert - depth = 4 > 3; 'v2extra' must not be excluded
         static::assertCount(1, $violations);
         static::assertSame($uri, $violations[0]->offendingSurface);
     }
@@ -282,7 +282,7 @@ class NestingDepthRuleTest extends TestCase
      */
     public function testUppercaseVersionTokenIsExcludedFromDepth(): void
     {
-        // Arrange — three literal resource segments plus uppercase 'V2' prefix;
+        // Arrange - three literal resource segments plus uppercase 'V2' prefix;
         // 'V2' must be excluded so depth = 3, which is exactly the threshold (no violation)
         $route = new NormalisedRoute(
             uri: 'V2/users/posts/comments',
@@ -295,7 +295,7 @@ class NestingDepthRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — 'V2' excluded; depth = 3; must not produce a violation
+        // Assert - 'V2' excluded; depth = 3; must not produce a violation
         static::assertEmpty($violations);
     }
 
@@ -328,13 +328,13 @@ class NestingDepthRuleTest extends TestCase
 
     /**
      * Test that rule id() returns 'R11' and severity() returns
-     * Severity::WARNING.
+     * Severity::Warning.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R11', $this->rule->id());
-        static::assertSame(Severity::WARNING, $this->rule->severity());
+        static::assertSame(Severity::Warning, $this->rule->severity());
     }
 }

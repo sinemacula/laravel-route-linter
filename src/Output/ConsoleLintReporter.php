@@ -27,7 +27,12 @@ final readonly class ConsoleLintReporter implements LintReporter
      *
      * @param  \Illuminate\Console\OutputStyle  $output
      */
-    public function __construct(private OutputStyle $output) {}
+    public function __construct(
+
+        /** Console output channel the report is rendered to */
+        private OutputStyle $output,
+
+    ) {}
 
     /**
      * Render the report (findings grouped by severity, plus stale-waiver

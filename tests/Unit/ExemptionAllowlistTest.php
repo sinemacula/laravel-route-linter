@@ -46,12 +46,12 @@ class ExemptionAllowlistTest extends TestCase
      */
     public function testEntryWithoutRulesSuppressesAnyRule(): void
     {
-        // Arrange — entry with empty rules list (default)
+        // Arrange - entry with empty rules list (default)
         $allowlist = new ExemptionAllowlist([
             new AllowlistEntry('users.store', 'Legacy store endpoint kept for backward compat.'),
         ]);
 
-        // Act & Assert — suppresses any rule ID on the matching route
+        // Act & Assert - suppresses any rule ID on the matching route
         static::assertTrue($allowlist->suppresses('users.store', 'users', 'R1'));
         static::assertTrue($allowlist->suppresses('users.store', 'users', 'R9'));
         static::assertTrue($allowlist->suppresses('users.store', 'users', 'R99'));
@@ -65,12 +65,12 @@ class ExemptionAllowlistTest extends TestCase
      */
     public function testEntryWithRulesSuppressesOnlyListedRules(): void
     {
-        // Arrange — entry covering only R1
+        // Arrange - entry covering only R1
         $allowlist = new ExemptionAllowlist([
             new AllowlistEntry('login', 'Legacy auth endpoint.', ['R1']),
         ]);
 
-        // Act & Assert — R1 is suppressed; R2 is not
+        // Act & Assert - R1 is suppressed; R2 is not
         static::assertTrue($allowlist->suppresses(null, 'login', 'R1'));
         static::assertFalse($allowlist->suppresses(null, 'login', 'R2'));
     }
@@ -87,7 +87,7 @@ class ExemptionAllowlistTest extends TestCase
             new AllowlistEntry('users.store', 'Legacy store endpoint.'),
         ]);
 
-        // Act & Assert — exact name match suppresses
+        // Act & Assert - exact name match suppresses
         static::assertTrue($allowlist->suppresses('users.store', 'users', 'R1'));
 
         // A different name is not suppressed even if the URI matches
@@ -106,7 +106,7 @@ class ExemptionAllowlistTest extends TestCase
             new AllowlistEntry('users/*', 'All user sub-routes are exempted for migration.'),
         ]);
 
-        // Act & Assert — wildcard matches the URI
+        // Act & Assert - wildcard matches the URI
         static::assertTrue($allowlist->suppresses(null, 'users/create', 'R1'));
         static::assertTrue($allowlist->suppresses(null, 'users/profile', 'R2'));
 
@@ -115,23 +115,23 @@ class ExemptionAllowlistTest extends TestCase
     }
 
     /**
-     * Test that observe() drives unmatched() — an entry whose pattern never
+     * Test that observe() drives unmatched() - an entry whose pattern never
      * matches any observed route appears in unmatched().
      *
      * @return void
      */
     public function testObserveAndUnmatched(): void
     {
-        // Arrange — two entries; only the first will be observed
+        // Arrange - two entries; only the first will be observed
         $allowlist = new ExemptionAllowlist([
             new AllowlistEntry('users.store', 'Legacy store endpoint.'),
             new AllowlistEntry('articles.old', 'Deprecated article route.'),
         ]);
 
-        // Act — observe only the route matching the first entry
+        // Act - observe only the route matching the first entry
         $allowlist->observe('users.store', 'users');
 
-        // Assert — only the unmatched second entry is stale
+        // Assert - only the unmatched second entry is stale
         static::assertSame(['articles.old'], $allowlist->unmatched());
     }
 
@@ -143,16 +143,16 @@ class ExemptionAllowlistTest extends TestCase
      */
     public function testUnmatchedIsSorted(): void
     {
-        // Arrange — three entries, none observed
+        // Arrange - three entries, none observed
         $allowlist = new ExemptionAllowlist([
             new AllowlistEntry('users/*', 'User sub-routes.'),
             new AllowlistEntry('articles.old', 'Old article route.'),
             new AllowlistEntry('beta/feature', 'Beta feature.'),
         ]);
 
-        // Act — no observe() calls, so all entries are unmatched
+        // Act - no observe() calls, so all entries are unmatched
 
-        // Assert — keys returned in ascending lexicographic order
+        // Assert - keys returned in ascending lexicographic order
         static::assertSame(
             ['articles.old', 'beta/feature', 'users/*'],
             $allowlist->unmatched(),
@@ -167,16 +167,16 @@ class ExemptionAllowlistTest extends TestCase
      */
     public function testUnusedEntryMatchedRouteButSuppressedNothing(): void
     {
-        // Arrange — entry covering R1 only; the route has no R1 violation
+        // Arrange - entry covering R1 only; the route has no R1 violation
         $allowlist = new ExemptionAllowlist([
             new AllowlistEntry('users.index', 'Waived for migration.', ['R1']),
         ]);
 
-        // Act — observe the route (it is live), but never call suppresses()
+        // Act - observe the route (it is live), but never call suppresses()
         // because no violation fires on it
         $allowlist->observe('users.index', 'users');
 
-        // Assert — entry appears in unused() but not unmatched()
+        // Assert - entry appears in unused() but not unmatched()
         static::assertSame([], $allowlist->unmatched());
         static::assertCount(1, $allowlist->unused());
         static::assertStringContainsString('users.index', $allowlist->unused()[0]);
@@ -197,11 +197,11 @@ class ExemptionAllowlistTest extends TestCase
             new AllowlistEntry('login', 'Legacy auth endpoint.', ['R1']),
         ]);
 
-        // Act — observe and then suppress a violation
+        // Act - observe and then suppress a violation
         $allowlist->observe(null, 'login');
         $allowlist->suppresses(null, 'login', 'R1');
 
-        // Assert — entry was used; it appears in neither unused() nor unmatched()
+        // Assert - entry was used; it appears in neither unused() nor unmatched()
         static::assertSame([], $allowlist->unmatched());
         static::assertSame([], $allowlist->unused());
     }
@@ -218,14 +218,14 @@ class ExemptionAllowlistTest extends TestCase
      */
     public function testNeverMatchedEntryIsNotReportedAsUnused(): void
     {
-        // Arrange — one entry, never observed and never suppressing anything
+        // Arrange - one entry, never observed and never suppressing anything
         $allowlist = new ExemptionAllowlist([
             new AllowlistEntry('never.matched', 'Waiver that never matched a live route.'),
         ]);
 
-        // Act — no observe() / suppresses() calls, so the entry's matched flag stays unset
+        // Act - no observe() / suppresses() calls, so the entry's matched flag stays unset
 
-        // Assert — a never-matched entry belongs in unmatched(), never in unused()
+        // Assert - a never-matched entry belongs in unmatched(), never in unused()
         static::assertSame([], $allowlist->unused(), 'A never-matched entry must not appear in unused().');
         static::assertSame(['never.matched'], $allowlist->unmatched());
     }
@@ -237,17 +237,17 @@ class ExemptionAllowlistTest extends TestCase
      */
     public function testUnusedIsSorted(): void
     {
-        // Arrange — two entries that both match a live route but suppress nothing
+        // Arrange - two entries that both match a live route but suppress nothing
         $allowlist = new ExemptionAllowlist([
             new AllowlistEntry('z-route', 'Last alphabetically.', ['R9']),
             new AllowlistEntry('a-route', 'First alphabetically.', ['R9']),
         ]);
 
-        // Act — observe both routes but never suppress
+        // Act - observe both routes but never suppress
         $allowlist->observe('z-route', 'z-route');
         $allowlist->observe('a-route', 'a-route');
 
-        // Assert — sorted ascending
+        // Assert - sorted ascending
         $unused = $allowlist->unused();
         static::assertCount(2, $unused);
         static::assertStringContainsString('a-route', $unused[0]);
@@ -271,10 +271,10 @@ class ExemptionAllowlistTest extends TestCase
             new AllowlistEntry('users.index', 'Should be matched.'),
         ]);
 
-        // Act — observe the matching route
+        // Act - observe the matching route
         $allowlist->observe('users.index', 'users');
 
-        // Assert — entry must NOT appear in unmatched()
+        // Assert - entry must NOT appear in unmatched()
         static::assertSame([], $allowlist->unmatched());
     }
 
@@ -289,13 +289,13 @@ class ExemptionAllowlistTest extends TestCase
      */
     public function testSuppressesChecksAllEntriesNotJustFirst(): void
     {
-        // Arrange — first entry does NOT match; second entry DOES match
+        // Arrange - first entry does NOT match; second entry DOES match
         $allowlist = new ExemptionAllowlist([
             new AllowlistEntry('orders.index', 'First entry, non-matching.', ['R1']),
             new AllowlistEntry('users.store', 'Second entry, matching.', ['R1']),
         ]);
 
-        // Act & Assert — the matching second entry must suppress the violation
+        // Act & Assert - the matching second entry must suppress the violation
         static::assertTrue($allowlist->suppresses('users.store', 'users', 'R1'));
     }
 
@@ -316,10 +316,10 @@ class ExemptionAllowlistTest extends TestCase
             new AllowlistEntry('users.store', 'Legacy endpoint.', ['R1']),
         ]);
 
-        // Act — call suppresses() (not observe()) for a matching route
+        // Act - call suppresses() (not observe()) for a matching route
         $allowlist->suppresses('users.store', 'users', 'R1');
 
-        // Assert — entry was matched via suppresses(), must not appear in unmatched()
+        // Assert - entry was matched via suppresses(), must not appear in unmatched()
         static::assertSame([], $allowlist->unmatched());
     }
 
@@ -339,10 +339,10 @@ class ExemptionAllowlistTest extends TestCase
             new AllowlistEntry('users.store', 'Legacy endpoint.', ['R1']),
         ]);
 
-        // Act — call suppresses() so the entry covers the violation
+        // Act - call suppresses() so the entry covers the violation
         $result = $allowlist->suppresses('users.store', 'users', 'R1');
 
-        // Assert — suppresses() returned true and entry is not in unused()
+        // Assert - suppresses() returned true and entry is not in unused()
         static::assertTrue($result);
         static::assertSame([], $allowlist->unused());
     }

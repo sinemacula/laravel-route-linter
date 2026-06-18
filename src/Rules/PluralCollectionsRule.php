@@ -29,7 +29,12 @@ final class PluralCollectionsRule implements Rule
      *
      * @param  \SineMacula\RouteLinter\Contracts\Inflector  $inflector
      */
-    public function __construct(private readonly Inflector $inflector) {}
+    public function __construct(
+
+        /** Inflector port used to test whether a collection segment is plural */
+        private readonly Inflector $inflector,
+
+    ) {}
 
     /**
      * Return the stable rule identifier.
@@ -50,7 +55,7 @@ final class PluralCollectionsRule implements Rule
     #[\Override]
     public function severity(): Severity
     {
-        return Severity::ERROR;
+        return Severity::Error;
     }
 
     /**

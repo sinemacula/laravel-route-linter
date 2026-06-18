@@ -40,7 +40,7 @@ class RuleConfigTest extends TestCase
             uncountables: $uncountables,
         );
 
-        // Assert — each surface is exactly the value passed in
+        // Assert - each surface is exactly the value passed in
         static::assertSame($denylist, $config->verbDenylist);
         static::assertSame($hints, $config->remediationHints);
         static::assertCount(1, $config->exemptions);

@@ -33,8 +33,13 @@ final class VerbInPathRule implements Rule
      * @param  \SineMacula\RouteLinter\Rules\Support\VerbDenylist  $denylist
      */
     public function __construct(
+
+        /** Pipeline that reduces a URI to candidate verb-test words */
         private readonly SegmentNormaliser $normaliser,
+
+        /** Membership oracle and hint lookup for denylisted verbs */
         private readonly VerbDenylist $denylist,
+
     ) {}
 
     /**
@@ -56,7 +61,7 @@ final class VerbInPathRule implements Rule
     #[\Override]
     public function severity(): Severity
     {
-        return Severity::ERROR;
+        return Severity::Error;
     }
 
     /**

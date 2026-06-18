@@ -21,8 +21,8 @@ use SineMacula\RouteLinter\Violation;
  */
 final class StandardMethodsRule implements Rule
 {
-    /** The RFC-standard HTTP methods that the linter accepts without complaint. */
-    private const ALLOWED_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
+    /** @var array<int, string> The RFC-standard HTTP methods that the linter accepts without complaint. */
+    private const array ALLOWED_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
 
     /**
      * Return the stable rule identifier.
@@ -43,7 +43,7 @@ final class StandardMethodsRule implements Rule
     #[\Override]
     public function severity(): Severity
     {
-        return Severity::ERROR;
+        return Severity::Error;
     }
 
     /**

@@ -23,8 +23,8 @@ use SineMacula\RouteLinter\Violation;
  */
 final class NestingDepthRule implements Rule
 {
-    /** Literal prefix segments excluded from the collection-level count. */
-    private const EXCLUDED_PREFIXES = ['api'];
+    /** @var array<int, string> Literal prefix segments excluded from the collection-level count. */
+    private const array EXCLUDED_PREFIXES = ['api'];
 
     /**
      * Return the stable rule identifier.
@@ -45,7 +45,7 @@ final class NestingDepthRule implements Rule
     #[\Override]
     public function severity(): Severity
     {
-        return Severity::WARNING;
+        return Severity::Warning;
     }
 
     /**

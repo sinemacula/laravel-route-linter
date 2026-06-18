@@ -14,7 +14,7 @@ use SineMacula\RouteLinter\LintRoutes;
  * This is the headline cost: for a whole route table the use case sources every
  * descriptor, normalises each URI, runs all nine rules, applies inline and
  * allowlist suppression, and assembles the deterministically-ordered report. It
- * is measured along two axes at a representative mid-size API table — a
+ * is measured along two axes at a representative mid-size API table - a
  * fully-clean table (the steady-state cost a passing CI run pays) and a
  * realistic mixed table whose defects drive the violation, suppression, and
  * stale-waiver paths the clean table never reaches.

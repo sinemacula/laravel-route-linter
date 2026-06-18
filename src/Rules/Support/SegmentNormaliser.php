@@ -8,7 +8,7 @@ use SineMacula\RouteLinter\Contracts\Inflector;
  * Deterministic 6-step pipeline that reduces a URI to candidate verb-test
  * words.
  *
- * The pipeline is a pure function of its inputs — no randomness, no external
+ * The pipeline is a pure function of its inputs - no randomness, no external
  * state. Steps: split on `/`, drop route parameters, drop version/prefix
  * segments, decompose compound segments across camelCase/kebab/snake/dot
  * boundaries, lowercase every word, then singularise via the injected Inflector
@@ -24,7 +24,12 @@ final readonly class SegmentNormaliser
      *
      * @param  \SineMacula\RouteLinter\Contracts\Inflector  $inflector
      */
-    public function __construct(private Inflector $inflector) {}
+    public function __construct(
+
+        /** Inflector port used to singularise candidate words */
+        private Inflector $inflector,
+
+    ) {}
 
     /**
      * Reduce a raw URI path to its candidate verb-test words.
@@ -40,16 +45,16 @@ final readonly class SegmentNormaliser
      */
     public function normalise(string $uri, array $uncountables): array
     {
-        // Step 1 — split on '/' and discard empty segments
+        // Step 1 - split on '/' and discard empty segments
         $segments = array_values(array_filter(explode('/', $uri), fn (string $s): bool => $s !== ''));
 
-        // Step 2 — drop route parameters (wrapped in braces, optional or required)
+        // Step 2 - drop route parameters (wrapped in braces, optional or required)
         $segments = array_values(array_filter($segments, fn (string $s): bool => !preg_match('/^\{[^}]+}$/', $s)));
 
-        // Step 3 — drop version segments (v1, v2, …) and the literal 'api' prefix
+        // Step 3 - drop version segments (v1, v2, …) and the literal 'api' prefix
         $segments = array_values(array_filter($segments, fn (string $s): bool => !preg_match('/^v\d+$/i', $s) && strtolower($s) !== 'api'));
 
-        // Step 4 — decompose compound segments across camelCase, kebab, snake, and dot boundaries
+        // Step 4 - decompose compound segments across camelCase, kebab, snake, and dot boundaries
         $words = [];
 
         foreach ($segments as $segment) {
@@ -66,10 +71,10 @@ final readonly class SegmentNormaliser
             }
         }
 
-        // Step 5 — lowercase every decomposed word
+        // Step 5 - lowercase every decomposed word
         $words = array_map('strtolower', $words);
 
-        // Step 6 — singularise each word via the injected inflector port;
+        // Step 6 - singularise each word via the injected inflector port;
         // uncountable words bypass singularisation and are returned as-is
         return array_map(
             fn (string $word): string => in_array($word, $uncountables, true)

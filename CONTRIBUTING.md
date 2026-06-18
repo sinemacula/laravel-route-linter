@@ -57,7 +57,7 @@ Run the full test suite before submitting:
 ```bash
 composer test                # Run the test suite in parallel using Paratest
 composer test:coverage       # With clover coverage report
-composer test:mutation       # Mutation-testing gate (Infection) — the enforced MSI floor
+composer test:mutation       # Mutation-testing gate (Infection) - the enforced MSI floor
 composer test:mutation:full  # Full mutation suite, no thresholds (scheduled audit run)
 ```
 

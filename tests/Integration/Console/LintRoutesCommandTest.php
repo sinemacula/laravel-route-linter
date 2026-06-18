@@ -26,7 +26,7 @@ class LintRoutesCommandTest extends TestCase
     private const string COMMAND = 'route:lint';
 
     /** @var array<int, string> Default verb denylist used across tests. */
-    private const VERB_DENYLIST = [
+    private const array VERB_DENYLIST = [
         'get', 'list', 'create', 'add', 'update', 'edit', 'delete',
         'remove', 'cancel', 'login', 'logout', 'search', 'fetch',
     ];
@@ -104,7 +104,7 @@ class LintRoutesCommandTest extends TestCase
     {
         $this->seedConfig();
 
-        // A named route whose name does not follow {resource}.{action} — triggers R8 (warning)
+        // A named route whose name does not follow {resource}.{action} - triggers R8 (warning)
         $this->getRouter()->get('users', fn () => [])->name('users.getAll');
 
         $this->runCommand()->assertExitCode(0);

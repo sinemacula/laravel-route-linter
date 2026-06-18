@@ -11,8 +11,8 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
  *
  * Runs each registered rule over a single normalised route and returns the
  * aggregated violations in a deterministic order. Rules are executed in the
- * fixed order they were supplied to the constructor — no sorting, no
- * randomness, no global state — so calling inspect() twice with the same inputs
+ * fixed order they were supplied to the constructor - no sorting, no
+ * randomness, no global state - so calling inspect() twice with the same inputs
  * returns byte-identical arrays (NFR-01).
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
@@ -56,7 +56,7 @@ final class RouteLintEngine
      * violations.
      *
      * Rules are executed in the fixed order they were supplied to the
-     * constructor. The returned array preserves that order — no additional
+     * constructor. The returned array preserves that order - no additional
      * sorting is applied here; deterministic final ordering is the report's
      * responsibility.
      *

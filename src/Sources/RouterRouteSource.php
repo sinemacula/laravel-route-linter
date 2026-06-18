@@ -12,7 +12,7 @@ use SineMacula\RouteLinter\Dto\RouteSuppression;
  * Route-source adapter backed by the Laravel router.
  *
  * Enumerates the live route table via `Router::getRoutes()` after a full
- * application boot — the same source that `route:list` consumes — and maps each
+ * application boot - the same source that `route:list` consumes - and maps each
  * route to a `RouteDescriptor` DTO. Vendor routes (whose defining class or
  * closure resolves to a file under the `vendor/` directory) are excluded from
  * the returned set; the domain never sees a framework `Route` object.
@@ -30,7 +30,12 @@ final class RouterRouteSource implements RouteSource
      *
      * @param  \Illuminate\Routing\Router  $router
      */
-    public function __construct(private readonly Router $router) {}
+    public function __construct(
+
+        /** Laravel router whose live route table is enumerated */
+        private readonly Router $router,
+
+    ) {}
 
     /**
      * Enumerate every app-owned route, excluding vendor routes.
@@ -140,7 +145,7 @@ final class RouterRouteSource implements RouteSource
             $file = (new \ReflectionFunction($closure))->getFileName();
         } catch (\ReflectionException) { // @codeCoverageIgnore
             // Unreachable for a real Closure (always reflectable); defaulting to
-            // app-owned is the safe direction — a route is never silently dropped.
+            // app-owned is the safe direction - a route is never silently dropped.
             return false; // @codeCoverageIgnore
         }
 
@@ -192,7 +197,7 @@ final class RouterRouteSource implements RouteSource
             return (new \ReflectionClass($class))->getFileName() ?: null;
         } catch (\ReflectionException) {
             // An unresolvable controller class yields null, which fileIsVendor()
-            // maps to app-owned — the conservative direction that never drops a route.
+            // maps to app-owned - the conservative direction that never drops a route.
             return null;
         }
     }

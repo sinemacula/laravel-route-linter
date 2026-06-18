@@ -12,8 +12,8 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
  * Config-backed adapter for the RuleConfiguration port.
  *
  * Reads the `route-linter.*` config section and assembles the strictly-separate
- * surfaces — verb denylist, remediation hints, exemption allowlist, inflector
- * uncountables, and nesting depth — into a {@see RuleConfig} DTO. The adapter
+ * surfaces - verb denylist, remediation hints, exemption allowlist, inflector
+ * uncountables, and nesting depth - into a {@see RuleConfig} DTO. The adapter
  * is the single place that validates the config schema: a non-array value for
  * an array-typed key, or an exemption entry missing its match or written
  * reason, raises an {@see InvalidConfigurationException} immediately rather
@@ -46,7 +46,7 @@ final class ConfigRuleConfiguration implements RuleConfiguration
     /**
      * Read an array-typed config key, failing loud on a non-array value.
      *
-     * A missing (null) value yields an empty array — absence is the shipped
+     * A missing (null) value yields an empty array - absence is the shipped
      * default. A present-but-non-array value is a misconfiguration that would
      * silently disable a rule surface, so it is rejected.
      *

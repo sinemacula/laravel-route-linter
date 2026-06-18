@@ -30,15 +30,15 @@ return [
     */
 
     'rules' => [
-        VerbInPathRule::class,           // R1  — action verbs in path
-        KebabCaseRule::class,            // R2  — kebab-case segments
-        LowercaseRule::class,            // R3  — lowercase segments
-        PluralCollectionsRule::class,    // R4  — plural collections
-        SlashSanityRule::class,          // R5  — trailing/duplicate slashes
-        StandardMethodsRule::class,      // R7  — standard HTTP methods
-        RouteNameRule::class,            // R8  — {resource}.{action} names
-        ApiResourceAlignmentRule::class, // R9  — HTML-only create/edit actions
-        NestingDepthRule::class,         // R11 — nesting-depth smell
+        VerbInPathRule::class,           // R1  - action verbs in path
+        KebabCaseRule::class,            // R2  - kebab-case segments
+        LowercaseRule::class,            // R3  - lowercase segments
+        PluralCollectionsRule::class,    // R4  - plural collections
+        SlashSanityRule::class,          // R5  - trailing/duplicate slashes
+        StandardMethodsRule::class,      // R7  - standard HTTP methods
+        RouteNameRule::class,            // R8  - {resource}.{action} names
+        ApiResourceAlignmentRule::class, // R9  - HTML-only create/edit actions
+        NestingDepthRule::class,         // R11 - nesting-depth smell
     ],
 
     /*
@@ -61,7 +61,7 @@ return [
     |
     | Action verbs that flag a path segment, grouped by their canonical fix. The
     | list is curated and tunable: add or remove words. Removing a word here is
-    | rule tuning, NOT a per-route exemption — use it for legitimate domain-noun
+    | rule tuning, NOT a per-route exemption - use it for legitimate domain-noun
     | homographs (e.g. a "transfer" resource, a stock "share", a chess "move").
     |
     */
@@ -86,7 +86,7 @@ return [
         'start', 'stop', 'pause', 'resume', 'lock', 'unlock', 'suspend', 'reopen',
         'assign', 'reset', 'revoke',
 
-        // Generic / non-CRUD actions (rarely a resource — rethink the design)
+        // Generic / non-CRUD actions (rarely a resource - rethink the design)
         'do', 'run', 'execute', 'perform', 'trigger', 'handle', 'process', 'calculate', 'validate', 'verify', 'refresh',
 
         // Auth & sessions

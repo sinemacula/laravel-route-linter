@@ -25,7 +25,7 @@ class RouteDescriptorTest extends TestCase
      */
     public function testExposesUriMethodsNameAndVendorFlag(): void
     {
-        // Arrange & Act — named route, non-vendor
+        // Arrange & Act - named route, non-vendor
         $named = new RouteDescriptor(
             uri: 'users/{user}',
             methods: ['GET', 'HEAD'],
@@ -39,7 +39,7 @@ class RouteDescriptorTest extends TestCase
         static::assertSame('users.show', $named->name);
         static::assertFalse($named->isVendor);
 
-        // Arrange & Act — unnamed vendor route
+        // Arrange & Act - unnamed vendor route
         $vendor = new RouteDescriptor(
             uri: 'vendor/package/resource',
             methods: ['POST'],

@@ -47,7 +47,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testEditActionIsFlagged(): void
     {
-        // Arrange — GET /photos/{photo}/edit; 'edit' is the final literal segment
+        // Arrange - GET /photos/{photo}/edit; 'edit' is the final literal segment
         $route = new NormalisedRoute(
             uri: 'photos/{photo}/edit',
             methods: ['GET'],
@@ -62,7 +62,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
+        static::assertSame(Severity::Warning, $violations[0]->severity);
         static::assertSame('edit', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -75,7 +75,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testCreateActionIsFlagged(): void
     {
-        // Arrange — GET /photos/create; 'create' is the final literal segment
+        // Arrange - GET /photos/create; 'create' is the final literal segment
         $route = new NormalisedRoute(
             uri: 'photos/create',
             methods: ['GET'],
@@ -90,7 +90,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
+        static::assertSame(Severity::Warning, $violations[0]->severity);
         static::assertSame('create', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -106,7 +106,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testCanonicalShowIsNotFlagged(): void
     {
-        // Arrange — GET /photos/{photo}; final segment is a parameter
+        // Arrange - GET /photos/{photo}; final segment is a parameter
         $route = new NormalisedRoute(
             uri: 'photos/{photo}',
             methods: ['GET'],
@@ -132,7 +132,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testNonFinalCreateSegmentIsNotFlagged(): void
     {
-        // Arrange — 'create' is not the last literal; 'items' follows it
+        // Arrange - 'create' is not the last literal; 'items' follows it
         $route = new NormalisedRoute(
             uri: 'create/items',
             methods: ['GET'],
@@ -161,7 +161,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testEditBeforeTrailingParamIsFlagged(): void
     {
-        // Arrange — GET /users/edit/{user}; reversed segments are ['{user}', 'edit', 'users']
+        // Arrange - GET /users/edit/{user}; reversed segments are ['{user}', 'edit', 'users']
         // The param '{user}' must be skipped (continue) to reach 'edit' as the last literal
         $route = new NormalisedRoute(
             uri: 'users/edit/{user}',
@@ -174,10 +174,10 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — 'edit' is the final literal segment and must be flagged
+        // Assert - 'edit' is the final literal segment and must be flagged
         static::assertCount(1, $violations);
         static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
+        static::assertSame(Severity::Warning, $violations[0]->severity);
         static::assertSame('edit', $violations[0]->offendingSurface);
     }
 
@@ -194,7 +194,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testCreateBeforeTrailingParamIsFlagged(): void
     {
-        // Arrange — GET /photos/create/{photo}; reversed: ['{photo}', 'create', 'photos']
+        // Arrange - GET /photos/create/{photo}; reversed: ['{photo}', 'create', 'photos']
         $route = new NormalisedRoute(
             uri: 'photos/create/{photo}',
             methods: ['GET'],
@@ -206,10 +206,10 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — 'create' is the final literal segment and must be flagged
+        // Assert - 'create' is the final literal segment and must be flagged
         static::assertCount(1, $violations);
         static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
+        static::assertSame(Severity::Warning, $violations[0]->severity);
         static::assertSame('create', $violations[0]->offendingSurface);
     }
 
@@ -226,8 +226,8 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testTrailingEmptySegmentDoesNotMaskCreateViolation(): void
     {
-        // Arrange — trailing slash produces an empty segment after 'create';
-        // reversed: ['', 'create', 'photos'] — empty must be skipped to reach 'create'
+        // Arrange - trailing slash produces an empty segment after 'create';
+        // reversed: ['', 'create', 'photos'] - empty must be skipped to reach 'create'
         $route = new NormalisedRoute(
             uri: 'photos/create/',
             methods: ['GET'],
@@ -239,7 +239,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — 'create' is still the final meaningful literal
+        // Assert - 'create' is still the final meaningful literal
         static::assertCount(1, $violations);
         static::assertSame('R9', $violations[0]->ruleId);
         static::assertSame('create', $violations[0]->offendingSurface);
@@ -254,7 +254,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testRouteWithNoLiteralSegmentIsNotFlagged(): void
     {
-        // Arrange — every segment is a route parameter, so there is no literal to test
+        // Arrange - every segment is a route parameter, so there is no literal to test
         $route = new NormalisedRoute(
             uri: '{tenant}/{user}',
             methods: ['GET'],
@@ -266,19 +266,19 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — lastLiteralSegment() scans every segment, finds none, and returns null
+        // Assert - lastLiteralSegment() scans every segment, finds none, and returns null
         static::assertEmpty($violations);
     }
 
     /**
      * Test that rule id() returns 'R9' and severity() returns
-     * Severity::WARNING.
+     * Severity::Warning.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R9', $this->rule->id());
-        static::assertSame(Severity::WARNING, $this->rule->severity());
+        static::assertSame(Severity::Warning, $this->rule->severity());
     }
 }

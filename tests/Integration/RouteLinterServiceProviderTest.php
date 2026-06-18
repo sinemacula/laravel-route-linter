@@ -136,7 +136,7 @@ class RouteLinterServiceProviderTest extends TestCase
      * and remediation hints.
      *
      * Linting `getUsers` must raise an R1 verb-in-path violation whose surface
-     * is the denylisted verb `get` and whose remediation hint is populated —
+     * is the denylisted verb `get` and whose remediation hint is populated -
      * proving the provider fed the configured denylist and hints into the
      * engine rather than empty lists.
      *
@@ -262,7 +262,7 @@ class RouteLinterServiceProviderTest extends TestCase
 
     /**
      * Test that a non-array `route-linter.rules` value yields a rule-less
-     * engine rather than raising — the lenient resolution mirrors the other
+     * engine rather than raising - the lenient resolution mirrors the other
      * surfaces.
      *
      * @return void
@@ -280,7 +280,7 @@ class RouteLinterServiceProviderTest extends TestCase
      * Test that register and boot run idempotently when invoked directly.
      *
      * Re-running the provider lifecycle against the booted application must not
-     * raise — the singleton bindings simply rebind and the macro registration
+     * raise - the singleton bindings simply rebind and the macro registration
      * short-circuits on its idempotency guard.
      *
      * @return void

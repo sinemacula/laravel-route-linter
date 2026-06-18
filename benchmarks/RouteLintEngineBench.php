@@ -15,7 +15,7 @@ use SineMacula\RouteLinter\RouteLintEngine;
  * route, free of the sourcing, suppression, and reporting work the use case
  * layers on top. It is measured along two routes: a clean route every rule
  * clears without emitting a finding (the common case), and a deliberately
- * defective route that trips several rules at once — bounding both the
+ * defective route that trips several rules at once - bounding both the
  * best-case scan and the allocation cost of constructing many violations.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>

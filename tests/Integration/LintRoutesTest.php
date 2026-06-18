@@ -39,13 +39,8 @@ use Tests\TestCase;
 #[CoversClass(LintRoutes::class)]
 class LintRoutesTest extends TestCase
 {
-    /**
-     * Default verb denylist that covers the fixture offenders used by most
-     * tests.
-     *
-     * @var array<int, string>
-     */
-    private const VERB_DENYLIST = [
+    /** @var array<int, string> Default verb denylist that covers the fixture offenders used by most tests. */
+    private const array VERB_DENYLIST = [
         'get', 'list', 'create', 'add', 'update', 'edit', 'delete',
         'remove', 'cancel', 'login', 'logout', 'search', 'fetch',
         'transfer', 'check', 'process', 'submit',
@@ -109,10 +104,10 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCase($router)->lint();
 
-        // The /login route is violating but covered by an allowlist entry — no errors expected
+        // The /login route is violating but covered by an allowlist entry - no errors expected
         static::assertSame([], $report->errors(), 'Violation for exempted route should be suppressed.');
 
-        // The allowlist entry matched a live route — no stale waivers
+        // The allowlist entry matched a live route - no stale waivers
         static::assertSame([], $report->staleWaivers(), 'Matched entry must not appear as stale.');
     }
 
@@ -150,7 +145,7 @@ class LintRoutesTest extends TestCase
      */
     public function testHomographRemovalClearsVerbFindingWithoutExemption(): void
     {
-        // Denylist WITHOUT 'transfer' — it was removed as a homograph
+        // Denylist WITHOUT 'transfer' - it was removed as a homograph
         $denylistWithoutTransfer = array_values(array_filter(
             self::VERB_DENYLIST,
             fn (string $v): bool => $v !== 'transfer',
@@ -168,7 +163,7 @@ class LintRoutesTest extends TestCase
 
         static::assertSame([], array_values($r1Violations), 'No R1 violation expected after homograph removal.');
 
-        // No exemption entry was created — allowlist stays empty, no stale waivers
+        // No exemption entry was created - allowlist stays empty, no stale waivers
         static::assertSame([], $report->staleWaivers(), 'No exemption entry should be stale when using denylist tuning.');
     }
 
@@ -295,7 +290,7 @@ class LintRoutesTest extends TestCase
         ));
         static::assertSame([], $loginViolations, 'All violations on an all-rules-waived route must be suppressed.');
 
-        // The allowlist entry matched a live route and suppressed violations — not stale
+        // The allowlist entry matched a live route and suppressed violations - not stale
         static::assertSame([], $report->staleWaivers(), 'A used config entry must not appear as stale.');
     }
 
@@ -358,10 +353,10 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCase($router)->lint();
 
-        // No route violations — the route is clean
+        // No route violations - the route is clean
         static::assertSame([], $report->errors(), 'Clean route must produce no errors.');
 
-        // The exemption matched a live route but suppressed nothing — must appear as a stale unused entry
+        // The exemption matched a live route but suppressed nothing - must appear as a stale unused entry
         $staleWaivers = $report->staleWaivers();
         static::assertNotEmpty($staleWaivers, 'A matched-but-unused config entry must appear as stale.');
 
@@ -444,7 +439,7 @@ class LintRoutesTest extends TestCase
      *
      * When the mutation sets the map value to false, `isset()` still returns
      * true, which means the suppression is considered "used" and no stale entry
-     * is added. But wait — this mutant means a USED suppression does NOT get
+     * is added. But wait - this mutant means a USED suppression does NOT get
      * recorded as used, so the stale-detection loop at L77 fires for it. The
      * test verifies that a suppression that actually fires on a violation
      * produces NO stale waiver.
@@ -456,7 +451,7 @@ class LintRoutesTest extends TestCase
         $this->seedDefaultConfig();
 
         $router = $this->getRouter();
-        // /getUsers triggers R1; inline suppression covers R1 — so suppression IS used
+        // /getUsers triggers R1; inline suppression covers R1 - so suppression IS used
         $router->get('getUsers', fn () => [])
             ->name('get-users')
             // @phpstan-ignore method.notFound
@@ -468,7 +463,7 @@ class LintRoutesTest extends TestCase
         $r1Violations = array_values(array_filter($report->errors(), fn ($v) => $v->ruleId === 'R1'));
         static::assertSame([], $r1Violations, 'R1 must be suppressed by the inline suppression.');
 
-        // The suppression fired on a real violation — must NOT be stale
+        // The suppression fired on a real violation - must NOT be stale
         $staleString = implode("\n", $report->staleWaivers());
         static::assertStringNotContainsString('Suppression that actually fires on R1.', $staleString, 'A used suppression must not appear as stale.');
     }
@@ -486,7 +481,7 @@ class LintRoutesTest extends TestCase
      * not fire on the route). Under the mutation the "continue" causes the
      * second suppression to also be iterated after the first fires, but since
      * R1 is the violation and the second suppression only covers R2, it would
-     * NOT be marked used by the "continue" path either — so this specific
+     * NOT be marked used by the "continue" path either - so this specific
      * arrangement is equivalent.
      *
      * Instead we need a case where the second suppression covers the SAME rule.
@@ -508,9 +503,9 @@ class LintRoutesTest extends TestCase
         $router->get('getUsers', fn () => [])
             ->name('get-users')
             // @phpstan-ignore method.notFound
-            ->ignoreRouteLint(['R1'], 'First suppression — fires on R1.')
+            ->ignoreRouteLint(['R1'], 'First suppression - fires on R1.')
             // @phpstan-ignore method.notFound
-            ->ignoreRouteLint(['R1'], 'Second suppression — never fires because break exits after first.');
+            ->ignoreRouteLint(['R1'], 'Second suppression - never fires because break exits after first.');
 
         $report = $this->buildUseCase($router)->lint();
 
@@ -522,12 +517,12 @@ class LintRoutesTest extends TestCase
         $staleWaivers = $report->staleWaivers();
         $staleString  = implode("\n", $staleWaivers);
         static::assertStringContainsString(
-            'Second suppression — never fires because break exits after first.',
+            'Second suppression - never fires because break exits after first.',
             $staleString,
             'Second suppression must be stale because break prevents it firing.',
         );
         static::assertStringNotContainsString(
-            'First suppression — fires on R1.',
+            'First suppression - fires on R1.',
             $staleString,
             'First suppression must not be stale because it fired.',
         );
@@ -574,7 +569,7 @@ class LintRoutesTest extends TestCase
         ));
         static::assertSame([], $r2Violations, 'R2 must be suppressed by the second inline suppression.');
 
-        // Neither suppression should be stale — both fired
+        // Neither suppression should be stale - both fired
         $staleString = implode("\n", $report->staleWaivers());
         static::assertStringNotContainsString('Suppresses verb-in-path violation.', $staleString, 'First suppression must not be stale.');
         static::assertStringNotContainsString('Suppresses kebab-case violation.', $staleString, 'Second suppression must not be stale.');
@@ -629,7 +624,7 @@ class LintRoutesTest extends TestCase
 
         $router = $this->getRouter();
         // Route with two parameters: {organisation} and {user}
-        // The final literal segment is "create" — should trigger R9 (apiResource warning)
+        // The final literal segment is "create" - should trigger R9 (apiResource warning)
         // If {organisation} and {user} are not correctly identified as parameters
         // (e.g. trim not applied so they stay as "{organisation}") then the segment
         // logic in other rules would be distorted.
@@ -638,7 +633,7 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCase($router)->lint();
 
-        // R9 fires on the "create" segment — confirms lastLiteralSegment correctly skips parameters
+        // R9 fires on the "create" segment - confirms lastLiteralSegment correctly skips parameters
         $r9Violations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => $v->ruleId === 'R9',
@@ -679,7 +674,7 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCase($router)->lint();
 
-        // R9 must fire on "create" — the rule correctly skips parameter segments
+        // R9 must fire on "create" - the rule correctly skips parameter segments
         $r9Violations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => $v->ruleId === 'R9',
@@ -690,7 +685,7 @@ class LintRoutesTest extends TestCase
         static::assertSame('create', $r9Violations[0]->offendingSurface);
 
         // No R4 violation must reference a brace-wrapped parameter segment.
-        // (R4 may fire on "create" as a singular segment, which is acceptable —
+        // (R4 may fire on "create" as a singular segment, which is acceptable -
         // what must not happen is {order} or {item} appearing as offending surfaces.)
         $r4ParamViolations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),

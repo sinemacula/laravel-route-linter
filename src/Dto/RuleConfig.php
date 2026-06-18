@@ -8,8 +8,8 @@ namespace SineMacula\RouteLinter\Dto;
  * Carries the strictly-separate config surfaces handed to every rule: the verb
  * denylist (action verbs that flag a path segment), the per-verb
  * remediation-hint map, the exemption-allowlist entries, the inflector
- * uncountables, and the maximum nesting depth. Surfaces are kept separate —
- * verbDenylist, exemptions, and uncountables never share storage — so callers
+ * uncountables, and the maximum nesting depth. Surfaces are kept separate -
+ * verbDenylist, exemptions, and uncountables never share storage - so callers
  * can tune each independently.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>

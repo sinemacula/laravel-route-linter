@@ -53,7 +53,7 @@ class RouteLintMacrosTest extends TestCase
      *
      * Without the early return the macro would be re-registered on each call.
      * We verify idempotency by checking that a second call leaves the route
-     * action produced by the macro intact — the macro still works and was not
+     * action produced by the macro intact - the macro still works and was not
      * double-appended by the re-registration attempt.
      *
      * @return void

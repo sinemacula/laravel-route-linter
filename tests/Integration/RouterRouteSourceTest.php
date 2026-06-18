@@ -166,7 +166,7 @@ class RouterRouteSourceTest extends TestCase
 
     /**
      * Test that no Illuminate\Routing\Route instance is returned by the adapter
-     * — only RouteDescriptor DTOs cross the boundary.
+     * - only RouteDescriptor DTOs cross the boundary.
      *
      * @return void
      */
@@ -481,7 +481,7 @@ class RouterRouteSourceTest extends TestCase
 
         // Register using the string controller@method notation so `uses` is a string.
         // RouteLintController lives under tests/, so ReflectionClass resolves a
-        // non-vendor file — the adapter must return it with isVendor === false.
+        // non-vendor file - the adapter must return it with isVendor === false.
         $router->get('widgets', [RouteLintController::class, 'index'])->name('widgets.index');
 
         $source      = new RouterRouteSource($router);
@@ -516,7 +516,7 @@ class RouterRouteSourceTest extends TestCase
         $router = $this->getRouter();
 
         // A route registered with a Closure is handled by the Closure branch
-        // (not the string branch). Register a named closure route that we own —
+        // (not the string branch). Register a named closure route that we own -
         // this is the canonical non-string-uses scenario for app-owned routes.
         $router->get('health', fn () => ['status' => 'ok'])->name('health.check');
 

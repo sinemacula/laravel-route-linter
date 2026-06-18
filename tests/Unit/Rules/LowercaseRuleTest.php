@@ -62,7 +62,7 @@ class LowercaseRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R3', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
+        static::assertSame(Severity::Error, $violations[0]->severity);
         static::assertSame('Users', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -97,7 +97,7 @@ class LowercaseRuleTest extends TestCase
      */
     public function testParameterSegmentsAreIgnored(): void
     {
-        // Arrange — the sole segment is a route parameter
+        // Arrange - the sole segment is a route parameter
         $route = new NormalisedRoute(
             uri: '{User}',
             methods: ['GET'],
@@ -120,7 +120,7 @@ class LowercaseRuleTest extends TestCase
      */
     public function testCamelCaseSegmentIsFlagged(): void
     {
-        // Arrange — userProfiles contains uppercase letters; both R2 and R3 fire independently
+        // Arrange - userProfiles contains uppercase letters; both R2 and R3 fire independently
         $route = new NormalisedRoute(
             uri: 'userProfiles',
             methods: ['GET'],
@@ -132,7 +132,7 @@ class LowercaseRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — R3 produces one violation for the mixed-case segment
+        // Assert - R3 produces one violation for the mixed-case segment
         static::assertCount(1, $violations);
         static::assertSame('R3', $violations[0]->ruleId);
         static::assertSame('userProfiles', $violations[0]->offendingSurface);
@@ -145,7 +145,7 @@ class LowercaseRuleTest extends TestCase
      */
     public function testEmptySegmentsAreIgnored(): void
     {
-        // Arrange — trailing slash produces an empty trailing segment
+        // Arrange - trailing slash produces an empty trailing segment
         $route = new NormalisedRoute(
             uri: 'users/',
             methods: ['GET'],
@@ -174,7 +174,7 @@ class LowercaseRuleTest extends TestCase
      */
     public function testUppercaseSegmentAfterParameterIsFlagged(): void
     {
-        // Arrange — '{user}' is first; 'Users' follows and must still be inspected
+        // Arrange - '{user}' is first; 'Users' follows and must still be inspected
         $route = new NormalisedRoute(
             uri: '{user}/Users',
             methods: ['GET'],
@@ -186,10 +186,10 @@ class LowercaseRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — 'Users' is uppercase and must be flagged despite the leading param
+        // Assert - 'Users' is uppercase and must be flagged despite the leading param
         static::assertCount(1, $violations);
         static::assertSame('R3', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
+        static::assertSame(Severity::Error, $violations[0]->severity);
         static::assertSame('Users', $violations[0]->offendingSurface);
     }
 
@@ -205,7 +205,7 @@ class LowercaseRuleTest extends TestCase
      */
     public function testTwoUppercaseSegmentsProduceTwoViolations(): void
     {
-        // Arrange — both 'Users' and 'Posts' contain uppercase letters
+        // Arrange - both 'Users' and 'Posts' contain uppercase letters
         $route = new NormalisedRoute(
             uri: 'Users/Posts',
             methods: ['GET'],
@@ -217,7 +217,7 @@ class LowercaseRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — two violations, one per offending segment, in segment order
+        // Assert - two violations, one per offending segment, in segment order
         static::assertCount(2, $violations);
         static::assertSame('R3', $violations[0]->ruleId);
         static::assertSame('Users', $violations[0]->offendingSurface);
@@ -226,13 +226,13 @@ class LowercaseRuleTest extends TestCase
     }
 
     /**
-     * Test that rule id() returns 'R3' and severity() returns Severity::ERROR.
+     * Test that rule id() returns 'R3' and severity() returns Severity::Error.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R3', $this->rule->id());
-        static::assertSame(Severity::ERROR, $this->rule->severity());
+        static::assertSame(Severity::Error, $this->rule->severity());
     }
 }

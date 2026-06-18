@@ -82,14 +82,14 @@ class VerbInPathRuleTest extends TestCase
     }
 
     /**
-     * Test that id() returns 'R1' and severity() returns Severity::ERROR.
+     * Test that id() returns 'R1' and severity() returns Severity::Error.
      *
      * @return void
      */
     public function testIdAndSeverity(): void
     {
         static::assertSame('R1', $this->rule->id());
-        static::assertSame(Severity::ERROR, $this->rule->severity());
+        static::assertSame(Severity::Error, $this->rule->severity());
     }
 
     /**
@@ -107,14 +107,14 @@ class VerbInPathRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert — one violation for the verb 'get'; 'user' is not a verb
+        // Assert - one violation for the verb 'get'; 'user' is not a verb
         static::assertCount(1, $violations);
 
         $violation = $violations[0];
 
         static::assertInstanceOf(Violation::class, $violation);
         static::assertSame('R1', $violation->ruleId);
-        static::assertSame(Severity::ERROR, $violation->severity);
+        static::assertSame(Severity::Error, $violation->severity);
         static::assertSame('get', $violation->offendingSurface);
         static::assertNotNull($violation->remediationHint);
     }
@@ -130,18 +130,18 @@ class VerbInPathRuleTest extends TestCase
         // Arrange
         $config = $this->makeConfig();
 
-        // Act & Assert — /users/create
+        // Act & Assert - /users/create
         $createViolations = $this->rule->inspect($this->makeRoute('users/create'), $config);
         static::assertCount(1, $createViolations);
         static::assertSame('create', $createViolations[0]->offendingSurface);
         static::assertSame('R1', $createViolations[0]->ruleId);
 
-        // Act & Assert — /order/{id}/cancel
+        // Act & Assert - /order/{id}/cancel
         $cancelViolations = $this->rule->inspect($this->makeRoute('order/{id}/cancel'), $config);
         static::assertCount(1, $cancelViolations);
         static::assertSame('cancel', $cancelViolations[0]->offendingSurface);
 
-        // Act & Assert — /login
+        // Act & Assert - /login
         $loginViolations = $this->rule->inspect($this->makeRoute('login'), $config);
         static::assertCount(1, $loginViolations);
         static::assertSame('login', $loginViolations[0]->offendingSurface);
@@ -154,7 +154,7 @@ class VerbInPathRuleTest extends TestCase
      */
     public function testCleanPluralCollectionNotFlagged(): void
     {
-        // Arrange — /users normalises to 'user', which is not a verb
+        // Arrange - /users normalises to 'user', which is not a verb
         $route  = $this->makeRoute('users');
         $config = $this->makeConfig();
 
@@ -194,14 +194,14 @@ class VerbInPathRuleTest extends TestCase
      */
     public function testDuplicateVerbEmittedOncePerRoute(): void
     {
-        // Arrange — 'getItems/getDetails' would normalise 'get' twice
+        // Arrange - 'getItems/getDetails' would normalise 'get' twice
         $route  = $this->makeRoute('getItems/getDetails');
         $config = $this->makeConfig();
 
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert — 'get' appears in both segments but must be emitted once only
+        // Assert - 'get' appears in both segments but must be emitted once only
         $offendingSurfaces = array_map(fn (Violation $v): string => $v->offendingSurface, $violations);
         static::assertCount(1, array_filter($offendingSurfaces, fn (string $s): bool => $s === 'get'));
     }
@@ -222,7 +222,7 @@ class VerbInPathRuleTest extends TestCase
      */
     public function testSameVerbInTwoSegmentsProducesExactlyOneViolation(): void
     {
-        // Arrange — 'get-users/get-items' decomposes to words [get, user, get, item];
+        // Arrange - 'get-users/get-items' decomposes to words [get, user, get, item];
         // 'get' appears twice but must produce exactly one R1 violation
         $route  = $this->makeRoute('get-users/get-items');
         $config = $this->makeConfig();
@@ -230,7 +230,7 @@ class VerbInPathRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert — total violation count must be exactly 1 (deduplicated)
+        // Assert - total violation count must be exactly 1 (deduplicated)
         static::assertCount(1, $violations);
         static::assertSame('get', $violations[0]->offendingSurface);
         static::assertSame('R1', $violations[0]->ruleId);
@@ -249,7 +249,7 @@ class VerbInPathRuleTest extends TestCase
      */
     public function testTwoDistinctVerbsProduceTwoViolations(): void
     {
-        // Arrange — 'getUsers/deleteItems' normalises to words including 'get' and 'delete',
+        // Arrange - 'getUsers/deleteItems' normalises to words including 'get' and 'delete',
         // both of which are in the denylist
         $route  = $this->makeRoute('getUsers/deleteItems');
         $config = $this->makeConfig();
@@ -257,7 +257,7 @@ class VerbInPathRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert — exactly two violations, one per distinct verb
+        // Assert - exactly two violations, one per distinct verb
         static::assertCount(2, $violations);
 
         $surfaces = array_map(fn (Violation $v): string => $v->offendingSurface, $violations);
@@ -267,7 +267,7 @@ class VerbInPathRuleTest extends TestCase
         // Both must carry R1 ERROR severity
         foreach ($violations as $violation) {
             static::assertSame('R1', $violation->ruleId);
-            static::assertSame(Severity::ERROR, $violation->severity);
+            static::assertSame(Severity::Error, $violation->severity);
         }
     }
 

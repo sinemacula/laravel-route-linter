@@ -57,9 +57,9 @@ class RouteLintEngineTest extends TestCase
      */
     public function testRunsAllRulesInSuppliedOrder(): void
     {
-        // Arrange — two stub rules each emitting a canned violation
-        $firstViolation  = new Violation('R1', Severity::ERROR, 'GET users users.index', 'getUsers', null);
-        $secondViolation = new Violation('R2', Severity::ERROR, 'GET users users.index', 'UserProfiles', null);
+        // Arrange - two stub rules each emitting a canned violation
+        $firstViolation  = new Violation('R1', Severity::Error, 'GET users users.index', 'getUsers', null);
+        $secondViolation = new Violation('R2', Severity::Error, 'GET users users.index', 'UserProfiles', null);
 
         $firstRule = new class ($firstViolation) implements Rule {
             /**
@@ -82,7 +82,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::ERROR;
+                return Severity::Error;
             }
 
             /**
@@ -118,7 +118,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::ERROR;
+                return Severity::Error;
             }
 
             /**
@@ -138,7 +138,7 @@ class RouteLintEngineTest extends TestCase
         // Act
         $violations = $engine->inspect($this->route, $this->config);
 
-        // Assert — both violations present in supplied rule order
+        // Assert - both violations present in supplied rule order
         static::assertCount(2, $violations);
         static::assertSame('R1', $violations[0]->ruleId);
         static::assertSame('R2', $violations[1]->ruleId);
@@ -148,16 +148,16 @@ class RouteLintEngineTest extends TestCase
      * Test that violations from multiple rules with different yield counts are
      * flattened into a single array of the expected total size.
      *
-     * Rule A emits 0, Rule B emits 1, Rule C emits 2 — total must be 3.
+     * Rule A emits 0, Rule B emits 1, Rule C emits 2 - total must be 3.
      *
      * @return void
      */
     public function testAggregatesViolationsAcrossRules(): void
     {
         // Arrange
-        $violationB  = new Violation('R2', Severity::ERROR, 'GET users users.index', 'UserProfiles', null);
-        $violationC1 = new Violation('R3', Severity::ERROR, 'GET users users.index', 'Users', null);
-        $violationC2 = new Violation('R3', Severity::ERROR, 'GET users users.index', 'USERS', null);
+        $violationB  = new Violation('R2', Severity::Error, 'GET users users.index', 'UserProfiles', null);
+        $violationC1 = new Violation('R3', Severity::Error, 'GET users users.index', 'Users', null);
+        $violationC2 = new Violation('R3', Severity::Error, 'GET users users.index', 'USERS', null);
 
         $ruleA = new class implements Rule {
             /**
@@ -175,7 +175,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::ERROR;
+                return Severity::Error;
             }
 
             /**
@@ -211,7 +211,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::ERROR;
+                return Severity::Error;
             }
 
             /**
@@ -251,7 +251,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::ERROR;
+                return Severity::Error;
             }
 
             /**
@@ -271,7 +271,7 @@ class RouteLintEngineTest extends TestCase
         // Act
         $violations = $engine->inspect($this->route, $this->config);
 
-        // Assert — 0 + 1 + 2 = 3 violations in a flat array
+        // Assert - 0 + 1 + 2 = 3 violations in a flat array
         static::assertCount(3, $violations);
         static::assertSame('R2', $violations[0]->ruleId);
         static::assertSame('R3', $violations[1]->ruleId);
@@ -319,9 +319,9 @@ class RouteLintEngineTest extends TestCase
      */
     public function testRepeatableOutputAcrossTwoRuns(): void
     {
-        // Arrange — a single stub rule emitting two canned violations
-        $violation1 = new Violation('R1', Severity::ERROR, 'GET users users.index', 'getUsers', null);
-        $violation2 = new Violation('R1', Severity::ERROR, 'GET users users.index', 'listUsers', null);
+        // Arrange - a single stub rule emitting two canned violations
+        $violation1 = new Violation('R1', Severity::Error, 'GET users users.index', 'getUsers', null);
+        $violation2 = new Violation('R1', Severity::Error, 'GET users users.index', 'listUsers', null);
 
         $rule = new class ($violation1, $violation2) implements Rule {
             /**
@@ -348,7 +348,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::ERROR;
+                return Severity::Error;
             }
 
             /**
@@ -365,11 +365,11 @@ class RouteLintEngineTest extends TestCase
 
         $engine = new RouteLintEngine($rule);
 
-        // Act — two separate calls with identical inputs
+        // Act - two separate calls with identical inputs
         $firstRun  = $engine->inspect($this->route, $this->config);
         $secondRun = $engine->inspect($this->route, $this->config);
 
-        // Assert — identical count, identical element identity per position
+        // Assert - identical count, identical element identity per position
         static::assertCount(2, $firstRun);
         static::assertCount(2, $secondRun);
 

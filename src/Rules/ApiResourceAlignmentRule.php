@@ -23,8 +23,8 @@ use SineMacula\RouteLinter\Violation;
  */
 final class ApiResourceAlignmentRule implements Rule
 {
-    /** HTML-only action segments that must not appear as the final literal URI segment on an API surface. */
-    private const HTML_ONLY_ACTIONS = ['create', 'edit'];
+    /** @var array<int, string> HTML-only action segments that must not appear as the final literal URI segment on an API surface. */
+    private const array HTML_ONLY_ACTIONS = ['create', 'edit'];
 
     /**
      * Return the stable rule identifier.
@@ -45,7 +45,7 @@ final class ApiResourceAlignmentRule implements Rule
     #[\Override]
     public function severity(): Severity
     {
-        return Severity::WARNING;
+        return Severity::Warning;
     }
 
     /**

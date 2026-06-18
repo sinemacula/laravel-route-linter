@@ -14,8 +14,8 @@ use SineMacula\RouteLinter\Dto\RouteDescriptor;
  * via the RuleConfiguration port, normalises each descriptor into a
  * NormalisedRoute, runs the RouteLintEngine over it, suppresses exempt
  * violations via the ExemptionAllowlist, and returns a populated
- * RouteLintReport. Stale allowlist entries — entries that matched no live route
- * — are recorded on the report.
+ * RouteLintReport. Stale allowlist entries - entries that matched no live route
+ * - are recorded on the report.
  *
  * This class carries no framework dependency; all I/O is mediated through the
  * injected ports. Determinism (NFR-01) is owned by RouteLintReport, which
@@ -36,9 +36,16 @@ final class LintRoutes
      * @param  \SineMacula\RouteLinter\RouteLintEngine  $engine
      */
     public function __construct(
+
+        /** Port that yields the app-owned route descriptors to lint */
         private readonly RouteSource $routeSource,
+
+        /** Port that loads the active rule-configuration bundle */
         private readonly RuleConfiguration $configuration,
+
+        /** Engine that runs the ordered rule set over each route */
         private readonly RouteLintEngine $engine,
+
     ) {}
 
     /**

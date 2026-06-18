@@ -61,7 +61,7 @@ class ConfigRuleConfigurationTest extends TestCase
     /**
      * Test that load() fails loud when an array-typed config key holds a
      * non-array value, rather than silently coercing it to an empty array
-     * (which would weaken the lint verdict — e.g. an empty verb denylist flags
+     * (which would weaken the lint verdict - e.g. an empty verb denylist flags
      * nothing).
      *
      * @return void
@@ -237,7 +237,7 @@ class ConfigRuleConfigurationTest extends TestCase
      * non-array scalar (kills LogicalOr mutant #1: `!is_array($item) && ...`).
      *
      * The original guard `!is_array($item) || !isset($item['match']) || ...`
-     * must throw when the item is a plain string — a non-array value can never
+     * must throw when the item is a plain string - a non-array value can never
      * have a `match` key but the mutant changes `||` to `&&` before the second
      * clause, allowing a non-array to pass silently.
      *
@@ -322,7 +322,7 @@ class ConfigRuleConfigurationTest extends TestCase
     public function testFilteredRulesListIsReIndexed(): void
     {
         // Place a non-string at index 0 so after filtering index 1 would remain 1
-        // without array_values — with array_values it becomes index 0.
+        // without array_values - with array_values it becomes index 0.
         config()->set('route-linter.exemptions', [
             ['match' => 'users.index', 'reason' => 'Reindex test.', 'rules' => [0 => 99, 1 => 'R1', 2 => 'R3']],
         ]);

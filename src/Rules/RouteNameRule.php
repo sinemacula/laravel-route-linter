@@ -22,7 +22,7 @@ use SineMacula\RouteLinter\Violation;
  */
 final class RouteNameRule implements Rule
 {
-    /** The canonical RESTful actions that are permitted as the final name segment. */
+    /** @var array<int, string> The canonical RESTful actions that are permitted as the final name segment. */
     private const array ALLOWED_ACTIONS = ['index', 'show', 'store', 'update', 'destroy', 'create', 'edit'];
 
     /**
@@ -44,7 +44,7 @@ final class RouteNameRule implements Rule
     #[\Override]
     public function severity(): Severity
     {
-        return Severity::WARNING;
+        return Severity::Warning;
     }
 
     /**

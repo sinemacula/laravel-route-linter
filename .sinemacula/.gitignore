@@ -1,7 +1,7 @@
 # .sinemacula/ tracking policy (allowlist v1)
 #
 # Managed by /build:init and the session:start hook. Do NOT remove the
-# `*` catch-all or the sentinel comment above — the session-start sync hook
+# `*` catch-all or the sentinel comment above - the session-start sync hook
 # uses them to detect this format and apply migrations from older versions.
 #
 # Why allowlist? Plugins write into .sinemacula/ automatically (workflow
@@ -21,7 +21,7 @@
 !config.toml
 !release-allowlist.json
 
-# Allow visual-regression baselines — shared so every engineer compares
+# Allow visual-regression baselines - shared so every engineer compares
 # against the same reference set. Remove these two lines to make baselines
 # per-machine.
 !browser-qa/

@@ -47,7 +47,7 @@ class StandardMethodsRuleTest extends TestCase
      */
     public function testNonStandardMethodIsFlagged(): void
     {
-        // Arrange — PURGE is not in the standard set
+        // Arrange - PURGE is not in the standard set
         $route = new NormalisedRoute(
             uri: 'users',
             methods: ['PURGE'],
@@ -62,7 +62,7 @@ class StandardMethodsRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R7', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
+        static::assertSame(Severity::Error, $violations[0]->severity);
         static::assertSame('PURGE', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -74,7 +74,7 @@ class StandardMethodsRuleTest extends TestCase
      */
     public function testStandardMethodsAreNotFlagged(): void
     {
-        // Arrange — GET and HEAD are both in the standard set
+        // Arrange - GET and HEAD are both in the standard set
         $route = new NormalisedRoute(
             uri: 'users',
             methods: ['GET', 'HEAD'],
@@ -104,7 +104,7 @@ class StandardMethodsRuleTest extends TestCase
      */
     public function testMultipleNonStandardMethodsAreSortedInOffendingSurface(): void
     {
-        // Arrange — ZZZ and AAA are both non-standard; input order is ZZZ first
+        // Arrange - ZZZ and AAA are both non-standard; input order is ZZZ first
         $route = new NormalisedRoute(
             uri: 'users',
             methods: ['ZZZ', 'GET', 'AAA'],
@@ -116,10 +116,10 @@ class StandardMethodsRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — one violation; non-standard methods must appear sorted
+        // Assert - one violation; non-standard methods must appear sorted
         static::assertCount(1, $violations);
         static::assertSame('R7', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
+        static::assertSame(Severity::Error, $violations[0]->severity);
         static::assertSame('AAA, ZZZ', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -130,7 +130,7 @@ class StandardMethodsRuleTest extends TestCase
      * offending surface.
      *
      * Kills the UnwrapArrayValues mutant (#71) by asserting the exact
-     * offendingSurface string — if array_values were removed the key ordering
+     * offendingSurface string - if array_values were removed the key ordering
      * could differ under sort(), but since sort() re-indexes anyway the
      * observable difference is confirmed absent, making this an equivalent
      * mutant (see note below).
@@ -139,7 +139,7 @@ class StandardMethodsRuleTest extends TestCase
      */
     public function testOnlyNonStandardMethodAppearsInOffendingSurface(): void
     {
-        // Arrange — only FOO is non-standard; GET is standard and must be excluded
+        // Arrange - only FOO is non-standard; GET is standard and must be excluded
         $route = new NormalisedRoute(
             uri: 'users',
             methods: ['GET', 'FOO'],
@@ -151,19 +151,19 @@ class StandardMethodsRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — exactly one non-standard method; offendingSurface is 'FOO' alone
+        // Assert - exactly one non-standard method; offendingSurface is 'FOO' alone
         static::assertCount(1, $violations);
         static::assertSame('FOO', $violations[0]->offendingSurface);
     }
 
     /**
-     * Test that rule id() returns 'R7' and severity() returns Severity::ERROR.
+     * Test that rule id() returns 'R7' and severity() returns Severity::Error.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R7', $this->rule->id());
-        static::assertSame(Severity::ERROR, $this->rule->severity());
+        static::assertSame(Severity::Error, $this->rule->severity());
     }
 }

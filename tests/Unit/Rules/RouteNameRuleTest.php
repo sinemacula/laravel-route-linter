@@ -47,7 +47,7 @@ class RouteNameRuleTest extends TestCase
      */
     public function testNonConventionalNameIsFlagged(): void
     {
-        // Arrange — 'getAll' is not in the allowed actions set
+        // Arrange - 'getAll' is not in the allowed actions set
         $route = new NormalisedRoute(
             uri: 'users',
             methods: ['GET'],
@@ -62,7 +62,7 @@ class RouteNameRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
+        static::assertSame(Severity::Warning, $violations[0]->severity);
         static::assertSame('users.getAll', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -75,7 +75,7 @@ class RouteNameRuleTest extends TestCase
      */
     public function testConventionalNameIsNotFlagged(): void
     {
-        // Arrange — 'index' is an allowed action
+        // Arrange - 'index' is an allowed action
         $route = new NormalisedRoute(
             uri: 'users',
             methods: ['GET'],
@@ -98,7 +98,7 @@ class RouteNameRuleTest extends TestCase
      */
     public function testUnnamedRouteIsSkipped(): void
     {
-        // Arrange — name is null; rule must skip without flagging
+        // Arrange - name is null; rule must skip without flagging
         $route = new NormalisedRoute(
             uri: 'users',
             methods: ['GET'],
@@ -122,7 +122,7 @@ class RouteNameRuleTest extends TestCase
      */
     public function testNestedResourceNameIsNotFlagged(): void
     {
-        // Arrange — 'users.posts.show': resource='users.posts', action='show'
+        // Arrange - 'users.posts.show': resource='users.posts', action='show'
         $route = new NormalisedRoute(
             uri: 'users/{user}/posts/{post}',
             methods: ['GET'],
@@ -145,7 +145,7 @@ class RouteNameRuleTest extends TestCase
      */
     public function testNameWithoutDotIsFlagged(): void
     {
-        // Arrange — 'login' has no dot; no resource.action structure
+        // Arrange - 'login' has no dot; no resource.action structure
         $route = new NormalisedRoute(
             uri: 'login',
             methods: ['GET'],
@@ -160,7 +160,7 @@ class RouteNameRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
+        static::assertSame(Severity::Warning, $violations[0]->severity);
         static::assertSame('login', $violations[0]->offendingSurface);
     }
 
@@ -176,7 +176,7 @@ class RouteNameRuleTest extends TestCase
      */
     public function testNameWithLeadingDotIsFlagged(): void
     {
-        // Arrange — '.index' has the dot at position 0; resource would be empty
+        // Arrange - '.index' has the dot at position 0; resource would be empty
         $route = new NormalisedRoute(
             uri: 'index',
             methods: ['GET'],
@@ -188,10 +188,10 @@ class RouteNameRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — the name must be flagged: offendingSurface is the full name
+        // Assert - the name must be flagged: offendingSurface is the full name
         static::assertCount(1, $violations);
         static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
+        static::assertSame(Severity::Warning, $violations[0]->severity);
         static::assertSame('.index', $violations[0]->offendingSurface);
     }
 
@@ -206,7 +206,7 @@ class RouteNameRuleTest extends TestCase
      */
     public function testAllAllowedActionsAreAccepted(): void
     {
-        // Arrange — the seven canonical actions
+        // Arrange - the seven canonical actions
         $allowedActions = ['index', 'show', 'store', 'update', 'destroy', 'create', 'edit'];
 
         foreach ($allowedActions as $action) {
@@ -236,7 +236,7 @@ class RouteNameRuleTest extends TestCase
      */
     public function testDisallowedActionOnShortResourceIsFlagged(): void
     {
-        // Arrange — 'a.list': resource='a' (one char), action='list' (not allowed)
+        // Arrange - 'a.list': resource='a' (one char), action='list' (not allowed)
         $route = new NormalisedRoute(
             uri: 'a',
             methods: ['GET'],
@@ -251,19 +251,19 @@ class RouteNameRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
+        static::assertSame(Severity::Warning, $violations[0]->severity);
         static::assertSame('a.list', $violations[0]->offendingSurface);
     }
 
     /**
      * Test that rule id() returns 'R8' and severity() returns
-     * Severity::WARNING.
+     * Severity::Warning.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R8', $this->rule->id());
-        static::assertSame(Severity::WARNING, $this->rule->severity());
+        static::assertSame(Severity::Warning, $this->rule->severity());
     }
 }

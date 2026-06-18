@@ -8,8 +8,8 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
 /**
  * Registers route macros used by the route-lint suppression feature.
  *
- * The static `register()` entry point is idempotent — it checks for an existing
- * macro before binding — so it is safe to call from service-provider `boot()`
+ * The static `register()` entry point is idempotent - it checks for an existing
+ * macro before binding - so it is safe to call from service-provider `boot()`
  * methods without risk of double-registration across test resets or multiple
  * provider loads.
  *

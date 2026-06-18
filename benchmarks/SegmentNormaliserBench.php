@@ -12,9 +12,9 @@ use SineMacula\RouteLinter\Rules\Support\SegmentNormaliser;
  * The normaliser is the regex-heavy hot path under the verb-in-path rule: per
  * surviving segment it runs a camelCase split, a multi-delimiter split, a
  * lowercase map, and an inflector singularisation. It is measured along two
- * URIs — a short plain collection path, and a deep path packed with version and
+ * URIs - a short plain collection path, and a deep path packed with version and
  * API prefixes, route parameters, and compound camelCase/kebab/snake/dot
- * segments — to bound both the cheap common case and the decomposition-heavy
+ * segments - to bound both the cheap common case and the decomposition-heavy
  * worst case.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>

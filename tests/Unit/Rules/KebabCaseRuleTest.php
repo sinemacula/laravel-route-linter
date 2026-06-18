@@ -61,7 +61,7 @@ class KebabCaseRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R2', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
+        static::assertSame(Severity::Error, $violations[0]->severity);
         static::assertSame('userProfiles', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -96,7 +96,7 @@ class KebabCaseRuleTest extends TestCase
      */
     public function testParameterSegmentsAreIgnored(): void
     {
-        // Arrange — the sole segment is a route parameter
+        // Arrange - the sole segment is a route parameter
         $route = new NormalisedRoute(
             uri: '{user}',
             methods: ['GET'],
@@ -143,7 +143,7 @@ class KebabCaseRuleTest extends TestCase
      */
     public function testEmptySegmentsAreIgnored(): void
     {
-        // Arrange — trailing slash produces an empty trailing segment
+        // Arrange - trailing slash produces an empty trailing segment
         $route = new NormalisedRoute(
             uri: 'users/',
             methods: ['GET'],
@@ -155,7 +155,7 @@ class KebabCaseRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — 'users' is valid kebab; '' is skipped; no violations
+        // Assert - 'users' is valid kebab; '' is skipped; no violations
         static::assertEmpty($violations);
     }
 
@@ -172,7 +172,7 @@ class KebabCaseRuleTest extends TestCase
      */
     public function testNonKebabSegmentAfterParameterIsFlagged(): void
     {
-        // Arrange — '{user}' is first; 'userProfiles' follows and must still be inspected
+        // Arrange - '{user}' is first; 'userProfiles' follows and must still be inspected
         $route = new NormalisedRoute(
             uri: '{user}/userProfiles',
             methods: ['GET'],
@@ -184,10 +184,10 @@ class KebabCaseRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — 'userProfiles' violates kebab-case despite the leading param
+        // Assert - 'userProfiles' violates kebab-case despite the leading param
         static::assertCount(1, $violations);
         static::assertSame('R2', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
+        static::assertSame(Severity::Error, $violations[0]->severity);
         static::assertSame('userProfiles', $violations[0]->offendingSurface);
     }
 
@@ -203,7 +203,7 @@ class KebabCaseRuleTest extends TestCase
      */
     public function testTwoNonKebabSegmentsProduceTwoViolations(): void
     {
-        // Arrange — both 'userProfiles' and 'some_other_stuff' violate kebab-case
+        // Arrange - both 'userProfiles' and 'some_other_stuff' violate kebab-case
         $route = new NormalisedRoute(
             uri: 'userProfiles/some_other_stuff',
             methods: ['GET'],
@@ -215,7 +215,7 @@ class KebabCaseRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert — two violations, one per offending segment, in segment order
+        // Assert - two violations, one per offending segment, in segment order
         static::assertCount(2, $violations);
         static::assertSame('R2', $violations[0]->ruleId);
         static::assertSame('userProfiles', $violations[0]->offendingSurface);
@@ -224,13 +224,13 @@ class KebabCaseRuleTest extends TestCase
     }
 
     /**
-     * Test that rule id() returns 'R2' and severity() returns Severity::ERROR.
+     * Test that rule id() returns 'R2' and severity() returns Severity::Error.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R2', $this->rule->id());
-        static::assertSame(Severity::ERROR, $this->rule->severity());
+        static::assertSame(Severity::Error, $this->rule->severity());
     }
 }

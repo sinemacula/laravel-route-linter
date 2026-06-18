@@ -27,9 +27,9 @@ use SineMacula\RouteLinter\Violation;
 /**
  * Shared fixture builders for the route-linter benchmark suite.
  *
- * Mirrors the production wiring assembled by the service provider — the same
+ * Mirrors the production wiring assembled by the service provider - the same
  * rule set, in the same fixed order, fed the same shipped default config (verb
- * denylist, remediation hints, uncountables) — so the benchmarks measure the
+ * denylist, remediation hints, uncountables) - so the benchmarks measure the
  * real hot paths rather than a toy configuration. All builders are pure and
  * deterministic: the generated route tables, allowlists, and violation sets are
  * a fixed function of their size argument, so two runs measure identical work.
@@ -140,7 +140,7 @@ trait RouteLinterFixtures
      * does.
      *
      * Splits on `/` preserving empty segments, then extracts brace-wrapped
-     * parameter names — identical to the private pipeline in {@see LintRoutes}.
+     * parameter names - identical to the private pipeline in {@see LintRoutes}.
      *
      * @param  string  $uri
      * @param  array<int, string>  $methods
@@ -191,7 +191,7 @@ trait RouteLinterFixtures
      * Build a realistic route table mixing clean routes with recurring defects.
      *
      * Roughly one route in four is a defect drawn from a fixed catalogue that
-     * exercises every error and warning rule, plus an inline suppression — so
+     * exercises every error and warning rule, plus an inline suppression - so
      * the benchmark covers the violation, suppression, and reporting paths the
      * clean table never reaches.
      *
@@ -267,7 +267,7 @@ trait RouteLinterFixtures
             $ruleId       = $rules[$i % count($rules)];
             $violations[] = new Violation(
                 ruleId: $ruleId,
-                severity: $i % 3 === 0 ? Severity::WARNING : Severity::ERROR,
+                severity: $i % 3 === 0 ? Severity::Warning : Severity::Error,
                 routeIdentity: 'GET api/v1/' . $resource . '/' . ($count - $i),
                 offendingSurface: $resource . '-' . $i,
                 remediationHint: null,
