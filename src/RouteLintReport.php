@@ -53,7 +53,7 @@ final class RouteLintReport
      */
     public function errors(): array
     {
-        return $this->sorted(Severity::Error);
+        return $this->sorted(Severity::ERROR);
     }
 
     /**
@@ -65,7 +65,7 @@ final class RouteLintReport
      */
     public function warnings(): array
     {
-        return $this->sorted(Severity::Warning);
+        return $this->sorted(Severity::WARNING);
     }
 
     /**

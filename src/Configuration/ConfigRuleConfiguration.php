@@ -13,11 +13,12 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
  *
  * Reads the `route-linter.*` config section and assembles the strictly-separate
  * surfaces - verb denylist, remediation hints, exemption allowlist, inflector
- * uncountables, and nesting depth - into a {@see RuleConfig} DTO. The adapter
- * is the single place that validates the config schema: a non-array value for
- * an array-typed key, or an exemption entry missing its match or written
- * reason, raises an {@see InvalidConfigurationException} immediately rather
- * than being silently coerced to a value that would weaken the lint verdict.
+ * uncountables, nesting depth, and required middleware - into a {@see RuleConfig}
+ * DTO. The adapter is the single place that validates the config schema: a
+ * non-array value for an array-typed key, an exemption entry missing its match
+ * or written reason, or a malformed required-middleware entry, raises an
+ * {@see InvalidConfigurationException} immediately rather than being silently
+ * coerced to a value that would weaken the lint verdict.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -40,6 +41,7 @@ final class ConfigRuleConfiguration implements RuleConfiguration
             exemptions: $this->buildExemptions($this->arrayConfig('route-linter.exemptions')),
             uncountables: $this->arrayConfig('route-linter.uncountables'),
             nestingMaxDepth: $this->intConfig('route-linter.nesting_max_depth', 3),
+            requiredMiddleware: $this->buildRequiredMiddleware($this->arrayConfig('route-linter.required_middleware')),
         );
     }
 
@@ -124,5 +126,47 @@ final class ConfigRuleConfiguration implements RuleConfiguration
         }
 
         return $entries;
+    }
+
+    /**
+     * Validate the raw required-middleware config into a pattern map.
+     *
+     * Each key is a URI pattern and each value the list of middleware names a
+     * matching route must declare. A non-string pattern, a non-array middleware
+     * list, or a non-string middleware entry is a misconfiguration and is
+     * rejected rather than silently dropped.
+     *
+     * @param  array<int|string, mixed>  $raw
+     * @return array<string, array<int, string>>
+     *
+     * @throws \SineMacula\RouteLinter\Exceptions\InvalidConfigurationException
+     */
+    private function buildRequiredMiddleware(array $raw): array
+    {
+        $patterns = [];
+
+        foreach ($raw as $pattern => $middleware) {
+            if (!is_string($pattern)) {
+                throw new InvalidConfigurationException(sprintf('Required-middleware pattern must be a string; got %s.', get_debug_type($pattern)));
+            }
+
+            if (!is_array($middleware)) {
+                throw new InvalidConfigurationException(sprintf('Required middleware for "%s" must be an array; got %s.', $pattern, get_debug_type($middleware)));
+            }
+
+            $names = [];
+
+            foreach ($middleware as $name) {
+                if (!is_string($name)) {
+                    throw new InvalidConfigurationException(sprintf('Required middleware for "%s" must be a list of strings; got %s.', $pattern, get_debug_type($name)));
+                }
+
+                $names[] = $name;
+            }
+
+            $patterns[$pattern] = $names;
+        }
+
+        return $patterns;
     }
 }

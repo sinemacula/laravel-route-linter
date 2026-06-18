@@ -47,6 +47,9 @@
         UnwrapArrayFilter: {
             ignore: [
                 "SineMacula\\RouteLinter\\Rules\\Support\\SegmentNormaliser::normalise",
+                // Defensive type-narrow: gatherMiddleware() errors on non-string
+                // (closure) middleware before this filter, so it never removes.
+                "SineMacula\\RouteLinter\\Sources\\RouterRouteSource::resolveMiddleware",
             ],
         },
         UnwrapArrayValues: {
@@ -59,6 +62,9 @@
         TrueValue: {
             ignore: [
                 "SineMacula\\RouteLinter\\RouteLintEngine::__construct",
+                // Seen-name set membership read only via isset(); the stored
+                // value is never inspected, so true vs false cannot be observed.
+                "SineMacula\\RouteLinter\\Rules\\DuplicateRouteNameRule::inspect",
             ],
         },
     }

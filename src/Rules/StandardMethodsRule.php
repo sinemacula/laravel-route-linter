@@ -43,7 +43,7 @@ final class StandardMethodsRule implements Rule
     #[\Override]
     public function severity(): Severity
     {
-        return Severity::Error;
+        return Severity::ERROR;
     }
 
     /**

@@ -9,16 +9,19 @@ use SineMacula\RouteLinter\Severity;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R3: Lowercase-only segment enforcement.
+ * Rule R10: required middleware.
  *
- * Flags any literal URI segment that contains one or more uppercase ASCII
- * letters (A–Z). Route-parameter segments (those wrapped in `{...}`) and empty
- * segments are ignored.
+ * Flags routes that match a configured URI pattern but do not declare a required
+ * middleware. The policy lives in `route-linter.required_middleware`, keyed by
+ * `fnmatch` URI pattern; each pattern maps to the middleware names a matching
+ * route must carry. Matching is an exact token comparison against the route's
+ * gathered middleware, so parameterised middleware must be configured exactly
+ * (e.g. `auth:sanctum`). Ships empty, so the rule is a no-op until configured.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
-final class LowercaseRule implements Rule
+final class RequiredMiddlewareRule implements Rule
 {
     /**
      * Return the stable rule identifier.
@@ -28,7 +31,7 @@ final class LowercaseRule implements Rule
     #[\Override]
     public function id(): string
     {
-        return 'R3';
+        return 'R10';
     }
 
     /**
@@ -39,11 +42,12 @@ final class LowercaseRule implements Rule
     #[\Override]
     public function severity(): Severity
     {
-        return Severity::ERROR;
+        return Severity::WARNING;
     }
 
     /**
-     * Inspect one normalised route and return zero or more violations.
+     * Inspect one normalised route and return one violation per missing required
+     * middleware across every matching pattern.
      *
      * @param  \SineMacula\RouteLinter\NormalisedRoute  $route
      * @param  \SineMacula\RouteLinter\Dto\RuleConfig  $config
@@ -54,18 +58,22 @@ final class LowercaseRule implements Rule
     {
         $violations = [];
 
-        foreach ($route->segments as $segment) {
-            if ($segment === '' || str_starts_with($segment, '{')) {
+        foreach ($config->requiredMiddleware as $pattern => $required) {
+            if (!fnmatch($pattern, $route->uri)) {
                 continue;
             }
 
-            if ($segment !== strtolower($segment)) {
+            foreach ($required as $middleware) {
+                if (in_array($middleware, $route->middleware, true)) {
+                    continue;
+                }
+
                 $violations[] = new Violation(
                     ruleId: $this->id(),
                     severity: $this->severity(),
                     routeIdentity: $route->identity(),
-                    offendingSurface: $segment,
-                    remediationHint: null,
+                    offendingSurface: $middleware,
+                    remediationHint: sprintf('add the `%s` middleware (route matches `%s`)', $middleware, $pattern),
                 );
             }
         }

@@ -11,6 +11,7 @@ use SineMacula\RouteLinter\RouteLintEngine;
 use SineMacula\RouteLinter\Severity;
 use SineMacula\RouteLinter\Violation;
 use Tests\Fixtures\Rules\ParameterEchoRule;
+use Tests\Fixtures\Rules\StaticAggregateRule;
 use Tests\TestCase;
 
 /**
@@ -58,8 +59,8 @@ class RouteLintEngineTest extends TestCase
     public function testRunsAllRulesInSuppliedOrder(): void
     {
         // Arrange - two stub rules each emitting a canned violation
-        $firstViolation  = new Violation('R1', Severity::Error, 'GET users users.index', 'getUsers', null);
-        $secondViolation = new Violation('R2', Severity::Error, 'GET users users.index', 'UserProfiles', null);
+        $firstViolation  = new Violation('R1', Severity::ERROR, 'GET users users.index', 'getUsers', null);
+        $secondViolation = new Violation('R2', Severity::ERROR, 'GET users users.index', 'UserProfiles', null);
 
         $firstRule = new class ($firstViolation) implements Rule {
             /**
@@ -82,7 +83,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::Error;
+                return Severity::ERROR;
             }
 
             /**
@@ -118,7 +119,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::Error;
+                return Severity::ERROR;
             }
 
             /**
@@ -155,9 +156,9 @@ class RouteLintEngineTest extends TestCase
     public function testAggregatesViolationsAcrossRules(): void
     {
         // Arrange
-        $violationB  = new Violation('R2', Severity::Error, 'GET users users.index', 'UserProfiles', null);
-        $violationC1 = new Violation('R3', Severity::Error, 'GET users users.index', 'Users', null);
-        $violationC2 = new Violation('R3', Severity::Error, 'GET users users.index', 'USERS', null);
+        $violationB  = new Violation('R2', Severity::ERROR, 'GET users users.index', 'UserProfiles', null);
+        $violationC1 = new Violation('R3', Severity::ERROR, 'GET users users.index', 'Users', null);
+        $violationC2 = new Violation('R3', Severity::ERROR, 'GET users users.index', 'USERS', null);
 
         $ruleA = new class implements Rule {
             /**
@@ -175,7 +176,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::Error;
+                return Severity::ERROR;
             }
 
             /**
@@ -211,7 +212,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::Error;
+                return Severity::ERROR;
             }
 
             /**
@@ -251,7 +252,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::Error;
+                return Severity::ERROR;
             }
 
             /**
@@ -320,8 +321,8 @@ class RouteLintEngineTest extends TestCase
     public function testRepeatableOutputAcrossTwoRuns(): void
     {
         // Arrange - a single stub rule emitting two canned violations
-        $violation1 = new Violation('R1', Severity::Error, 'GET users users.index', 'getUsers', null);
-        $violation2 = new Violation('R1', Severity::Error, 'GET users users.index', 'listUsers', null);
+        $violation1 = new Violation('R1', Severity::ERROR, 'GET users users.index', 'getUsers', null);
+        $violation2 = new Violation('R1', Severity::ERROR, 'GET users users.index', 'listUsers', null);
 
         $rule = new class ($violation1, $violation2) implements Rule {
             /**
@@ -348,7 +349,7 @@ class RouteLintEngineTest extends TestCase
             #[\Override]
             public function severity(): Severity
             {
-                return Severity::Error;
+                return Severity::ERROR;
             }
 
             /**
@@ -379,5 +380,88 @@ class RouteLintEngineTest extends TestCase
             static::assertSame($violation->offendingSurface, $secondRun[$index]->offendingSurface);
             static::assertSame($violation->severity, $secondRun[$index]->severity);
         }
+    }
+
+    /**
+     * Test that inspectAll() runs aggregate rules over the whole route set,
+     * emitting one violation per route.
+     *
+     * @return void
+     */
+    public function testInspectAllRunsAggregateRulesOverTheWholeSet(): void
+    {
+        // Arrange - one aggregate rule, two routes
+        $engine = new RouteLintEngine(new StaticAggregateRule('AGG-1'));
+        $second = new NormalisedRoute(
+            uri: 'orders',
+            methods: ['GET'],
+            name: 'orders.index',
+            segments: ['orders'],
+            parameters: [],
+        );
+
+        // Act
+        $violations = $engine->inspectAll([$this->route, $second], $this->config);
+
+        // Assert - one violation per route, in supplied order
+        static::assertCount(2, $violations);
+        static::assertSame('AGG-1', $violations[0]->ruleId);
+        static::assertSame('GET users users.index', $violations[0]->routeIdentity);
+        static::assertSame('GET orders orders.index', $violations[1]->routeIdentity);
+    }
+
+    /**
+     * Test that an aggregate rule is not run during the per-route inspect()
+     * pass and a per-route rule is not run during inspectAll(): the engine
+     * partitions rules by kind.
+     *
+     * @return void
+     */
+    public function testRulesArePartitionedByKind(): void
+    {
+        // Arrange - one per-route rule and one aggregate rule
+        $engine = new RouteLintEngine(new ParameterEchoRule, new StaticAggregateRule('AGG-2'));
+
+        // Act
+        $perRoute  = $engine->inspect($this->route, $this->config);
+        $aggregate = $engine->inspectAll([$this->route], $this->config);
+
+        // Assert - inspect() sees only the per-route rule; inspectAll() only the aggregate
+        static::assertCount(1, $perRoute);
+        static::assertSame('TEST-PARAMS', $perRoute[0]->ruleId);
+        static::assertCount(1, $aggregate);
+        static::assertSame('AGG-2', $aggregate[0]->ruleId);
+    }
+
+    /**
+     * Test that inspectAll() returns an empty array when no aggregate rules are
+     * registered.
+     *
+     * @return void
+     */
+    public function testInspectAllReturnsEmptyWithoutAggregateRules(): void
+    {
+        // Arrange - only a per-route rule
+        $engine = new RouteLintEngine(new ParameterEchoRule);
+
+        // Act
+        $violations = $engine->inspectAll([$this->route], $this->config);
+
+        // Assert
+        static::assertSame([], $violations);
+    }
+
+    /**
+     * Test that the engine rejects an id shared between a per-route rule and an
+     * aggregate rule, since uniqueness spans both kinds.
+     *
+     * @return void
+     */
+    public function testRejectsDuplicateRuleIdAcrossKinds(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Duplicate route-linter rule id "TEST-PARAMS".');
+
+        new RouteLintEngine(new ParameterEchoRule, new StaticAggregateRule('TEST-PARAMS'));
     }
 }

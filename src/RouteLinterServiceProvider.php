@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 use SineMacula\RouteLinter\Configuration\ConfigRuleConfiguration;
 use SineMacula\RouteLinter\Console\LintRoutesCommand;
+use SineMacula\RouteLinter\Contracts\AggregateRule;
 use SineMacula\RouteLinter\Contracts\Inflector;
 use SineMacula\RouteLinter\Contracts\LintReporter;
 use SineMacula\RouteLinter\Contracts\RouteSource;
@@ -94,12 +95,13 @@ final class RouteLinterServiceProvider extends ServiceProvider
      * order.
      *
      * Each entry in `route-linter.rules` must be a class string implementing
-     * the Rule contract; rules are resolved through the container so they may
-     * declare constructor dependencies. A non-array config value yields an
-     * empty rule set.
+     * the Rule or AggregateRule contract; rules are resolved through the
+     * container so they may declare constructor dependencies. A non-array config
+     * value yields an empty rule set. The engine partitions the resolved rules
+     * by kind, so per-route and cross-route rules share one ordered list.
      *
      * @param  \Illuminate\Contracts\Foundation\Application  $app
-     * @return array<int, \SineMacula\RouteLinter\Contracts\Rule>
+     * @return array<int, \SineMacula\RouteLinter\Contracts\AggregateRule|\SineMacula\RouteLinter\Contracts\Rule>
      *
      * @throws \SineMacula\RouteLinter\Exceptions\InvalidConfigurationException
      */
@@ -112,12 +114,12 @@ final class RouteLinterServiceProvider extends ServiceProvider
         }
 
         return array_map(
-            function (mixed $class) use ($app): Rule {
+            function (mixed $class) use ($app): Rule|AggregateRule {
 
-                if (!is_string($class) || !is_subclass_of($class, Rule::class)) {
+                if (!is_string($class) || (!is_subclass_of($class, Rule::class) && !is_subclass_of($class, AggregateRule::class))) {
                     $got = is_string($class) ? $class : get_debug_type($class);
 
-                    throw new InvalidConfigurationException(sprintf('Configured rule must implement %s; got "%s".', Rule::class, $got));
+                    throw new InvalidConfigurationException(sprintf('Configured rule must implement %s or %s; got "%s".', Rule::class, AggregateRule::class, $got));
                 }
 
                 return $app->make($class);

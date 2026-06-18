@@ -45,7 +45,7 @@ final class ApiResourceAlignmentRule implements Rule
     #[\Override]
     public function severity(): Severity
     {
-        return Severity::Warning;
+        return Severity::WARNING;
     }
 
     /**

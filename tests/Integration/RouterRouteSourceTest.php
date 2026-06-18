@@ -631,6 +631,74 @@ class RouterRouteSourceTest extends TestCase
     }
 
     /**
+     * Test that a closure route yields a null handler (no class to inspect).
+     *
+     * @return void
+     */
+    public function testClosureRouteHasNullHandler(): void
+    {
+        $router = $this->getRouter();
+        $router->get('users', fn () => [])->name('users.index');
+
+        $descriptor = $this->descriptorByName((new RouterRouteSource($router))->appRoutes(), 'users.index');
+
+        static::assertNull($descriptor->handler);
+    }
+
+    /**
+     * Test that a controller-backed route yields a `Class@method` handler.
+     *
+     * @return void
+     */
+    public function testControllerRouteHandlerIsClassAndMethod(): void
+    {
+        $router = $this->getRouter();
+        $router->get('reports', [RouteLintController::class, 'index'])->name('reports.index');
+
+        $descriptor = $this->descriptorByName((new RouterRouteSource($router))->appRoutes(), 'reports.index');
+
+        static::assertSame(RouteLintController::class . '@index', $descriptor->handler);
+    }
+
+    /**
+     * Test that the gathered middleware is returned as a contiguous, zero-based
+     * list of strings.
+     *
+     * A duplicate middleware entry makes the router's `array_unique` leave a gap
+     * in the keys, so the result must be re-indexed.
+     *
+     * @return void
+     */
+    public function testMiddlewareIsGatheredAsReindexedStrings(): void
+    {
+        $router = $this->getRouter();
+        $router->get('admin', fn () => [])->name('admin.index')
+            ->middleware(['auth', 'auth', 'can:manage']);
+
+        $descriptor = $this->descriptorByName((new RouterRouteSource($router))->appRoutes(), 'admin.index');
+
+        static::assertSame(['auth', 'can:manage'], $descriptor->middleware);
+    }
+
+    /**
+     * Find a descriptor by route name.
+     *
+     * @param  array<int, \SineMacula\RouteLinter\Dto\RouteDescriptor>  $descriptors
+     * @param  string  $name
+     * @return \SineMacula\RouteLinter\Dto\RouteDescriptor
+     */
+    private function descriptorByName(array $descriptors, string $name): RouteDescriptor
+    {
+        foreach ($descriptors as $descriptor) {
+            if ($descriptor->name === $name) {
+                return $descriptor;
+            }
+        }
+
+        static::fail(sprintf('No descriptor found for route name "%s".', $name));
+    }
+
+    /**
      * Get a fresh router instance for the test.
      *
      * Returns the container-bound router so routes are registered against the

@@ -267,7 +267,7 @@ trait RouteLinterFixtures
             $ruleId       = $rules[$i % count($rules)];
             $violations[] = new Violation(
                 ruleId: $ruleId,
-                severity: $i % 3 === 0 ? Severity::Warning : Severity::Error,
+                severity: $i % 3 === 0 ? Severity::WARNING : Severity::ERROR,
                 routeIdentity: 'GET api/v1/' . $resource . '/' . ($count - $i),
                 offendingSurface: $resource . '-' . $i,
                 remediationHint: null,
@@ -315,7 +315,7 @@ trait RouteLinterFixtures
             1 => new RouteDescriptor('api/v1/orders/{order}/cancel', ['POST'], 'orders.cancel', false),
             2 => new RouteDescriptor('api/v1/user/{user}', ['GET', 'HEAD'], 'user.show', false),
             3 => new RouteDescriptor('api/v1/things', ['GET', 'PURGE'], 'things.index', false),
-            4 => new RouteDescriptor('api/v1/products/edit', ['GET', 'HEAD'], 'products.edit', false, [
+            4 => new RouteDescriptor('api/v1/products/edit', ['GET', 'HEAD'], 'products.edit', false, suppressions: [
                 new RouteSuppression(['R9'], 'BL-3 legacy HTML form pending migration'),
             ]),
             default => new RouteDescriptor(

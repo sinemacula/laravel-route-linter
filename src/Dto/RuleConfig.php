@@ -8,9 +8,9 @@ namespace SineMacula\RouteLinter\Dto;
  * Carries the strictly-separate config surfaces handed to every rule: the verb
  * denylist (action verbs that flag a path segment), the per-verb
  * remediation-hint map, the exemption-allowlist entries, the inflector
- * uncountables, and the maximum nesting depth. Surfaces are kept separate -
- * verbDenylist, exemptions, and uncountables never share storage - so callers
- * can tune each independently.
+ * uncountables, the maximum nesting depth, and the per-pattern required
+ * middleware map. Surfaces are kept separate - verbDenylist, exemptions, and
+ * uncountables never share storage - so callers can tune each independently.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -25,6 +25,7 @@ final readonly class RuleConfig
      * @param  array<int, \SineMacula\RouteLinter\Dto\AllowlistEntry>  $exemptions
      * @param  array<int, string>  $uncountables
      * @param  int  $nestingMaxDepth
+     * @param  array<string, array<int, string>>  $requiredMiddleware
      */
     public function __construct(
 
@@ -42,6 +43,9 @@ final readonly class RuleConfig
 
         /** Maximum collection nesting levels before the nesting-depth rule (R11) warns */
         public int $nestingMaxDepth = 3,
+
+        /** Required middleware keyed by URI pattern, honoured by the required-middleware rule (R10) */
+        public array $requiredMiddleware = [],
 
     ) {}
 }

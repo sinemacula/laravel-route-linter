@@ -62,7 +62,7 @@ class RouteNameRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::Warning, $violations[0]->severity);
+        static::assertSame(Severity::WARNING, $violations[0]->severity);
         static::assertSame('users.getAll', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -160,7 +160,7 @@ class RouteNameRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::Warning, $violations[0]->severity);
+        static::assertSame(Severity::WARNING, $violations[0]->severity);
         static::assertSame('login', $violations[0]->offendingSurface);
     }
 
@@ -191,7 +191,7 @@ class RouteNameRuleTest extends TestCase
         // Assert - the name must be flagged: offendingSurface is the full name
         static::assertCount(1, $violations);
         static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::Warning, $violations[0]->severity);
+        static::assertSame(Severity::WARNING, $violations[0]->severity);
         static::assertSame('.index', $violations[0]->offendingSurface);
     }
 
@@ -251,19 +251,19 @@ class RouteNameRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::Warning, $violations[0]->severity);
+        static::assertSame(Severity::WARNING, $violations[0]->severity);
         static::assertSame('a.list', $violations[0]->offendingSurface);
     }
 
     /**
      * Test that rule id() returns 'R8' and severity() returns
-     * Severity::Warning.
+     * Severity::WARNING.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R8', $this->rule->id());
-        static::assertSame(Severity::Warning, $this->rule->severity());
+        static::assertSame(Severity::WARNING, $this->rule->severity());
     }
 }

@@ -55,13 +55,17 @@ final class LintRoutes
      * 1. Load the RuleConfig (may throw InvalidConfigurationException;
      *    propagates to caller).
      * 2. Build the ExemptionAllowlist from config exemptions.
-     * 3. Source app-owned RouteDescriptors.
-     * 4. Observe every descriptor so allowlist pattern-match tracking covers
-     *    all live routes.
-     * 5. For each descriptor: normalise, run the engine, apply per-rule
+     * 3. Source app-owned RouteDescriptors and observe every one so allowlist
+     *    pattern-match tracking covers all live routes.
+     * 4. Normalise every descriptor, keeping each paired with its descriptor for
      *    suppression.
-     * 6. Record stale inline suppressions, unmatched allowlist entries, and
-     *    unused allowlist entries.
+     * 5. Per-route pass: run the per-route rules over each route and apply
+     *    suppression.
+     * 6. Aggregate pass: run the cross-route rules over the whole route set and
+     *    apply suppression, attributing each violation to its offending route;
+     *    a violation matching no live route is reported unsuppressed.
+     * 7. Record stale inline suppressions (those that fired on no violation in
+     *    either pass), unmatched allowlist entries, and unused allowlist entries.
      *
      * @return \SineMacula\RouteLinter\RouteLintReport
      *
@@ -79,25 +83,110 @@ final class LintRoutes
             $allowlist->observe($descriptor->name, $descriptor->uri);
         }
 
+        $pairs                = [];
+        $routes               = [];
+        $descriptorByIdentity = [];
+
         foreach ($descriptors as $descriptor) {
-            $normalised = $this->normalise($descriptor);
-            $violations = $this->engine->inspect($normalised, $config);
-
-            $inlineUsed = $this->applyViolations($descriptor, $allowlist, $report, $violations);
-
-            foreach ($descriptor->suppressions as $suppression) {
-                if (!($inlineUsed[spl_object_id($suppression)] ?? false)) {
-                    $rules = $suppression->rules === [] ? 'all rules' : implode(', ', $suppression->rules);
-                    $report->addStaleWaiver(sprintf(
-                        '%s (suppressed nothing, rules: %s): %s',
-                        $normalised->identity(),
-                        $rules,
-                        $suppression->reason,
-                    ));
-                }
-            }
+            $route                                    = $this->normalise($descriptor);
+            $pairs[]                                  = [$descriptor, $route];
+            $routes[]                                 = $route;
+            $descriptorByIdentity[$route->identity()] = $descriptor;
         }
 
+        $inlineUsed = [];
+
+        foreach ($pairs as [$descriptor, $route]) {
+            $violations = $this->engine->inspect($route, $config);
+            $inlineUsed += $this->applyViolations($descriptor, $allowlist, $report, $violations);
+        }
+
+        $inlineUsed += $this->suppressAggregate(
+            $this->engine->inspectAll($routes, $config),
+            $descriptorByIdentity,
+            $allowlist,
+            $report,
+        );
+
+        $this->recordStaleSuppressions($pairs, $inlineUsed, $report);
+        $this->recordStaleAllowlist($allowlist, $report);
+
+        return $report;
+    }
+
+    /**
+     * Apply suppression to the aggregate-pass violations.
+     *
+     * Each violation is attributed to the route whose identity it carries, so
+     * the same inline + allowlist suppression as the per-route pass applies. A
+     * violation matching no live route cannot be per-route suppressed and is
+     * reported directly. Returns the inline suppressions that fired.
+     *
+     * @param  array<int, \SineMacula\RouteLinter\Violation>  $violations
+     * @param  array<string, \SineMacula\RouteLinter\Dto\RouteDescriptor>  $descriptorByIdentity
+     * @param  \SineMacula\RouteLinter\ExemptionAllowlist  $allowlist
+     * @param  \SineMacula\RouteLinter\RouteLintReport  $report
+     * @return array<int, true>
+     */
+    private function suppressAggregate(
+        array $violations,
+        array $descriptorByIdentity,
+        ExemptionAllowlist $allowlist,
+        RouteLintReport $report,
+    ): array {
+        $inlineUsed = [];
+
+        foreach ($violations as $violation) {
+            $descriptor = $descriptorByIdentity[$violation->routeIdentity] ?? null;
+
+            if ($descriptor === null) {
+                $report->addViolation($violation);
+
+                continue;
+            }
+
+            $inlineUsed += $this->applyViolations($descriptor, $allowlist, $report, [$violation]);
+        }
+
+        return $inlineUsed;
+    }
+
+    /**
+     * Record inline suppressions that fired on no violation in either pass.
+     *
+     * @param  array<int, array{0: \SineMacula\RouteLinter\Dto\RouteDescriptor, 1: \SineMacula\RouteLinter\NormalisedRoute}>  $pairs
+     * @param  array<int, true>  $inlineUsed
+     * @param  \SineMacula\RouteLinter\RouteLintReport  $report
+     * @return void
+     */
+    private function recordStaleSuppressions(array $pairs, array $inlineUsed, RouteLintReport $report): void
+    {
+        foreach ($pairs as [$descriptor, $route]) {
+            foreach ($descriptor->suppressions as $suppression) {
+                if ($inlineUsed[spl_object_id($suppression)] ?? false) {
+                    continue;
+                }
+
+                $rules = $suppression->rules === [] ? 'all rules' : implode(', ', $suppression->rules);
+                $report->addStaleWaiver(sprintf(
+                    '%s (suppressed nothing, rules: %s): %s',
+                    $route->identity(),
+                    $rules,
+                    $suppression->reason,
+                ));
+            }
+        }
+    }
+
+    /**
+     * Record allowlist entries that matched no live route or suppressed nothing.
+     *
+     * @param  \SineMacula\RouteLinter\ExemptionAllowlist  $allowlist
+     * @param  \SineMacula\RouteLinter\RouteLintReport  $report
+     * @return void
+     */
+    private function recordStaleAllowlist(ExemptionAllowlist $allowlist, RouteLintReport $report): void
+    {
         foreach ($allowlist->unmatched() as $key) {
             $report->addStaleWaiver($key);
         }
@@ -105,8 +194,6 @@ final class LintRoutes
         foreach ($allowlist->unused() as $entry) {
             $report->addStaleWaiver($entry);
         }
-
-        return $report;
     }
 
     /**
@@ -177,6 +264,8 @@ final class LintRoutes
             name: $descriptor->name,
             segments: $segments,
             parameters: $parameters,
+            handler: $descriptor->handler,
+            middleware: $descriptor->middleware,
         );
     }
 
