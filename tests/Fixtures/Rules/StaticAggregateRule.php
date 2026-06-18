@@ -28,8 +28,13 @@ final class StaticAggregateRule implements AggregateRule
      * @param  \SineMacula\RouteLinter\Severity  $severityTier
      */
     public function __construct(
+
+        /** The rule id this fixture reports findings under */
         private readonly string $ruleId = 'AGG',
+
+        /** The severity tier this fixture emits */
         private readonly Severity $severityTier = Severity::WARNING,
+
     ) {}
 
     /**
