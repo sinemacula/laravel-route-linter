@@ -1,0 +1,23 @@
+{
+    $schema: "./vendor/infection/infection/resources/schema.json",
+    source: {
+        directories: [
+            "src"
+        ]
+    },
+    logs: {
+        summary: "build/infection-full-summary.log",
+        text: "build/infection-full.log"
+    },
+    phpUnit: {
+        configDir: ".",
+        customPath: "vendor/bin/phpunit"
+    },
+    initialTestsPhpOptions: "-d memory_limit=1G",
+    timeout: 30,
+    mutators: {
+        // Full audit run: all @default mutators, no ignores, so provably-equivalent
+        // mutants stay visible. The gate (infection.json5) ignores the reviewed ones.
+        "@default": true
+    }
+}

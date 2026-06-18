@@ -1,0 +1,156 @@
+# Sine Macula Project Configuration
+# Lives at .sinemacula/config.toml in the user's repo root.
+# Shared by the Blueprint, Build, and Deploy plugins.
+
+[project]
+project_name = "laravel-route-linter"
+project_description = "A deterministic, opt-in artisan linter for RESTful route conventions in Laravel applications."
+copyright = "Sine Macula Limited"
+# Active install profile (PRD 52). One of: minimal, php-only, typescript-only, full.
+# Selected by `build:init --profile <name>` or `/build:profile switch <name>`.
+# When unset (or empty), the profile defaults to `full` - every pack/agent.
+# profile = "full"
+
+[language]
+# Primary language - auto-detected or manually set.
+# Must match a pack name in plugins/build/packs/.
+primary = "php"
+pack = "php"
+# Optional additional packs active for this project (PRD 2.3 multi-pack picker).
+# Populated by `build:init` when the detector matches more than one pack and
+# the user opts in via the multi-pack picker. Operations that aren't scoped to
+# a specific pack default to `primary`; per-pack operations may iterate this
+# list. Example for a PHP backend + TypeScript frontend monorepo:
+# packs = ["php", "typescript"]
+
+[git]
+git_base_branches = ["master"]
+git_branch_format = "{type}/{scope}"
+
+[blueprint.paths]
+# Workflow directory - one per idea, supports concurrent workflows.
+# {workflow-slug} is derived from the idea (kebab-case, max 40 chars).
+workflow_dir = ".sinemacula/blueprint/workflows/{workflow-slug}/"
+
+# PRD output - public directory, consumed by the Build plugin.
+prd_dir = "docs/prd"
+path_prd = "docs/prd/{NN}-{slug}.md"
+
+# Workflow-internal artifact paths (relative to repo root).
+# {workflow-dir} expands to the workflow's directory above.
+path_intake = "{workflow-dir}/intake-brief.md"
+path_spike = "{workflow-dir}/spikes/spike-{slug}.md"
+path_problem_map = "{workflow-dir}/problem-map.md"
+path_prioritization = "{workflow-dir}/prioritization.md"
+path_state = "{workflow-dir}/workflow-state.md"
+
+[build.paths]
+# Workflow directory - one per workflow, supports concurrent workflows.
+# {workflow-slug} is derived from the PRD or user request (kebab-case, max 40 chars).
+workflow_dir = ".sinemacula/build/workflows/{workflow-slug}/"
+
+# Workflow-internal artifact paths (relative to repo root).
+# {workflow-dir} expands to the workflow's directory above.
+path_state = "{workflow-dir}/workflow-state.md"
+path_spec = "{workflow-dir}/spec.md"
+path_architecture = "{workflow-dir}/architecture.md"
+path_tasks = "{workflow-dir}/tasks/"
+path_findings = "{workflow-dir}/findings.md"
+path_verification = "{workflow-dir}/verification.md"
+path_standards_report = "{workflow-dir}/standards-report.md"
+path_refactor_plan = "{workflow-dir}/refactor-plan.md"
+path_behavior_snapshot = "{workflow-dir}/behaviour-snapshot.md"
+path_clean_analysis = "{workflow-dir}/clean-analysis.md"
+path_clean_plan = "{workflow-dir}/clean-plan.md"
+path_knowledge = "{workflow-dir}/knowledge.md"
+
+# [build.context] is optional and retained only for backwards compatibility.
+# Orchestrators no longer prompt to clear context between stages.
+# If you want a fresh context at any stage boundary, run `/clear` manually.
+# [build.context]
+# context_refresh = false
+
+[build.standards]
+# Override language pack thresholds per-project.
+# Uncomment and adjust as needed.
+# min_coverage = 80
+# max_cyclomatic_complexity = 10
+# max_method_lines = 30
+# max_class_lines = 500
+# max_parameters = 6
+# max_remediation_cycles = 3
+# clean_unit_size = 5
+# clean_max_fix_tier = "guided-fix"
+# clean_max_issues_per_unit = 25
+
+[build.checks]
+# CLI commands that must pass before workflow completion.
+# Each entry is run via Bash; non-zero exit blocks the gate.
+required = []
+
+# [project.push_gates] - opt-in project-level push gates.
+# Commands listed here must exit 0 before `git push` is allowed.
+# These run IN ADDITION TO the non-negotiable Quality Floor; they are
+# project-specific checks the team opts into. Absent block = no extra gates.
+# Run with: node scripts/run-push-gates.js (add to your local pre-push hook
+# or call manually before pushing - see CONTRIBUTING.md for details).
+#
+# [project.push_gates]
+# commands = ["qlty check", "qlty smells --all"]
+# warn_only = false        # true = failures print a warning but don't block
+# timeout_seconds = 300    # per-command timeout; default 300s (5 minutes)
+
+[build.completion]
+# Action to execute automatically after workflow completion.
+# Valid values:
+#   "full"   - commit + push + create PR
+#   "push"   - commit + push
+#   "commit" - commit only
+#   "prompt" - show interactive selection menu (default)
+# When absent or set to "prompt", the interactive menu is shown.
+# Use --prompt override on any workflow run to force the interactive menu
+# regardless of this setting.
+default_action = "prompt"
+
+# `[build].stall_threshold_hours` - hours of inactivity before `build:workflow-status`
+# flags an active workflow as stalled and surfaces an auto-escalation nudge to
+# invoke `/build:exception` (PRD 7.5). Workflows with terminal status (complete,
+# archived) are never flagged. Set to 0 to disable the nudge entirely. Default
+# is 4. The setting lives directly on `[build]`; uncomment to override:
+# [build]
+# stall_threshold_hours = 4
+
+[build.continuous_learning]
+# Preference injection cap.
+# `inject_top_n` - ranked preferences injected at SessionStart (confidence × recency).
+# Debug override for a hook process: SM_CL_NO_CAP=1 or --no-cap.
+inject_top_n = 5
+
+[learning]
+# Continuous-learning observation pipeline (PRDs 19-25).
+# Default-on. Set to false to disable all observation writes for this project.
+# Per-session override: SM_LEARNING_DISABLED=1.
+enabled = true
+
+# Auto-injection thresholds (PRD 22).
+# `min_confidence` - drop preferences below this confidence floor (0-1).
+# `max_preferences` is retained as a legacy fallback; prefer
+# [build.continuous_learning].inject_top_n for the SessionStart injection cap.
+min_confidence = 0.7
+
+# Granular toggles (PRD 25). Master `enabled = false` always wins; use these to
+# disable a single stage of the pipeline while keeping the rest enabled.
+# `observation_enabled` - write tool/prompt observations to the local log.
+# `injection_enabled`   - materialise the active preference set at SessionStart.
+# `extraction_enabled`  - emit the Stop-trigger marker for the preference extractor.
+observation_enabled = true
+injection_enabled = true
+extraction_enabled = true
+
+# Retention windows (PRD 25).
+# `observation_retention_days` - prune observation log entries older than this on SessionStart.
+#                                Set to 0 to disable retention pruning.
+# `preference_archive_days`    - days a preference may stay below the confidence floor
+#                                before the extractor archives it.
+observation_retention_days = 30
+preference_archive_days = 14

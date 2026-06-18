@@ -1,0 +1,65 @@
+{
+    $schema: "./vendor/infection/infection/resources/schema.json",
+    source: {
+        directories: [
+            "src"
+        ]
+    },
+    logs: {
+        summary: "build/infection-summary.log",
+        text: "build/infection.log"
+    },
+    phpUnit: {
+        configDir: ".",
+        customPath: "vendor/bin/phpunit"
+    },
+    initialTestsPhpOptions: "-d memory_limit=1G",
+    timeout: 30,
+    mutators: {
+        "@default": true,
+
+        // Provably-equivalent mutants, ignored for the gate only. The full run
+        // (infection.full.json5) keeps them visible for audit.
+        DecrementInteger: {
+            ignore: [
+                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
+            ],
+        },
+        IncrementInteger: {
+            ignore: [
+                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
+            ],
+        },
+        UnwrapSubstr: {
+            ignore: [
+                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
+            ],
+        },
+        ReturnRemoval: {
+            ignore: [
+                "SineMacula\\RouteLinter\\Inflection\\FrameworkInflector::isPlural",
+                "SineMacula\\RouteLinter\\Output\\ConsoleLintReporter::report",
+                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
+                "SineMacula\\RouteLinter\\Sources\\RouterRouteSource::fileIsVendor",
+                "SineMacula\\RouteLinter\\Support\\RouteLintMacros::register",
+            ],
+        },
+        UnwrapArrayFilter: {
+            ignore: [
+                "SineMacula\\RouteLinter\\Rules\\Support\\SegmentNormaliser::normalise",
+            ],
+        },
+        UnwrapArrayValues: {
+            ignore: [
+                "SineMacula\\RouteLinter\\Rules\\StandardMethodsRule::inspect",
+                "SineMacula\\RouteLinter\\Rules\\Support\\SegmentNormaliser::normalise",
+                "SineMacula\\RouteLinter\\RouteLinterServiceProvider::resolveRules",
+            ],
+        },
+        TrueValue: {
+            ignore: [
+                "SineMacula\\RouteLinter\\RouteLintEngine::__construct",
+            ],
+        },
+    }
+}
