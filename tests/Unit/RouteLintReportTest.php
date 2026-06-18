@@ -30,8 +30,8 @@ class RouteLintReportTest extends TestCase
         // Arrange
         $report = new RouteLintReport;
 
-        $error   = new Violation('R1', Severity::Error, 'GET users', 'getUsers', null);
-        $warning = new Violation('R8', Severity::Warning, 'GET users', 'users.getAll', null);
+        $error   = new Violation('R1', Severity::ERROR, 'GET users', 'getUsers', null);
+        $warning = new Violation('R8', Severity::WARNING, 'GET users', 'users.getAll', null);
 
         $report->addViolation($error);
         $report->addViolation($warning);
@@ -42,11 +42,11 @@ class RouteLintReportTest extends TestCase
 
         // Assert
         static::assertCount(1, $errors);
-        static::assertSame(Severity::Error, $errors[0]->severity);
+        static::assertSame(Severity::ERROR, $errors[0]->severity);
         static::assertSame('R1', $errors[0]->ruleId);
 
         static::assertCount(1, $warnings);
-        static::assertSame(Severity::Warning, $warnings[0]->severity);
+        static::assertSame(Severity::WARNING, $warnings[0]->severity);
         static::assertSame('R8', $warnings[0]->ruleId);
     }
 
@@ -62,9 +62,9 @@ class RouteLintReportTest extends TestCase
     public function testFindingsAreDeterministicallyOrdered(): void
     {
         // Arrange - three violations that differ on all three sort keys
-        $alpha = new Violation('R1', Severity::Error, 'GET,HEAD users', 'getUsers', null);
-        $beta  = new Violation('R2', Severity::Error, 'GET,HEAD users', 'UserProfiles', null);
-        $gamma = new Violation('R1', Severity::Error, 'GET articles', 'getArticles', null);
+        $alpha = new Violation('R1', Severity::ERROR, 'GET,HEAD users', 'getUsers', null);
+        $beta  = new Violation('R2', Severity::ERROR, 'GET,HEAD users', 'UserProfiles', null);
+        $gamma = new Violation('R1', Severity::ERROR, 'GET articles', 'getArticles', null);
 
         // Report A: inserted in alpha, beta, gamma order
         $reportA = new RouteLintReport;
@@ -110,8 +110,8 @@ class RouteLintReportTest extends TestCase
         // Arrange
         $report = new RouteLintReport;
 
-        $report->addViolation(new Violation('R8', Severity::Warning, 'GET users', 'users.getAll', null));
-        $report->addViolation(new Violation('R11', Severity::Warning, 'GET a/b/c/d', 'a/b/c/d', null));
+        $report->addViolation(new Violation('R8', Severity::WARNING, 'GET users', 'users.getAll', null));
+        $report->addViolation(new Violation('R11', Severity::WARNING, 'GET a/b/c/d', 'a/b/c/d', null));
         $report->addStaleWaiver('users.legacy');
 
         // Act & Assert
@@ -176,9 +176,9 @@ class RouteLintReportTest extends TestCase
         // Arrange - same routeIdentity and ruleId, different offendingSurface
         $report = new RouteLintReport;
 
-        $report->addViolation(new Violation('R1', Severity::Error, 'GET users', 'zebra', null));
-        $report->addViolation(new Violation('R1', Severity::Error, 'GET users', 'apple', null));
-        $report->addViolation(new Violation('R1', Severity::Error, 'GET users', 'mango', null));
+        $report->addViolation(new Violation('R1', Severity::ERROR, 'GET users', 'zebra', null));
+        $report->addViolation(new Violation('R1', Severity::ERROR, 'GET users', 'apple', null));
+        $report->addViolation(new Violation('R1', Severity::ERROR, 'GET users', 'mango', null));
 
         // Act
         $errors = $report->errors();
@@ -201,13 +201,13 @@ class RouteLintReportTest extends TestCase
     {
         // Report A: inserted ascending
         $reportA = new RouteLintReport;
-        $reportA->addViolation(new Violation('R2', Severity::Error, 'POST orders', 'alpha-surface', null));
-        $reportA->addViolation(new Violation('R2', Severity::Error, 'POST orders', 'omega-surface', null));
+        $reportA->addViolation(new Violation('R2', Severity::ERROR, 'POST orders', 'alpha-surface', null));
+        $reportA->addViolation(new Violation('R2', Severity::ERROR, 'POST orders', 'omega-surface', null));
 
         // Report B: inserted descending
         $reportB = new RouteLintReport;
-        $reportB->addViolation(new Violation('R2', Severity::Error, 'POST orders', 'omega-surface', null));
-        $reportB->addViolation(new Violation('R2', Severity::Error, 'POST orders', 'alpha-surface', null));
+        $reportB->addViolation(new Violation('R2', Severity::ERROR, 'POST orders', 'omega-surface', null));
+        $reportB->addViolation(new Violation('R2', Severity::ERROR, 'POST orders', 'alpha-surface', null));
 
         // Act
         $errorsA = $reportA->errors();

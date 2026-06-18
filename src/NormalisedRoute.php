@@ -23,6 +23,8 @@ final readonly class NormalisedRoute
      * @param  string|null  $name
      * @param  array<int, string>  $segments
      * @param  array<int, string>  $parameters
+     * @param  string|null  $handler
+     * @param  array<int, string>  $middleware
      */
     public function __construct(
 
@@ -45,6 +47,12 @@ final readonly class NormalisedRoute
          * field.
          */
         public array $parameters,
+
+        /** The handler as `Class@method` (or `Class` for invokables), or null for closure routes */
+        public ?string $handler = null,
+
+        /** Gathered middleware names, e.g. `['auth:sanctum']`; closure middleware is excluded */
+        public array $middleware = [],
 
     ) {}
 

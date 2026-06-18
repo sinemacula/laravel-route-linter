@@ -82,14 +82,14 @@ class VerbInPathRuleTest extends TestCase
     }
 
     /**
-     * Test that id() returns 'R1' and severity() returns Severity::Error.
+     * Test that id() returns 'R1' and severity() returns Severity::ERROR.
      *
      * @return void
      */
     public function testIdAndSeverity(): void
     {
         static::assertSame('R1', $this->rule->id());
-        static::assertSame(Severity::Error, $this->rule->severity());
+        static::assertSame(Severity::ERROR, $this->rule->severity());
     }
 
     /**
@@ -114,7 +114,7 @@ class VerbInPathRuleTest extends TestCase
 
         static::assertInstanceOf(Violation::class, $violation);
         static::assertSame('R1', $violation->ruleId);
-        static::assertSame(Severity::Error, $violation->severity);
+        static::assertSame(Severity::ERROR, $violation->severity);
         static::assertSame('get', $violation->offendingSurface);
         static::assertNotNull($violation->remediationHint);
     }
@@ -267,7 +267,7 @@ class VerbInPathRuleTest extends TestCase
         // Both must carry R1 ERROR severity
         foreach ($violations as $violation) {
             static::assertSame('R1', $violation->ruleId);
-            static::assertSame(Severity::Error, $violation->severity);
+            static::assertSame(Severity::ERROR, $violation->severity);
         }
     }
 

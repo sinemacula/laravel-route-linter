@@ -24,6 +24,8 @@ final readonly class RouteDescriptor
      * @param  array<int, string>  $methods
      * @param  string|null  $name
      * @param  bool  $isVendor
+     * @param  string|null  $handler
+     * @param  array<int, string>  $middleware
      * @param  list<\SineMacula\RouteLinter\Dto\RouteSuppression>  $suppressions
      */
     public function __construct(
@@ -39,6 +41,12 @@ final readonly class RouteDescriptor
 
         /** Whether the route belongs to a vendor package */
         public bool $isVendor,
+
+        /** The handler as `Class@method` (or `Class` for invokables), or null for closure routes */
+        public ?string $handler = null,
+
+        /** Gathered middleware names, e.g. `['auth:sanctum']`; closure middleware is excluded */
+        public array $middleware = [],
 
         /** Inline suppressions declared via `ignoreRouteLint`; empty when none were registered */
         public array $suppressions = [],

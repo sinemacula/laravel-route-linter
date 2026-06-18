@@ -8,7 +8,8 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/sinemacula/laravel-route-linter.svg)](https://packagist.org/packages/sinemacula/laravel-route-linter)
 
 A deterministic, opt-in Artisan command that lints a Laravel application's route table against a fixed catalogue of
-RESTful URL conventions, and exits non-zero on error-severity violations so CI can gate on it.
+RESTful URL conventions and route-integrity checks, and exits non-zero on error-severity violations so CI can gate on
+it.
 
 It reads the live route table (`Router::getRoutes()` after a full boot) plus its own config - no model versions, no
 probabilistic inference - so the same routes and config always produce the same verdict. It enforces the
@@ -21,10 +22,10 @@ invocation walks the whole route table once:
 
 1. **Source** the app-owned routes from the live router, excluding vendor routes (the same set `route:list
    --except-vendor` reports).
-2. **Normalise** each route into a framework-free value object - its URI split into segments, its parameter names, and
-   its HTTP methods.
-3. **Inspect** every route with the ordered rule set; each rule returns zero or more violations tagged `error` or
-   `warning`.
+2. **Normalise** each route into a framework-free value object - its URI split into segments, its parameter names, its
+   HTTP methods, its controller handler, and its gathered middleware.
+3. **Inspect** every route with the ordered per-route rules, then run the cross-route (aggregate) rules over the whole
+   set; each rule returns zero or more violations tagged `error` or `warning`.
 4. **Suppress** any violation covered by an inline waiver or a config allowlist entry.
 5. **Report** the findings in a deterministic total order and exit non-zero when any `error`-severity violation
    survives.
@@ -48,13 +49,17 @@ A few principles hold across the surface:
 | R3   | error    | Segments are lowercase                                                                      |
 | R4   | error    | Collection segments are plural (honours configured uncountables)                            |
 | R5   | error    | No trailing or duplicate slashes                                                            |
+| R6   | error    | No duplicate route name (would break `route()` URL generation)                              |
 | R7   | error    | Standard HTTP methods only                                                                  |
 | R8   | warning  | Named routes follow `{resource}.{action}`                                                   |
 | R9   | warning  | No HTML-only `create` / `edit` action as the final literal segment on an API surface        |
+| R10  | warning  | Routes matching a configured pattern declare the required middleware                        |
 | R11  | warning  | Resource nesting no deeper than the configured number of collection levels (default three)  |
+| R12  | error    | Route handler (controller class / method) exists                                            |
 
 > [!NOTE]
-> Rule IDs `R6` and `R10` are intentionally reserved/retired - IDs are kept stable across releases.
+> Rule IDs are stable across releases - a rule keeps its ID for life, so waivers and CI gates that pin
+> an ID stay valid on upgrade.
 
 ## Installation
 
@@ -110,6 +115,17 @@ Removing a word from `verb_denylist` is **rule tuning**, not a per-route waiver 
 homographs (e.g. a real `transfer` resource). This is global and needs no reason. The maximum nesting depth enforced by
 R11 is set with `nesting_max_depth` (default `3`).
 
+R10 (required middleware) is opt-in and ships empty. Map an `fnmatch` URI pattern to the middleware a matching route
+must declare; matching is an exact token comparison, so write parameterised middleware in full:
+
+```php
+// config/route-linter.php
+'required_middleware' => [
+    'admin/*' => ['auth', 'can:access-admin'],
+    'api/*'   => ['auth:sanctum'],
+],
+```
+
 ## Extending
 
 The rule set is the product surface, and it is configurable. The `rules` key lists the rules the engine runs, in order;
@@ -125,8 +141,9 @@ dependencies. Remove a built-in by deleting its line, or append your own:
 ],
 ```
 
-A custom rule receives the normalised route (including its brace-stripped parameter names) and the active config, and
-returns zero or more violations:
+A custom rule receives the normalised route - its segments, brace-stripped parameter names, controller handler
+(`Class@method`, or `null` for closures), and gathered middleware - and the active config, and returns zero or more
+violations:
 
 ```php
 use SineMacula\RouteLinter\Contracts\Rule;
@@ -139,7 +156,7 @@ class NoSnakeCaseRule implements Rule
 {
     public function id(): string { return 'APP1'; }
 
-    public function severity(): Severity { return Severity::Error; }
+    public function severity(): Severity { return Severity::ERROR; }
 
     public function inspect(NormalisedRoute $route, RuleConfig $config): array
     {
@@ -156,8 +173,15 @@ class NoSnakeCaseRule implements Rule
 }
 ```
 
-Rule IDs must be unique - the engine rejects a duplicate at boot. Output rendering is a port too: bind your own
-`LintReporter` implementation (for example, to emit JSON or SARIF for CI) to replace the default console reporter.
+For checks that span the whole route table rather than one route at a time - duplicate detection, table-wide invariants
+
+- implement `AggregateRule` instead. Its `inspect(array $routes, RuleConfig $config)` receives every normalised route at
+once and runs in a single pass after the per-route rules. List it in the same `rules` key; the engine partitions the two
+kinds by contract. Attribute each violation to the offending route's `identity()` so per-rule waivers still apply.
+
+Rule IDs must be unique across both kinds - the engine rejects a duplicate at boot. Output rendering is a port too: bind
+your own `LintReporter` implementation (for example, to emit JSON or SARIF for CI) to replace the default console
+reporter.
 
 ## Determinism
 

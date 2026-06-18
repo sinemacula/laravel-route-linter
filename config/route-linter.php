@@ -1,10 +1,13 @@
 <?php
 
 use SineMacula\RouteLinter\Rules\ApiResourceAlignmentRule;
+use SineMacula\RouteLinter\Rules\DuplicateRouteNameRule;
 use SineMacula\RouteLinter\Rules\KebabCaseRule;
 use SineMacula\RouteLinter\Rules\LowercaseRule;
 use SineMacula\RouteLinter\Rules\NestingDepthRule;
 use SineMacula\RouteLinter\Rules\PluralCollectionsRule;
+use SineMacula\RouteLinter\Rules\RequiredMiddlewareRule;
+use SineMacula\RouteLinter\Rules\RouteHandlerExistsRule;
 use SineMacula\RouteLinter\Rules\RouteNameRule;
 use SineMacula\RouteLinter\Rules\SlashSanityRule;
 use SineMacula\RouteLinter\Rules\StandardMethodsRule;
@@ -20,12 +23,13 @@ return [
     | Rules
     |---------------------------------------------------------------------------
     |
-    | The ordered rule set the engine runs over every route. Each entry is a
-    | class implementing SineMacula\RouteLinter\Contracts\Rule and is resolved
-    | from the container, so rules may declare constructor dependencies. Remove
-    | a built-in rule by deleting its line; add your own by appending its class.
-    | Rule IDs must be unique (the engine asserts this at boot). The shipped IDs
-    | are R1-R5, R7-R9, R11; R6 and R10 are intentionally reserved/retired.
+    | The ordered rule set the engine runs over the route table. Each entry is a
+    | class implementing the SineMacula\RouteLinter\Contracts\Rule (per-route) or
+    | AggregateRule (cross-route, e.g. duplicate detection) contract, resolved
+    | from the container so rules may declare constructor dependencies. Remove a
+    | built-in rule by deleting its line; add your own by appending its class.
+    | Rule IDs (R1-R12) must be unique - the engine asserts this at boot - and are
+    | stable across releases, so a waiver keeps its meaning when you upgrade.
     |
     */
 
@@ -35,10 +39,13 @@ return [
         LowercaseRule::class,            // R3  - lowercase segments
         PluralCollectionsRule::class,    // R4  - plural collections
         SlashSanityRule::class,          // R5  - trailing/duplicate slashes
+        DuplicateRouteNameRule::class,   // R6  - duplicate route name (aggregate)
         StandardMethodsRule::class,      // R7  - standard HTTP methods
         RouteNameRule::class,            // R8  - {resource}.{action} names
         ApiResourceAlignmentRule::class, // R9  - HTML-only create/edit actions
+        RequiredMiddlewareRule::class,   // R10 - required middleware per pattern
         NestingDepthRule::class,         // R11 - nesting-depth smell
+        RouteHandlerExistsRule::class,   // R12 - controller handler exists
     ],
 
     /*
@@ -53,6 +60,24 @@ return [
     */
 
     'nesting_max_depth' => 3,
+
+    /*
+    |---------------------------------------------------------------------------
+    | Required Middleware
+    |---------------------------------------------------------------------------
+    |
+    | Per-pattern middleware policy enforced by the required-middleware rule
+    | (R10). Each key is an `fnmatch` URI pattern; each value lists the
+    | middleware a matching route MUST declare. Matching is an exact token
+    | comparison, so parameterised middleware must be written in full. Ships
+    | empty - the rule is a no-op until you add a pattern.
+    |
+    |   'admin/*' => ['auth', 'can:access-admin'],
+    |   'api/*'   => ['auth:sanctum'],
+    |
+    */
+
+    'required_middleware' => [],
 
     /*
     |---------------------------------------------------------------------------

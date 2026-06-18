@@ -56,7 +56,7 @@ class ConsoleLintReporterTest extends TestCase
         $report    = new RouteLintReport;
         $violation = new Violation(
             ruleId: 'R1',
-            severity: Severity::Error,
+            severity: Severity::ERROR,
             routeIdentity: 'GET /get-users',
             offendingSurface: 'get',
             remediationHint: 'use a noun-based path instead',
@@ -89,7 +89,7 @@ class ConsoleLintReporterTest extends TestCase
         $report    = new RouteLintReport;
         $violation = new Violation(
             ruleId: 'R8',
-            severity: Severity::Warning,
+            severity: Severity::WARNING,
             routeIdentity: 'GET users',
             offendingSurface: 'users.getAll',
             remediationHint: null,
@@ -163,7 +163,7 @@ class ConsoleLintReporterTest extends TestCase
         $report    = new RouteLintReport;
         $violation = new Violation(
             ruleId: 'R2',
-            severity: Severity::Error,
+            severity: Severity::ERROR,
             routeIdentity: 'GET userProfiles',
             offendingSurface: 'userProfiles',
             remediationHint: null,
@@ -192,7 +192,7 @@ class ConsoleLintReporterTest extends TestCase
         $report    = new RouteLintReport;
         $violation = new Violation(
             ruleId: 'R11',
-            severity: Severity::Warning,
+            severity: Severity::WARNING,
             routeIdentity: 'GET a/b/c/d',
             offendingSurface: 'a/b/c/d',
             remediationHint: null,
@@ -256,7 +256,7 @@ class ConsoleLintReporterTest extends TestCase
         $report = new RouteLintReport;
         $report->addViolation(new Violation(
             ruleId: 'R8',
-            severity: Severity::Warning,
+            severity: Severity::WARNING,
             routeIdentity: 'GET users',
             offendingSurface: 'users',
             remediationHint: null,
@@ -290,7 +290,7 @@ class ConsoleLintReporterTest extends TestCase
         $report = new RouteLintReport;
         $report->addViolation(new Violation(
             ruleId: 'R1',
-            severity: Severity::Error,
+            severity: Severity::ERROR,
             routeIdentity: 'GET getUsers',
             offendingSurface: 'getUsers',
             remediationHint: null,
@@ -319,7 +319,7 @@ class ConsoleLintReporterTest extends TestCase
         $report = new RouteLintReport;
         $report->addViolation(new Violation(
             ruleId: 'R5',
-            severity: Severity::Error,
+            severity: Severity::ERROR,
             routeIdentity: 'GET /fetch-items',
             offendingSurface: 'fetch',
             remediationHint: 'rename to /items',
@@ -350,7 +350,7 @@ class ConsoleLintReporterTest extends TestCase
         $report = new RouteLintReport;
         $report->addViolation(new Violation(
             ruleId: 'R3',
-            severity: Severity::Error,
+            severity: Severity::ERROR,
             routeIdentity: 'POST UserItems',
             offendingSurface: 'UserItems',
             remediationHint: null,

@@ -61,7 +61,7 @@ class KebabCaseRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R2', $violations[0]->ruleId);
-        static::assertSame(Severity::Error, $violations[0]->severity);
+        static::assertSame(Severity::ERROR, $violations[0]->severity);
         static::assertSame('userProfiles', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -187,7 +187,7 @@ class KebabCaseRuleTest extends TestCase
         // Assert - 'userProfiles' violates kebab-case despite the leading param
         static::assertCount(1, $violations);
         static::assertSame('R2', $violations[0]->ruleId);
-        static::assertSame(Severity::Error, $violations[0]->severity);
+        static::assertSame(Severity::ERROR, $violations[0]->severity);
         static::assertSame('userProfiles', $violations[0]->offendingSurface);
     }
 
@@ -224,13 +224,13 @@ class KebabCaseRuleTest extends TestCase
     }
 
     /**
-     * Test that rule id() returns 'R2' and severity() returns Severity::Error.
+     * Test that rule id() returns 'R2' and severity() returns Severity::ERROR.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R2', $this->rule->id());
-        static::assertSame(Severity::Error, $this->rule->severity());
+        static::assertSame(Severity::ERROR, $this->rule->severity());
     }
 }

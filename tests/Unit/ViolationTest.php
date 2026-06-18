@@ -29,7 +29,7 @@ class ViolationTest extends TestCase
         // Arrange & Act
         $violation = new Violation(
             ruleId: 'R1',
-            severity: Severity::Error,
+            severity: Severity::ERROR,
             routeIdentity: 'GET getUsers get-users',
             offendingSurface: 'get',
             remediationHint: 'GET /users',
@@ -37,7 +37,7 @@ class ViolationTest extends TestCase
 
         // Assert
         static::assertSame('R1', $violation->ruleId);
-        static::assertSame(Severity::Error, $violation->severity);
+        static::assertSame(Severity::ERROR, $violation->severity);
         static::assertSame('GET getUsers get-users', $violation->routeIdentity);
         static::assertSame('get', $violation->offendingSurface);
         static::assertSame('GET /users', $violation->remediationHint);
@@ -54,14 +54,14 @@ class ViolationTest extends TestCase
         // Arrange & Act
         $violation = new Violation(
             ruleId: 'R5',
-            severity: Severity::Warning,
+            severity: Severity::WARNING,
             routeIdentity: 'GET users/ users.index',
             offendingSurface: 'users/',
             remediationHint: null,
         );
 
         // Assert
-        static::assertSame(Severity::Warning, $violation->severity);
+        static::assertSame(Severity::WARNING, $violation->severity);
         static::assertNull($violation->remediationHint);
     }
 }

@@ -61,7 +61,7 @@ class SlashSanityRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R5', $violations[0]->ruleId);
-        static::assertSame(Severity::Error, $violations[0]->severity);
+        static::assertSame(Severity::ERROR, $violations[0]->severity);
         static::assertSame('users/', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -88,7 +88,7 @@ class SlashSanityRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R5', $violations[0]->ruleId);
-        static::assertSame(Severity::Error, $violations[0]->severity);
+        static::assertSame(Severity::ERROR, $violations[0]->severity);
         static::assertSame('users//posts', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -187,13 +187,13 @@ class SlashSanityRuleTest extends TestCase
     }
 
     /**
-     * Test that rule id() returns 'R5' and severity() returns Severity::Error.
+     * Test that rule id() returns 'R5' and severity() returns Severity::ERROR.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R5', $this->rule->id());
-        static::assertSame(Severity::Error, $this->rule->severity());
+        static::assertSame(Severity::ERROR, $this->rule->severity());
     }
 }

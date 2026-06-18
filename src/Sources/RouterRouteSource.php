@@ -71,8 +71,40 @@ final class RouterRouteSource implements RouteSource
             methods: $route->methods(),
             name: $route->getName(),
             isVendor: $this->isVendorRoute($route),
+            handler: $this->resolveHandler($route),
+            middleware: $this->resolveMiddleware($route),
             suppressions: $this->buildSuppressions($route),
         );
+    }
+
+    /**
+     * Resolve the route handler as `Class@method` (or `Class` for invokables),
+     * returning null for closure routes (which have no class to inspect).
+     *
+     * @param  \Illuminate\Routing\Route  $route
+     * @return string|null
+     */
+    private function resolveHandler(Route $route): ?string
+    {
+        if ($route->getAction('uses') instanceof \Closure) {
+            return null;
+        }
+
+        return $route->getActionName();
+    }
+
+    /**
+     * Gather the route's middleware names, discarding any closure middleware
+     * (which cannot be matched against a configured string).
+     *
+     * @param  \Illuminate\Routing\Route  $route
+     * @return array<int, string>
+     */
+    private function resolveMiddleware(Route $route): array
+    {
+        // gatherMiddleware() already returns a de-duplicated, contiguous list;
+        // the filter only narrows the element type to string for the contract.
+        return array_filter($route->gatherMiddleware(), 'is_string');
     }
 
     /**

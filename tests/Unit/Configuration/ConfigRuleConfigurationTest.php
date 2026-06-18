@@ -363,4 +363,84 @@ class ConfigRuleConfigurationTest extends TestCase
         static::assertSame('orders.index', $result->exemptions[1]->match);
         static::assertSame('products.index', $result->exemptions[2]->match);
     }
+
+    /**
+     * Test that the required-middleware surface defaults to an empty map when
+     * the config key is absent.
+     *
+     * @return void
+     */
+    public function testDefaultRequiredMiddlewareIsEmpty(): void
+    {
+        static::assertSame([], (new ConfigRuleConfiguration)->load()->requiredMiddleware);
+    }
+
+    /**
+     * Test that load() reads the required-middleware map into the RuleConfig,
+     * preserving patterns and their middleware lists.
+     *
+     * @return void
+     */
+    public function testReadsRequiredMiddlewareFromConfig(): void
+    {
+        config()->set('route-linter.required_middleware', [
+            'admin/*' => ['auth', 'can:access-admin'],
+            'api/*'   => ['auth:sanctum'],
+        ]);
+
+        $result = (new ConfigRuleConfiguration)->load();
+
+        static::assertSame([
+            'admin/*' => ['auth', 'can:access-admin'],
+            'api/*'   => ['auth:sanctum'],
+        ], $result->requiredMiddleware);
+    }
+
+    /**
+     * Test that load() fails loud when a required-middleware pattern is not a
+     * string (e.g. the config is a list, yielding integer keys).
+     *
+     * @return void
+     */
+    public function testNonStringRequiredMiddlewarePatternIsRejected(): void
+    {
+        config()->set('route-linter.required_middleware', [['auth']]);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Required-middleware pattern must be a string');
+
+        (new ConfigRuleConfiguration)->load();
+    }
+
+    /**
+     * Test that load() fails loud when a required-middleware value is not an
+     * array.
+     *
+     * @return void
+     */
+    public function testNonArrayRequiredMiddlewareValueIsRejected(): void
+    {
+        config()->set('route-linter.required_middleware', ['admin/*' => 'auth']);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Required middleware for "admin/*" must be an array');
+
+        (new ConfigRuleConfiguration)->load();
+    }
+
+    /**
+     * Test that load() fails loud when a required-middleware list contains a
+     * non-string entry.
+     *
+     * @return void
+     */
+    public function testNonStringRequiredMiddlewareEntryIsRejected(): void
+    {
+        config()->set('route-linter.required_middleware', ['admin/*' => ['auth', 42]]);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Required middleware for "admin/*" must be a list of strings');
+
+        (new ConfigRuleConfiguration)->load();
+    }
 }

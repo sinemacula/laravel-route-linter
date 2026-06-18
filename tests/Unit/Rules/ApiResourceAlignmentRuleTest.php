@@ -62,7 +62,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::Warning, $violations[0]->severity);
+        static::assertSame(Severity::WARNING, $violations[0]->severity);
         static::assertSame('edit', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -90,7 +90,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::Warning, $violations[0]->severity);
+        static::assertSame(Severity::WARNING, $violations[0]->severity);
         static::assertSame('create', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -177,7 +177,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Assert - 'edit' is the final literal segment and must be flagged
         static::assertCount(1, $violations);
         static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::Warning, $violations[0]->severity);
+        static::assertSame(Severity::WARNING, $violations[0]->severity);
         static::assertSame('edit', $violations[0]->offendingSurface);
     }
 
@@ -209,7 +209,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Assert - 'create' is the final literal segment and must be flagged
         static::assertCount(1, $violations);
         static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::Warning, $violations[0]->severity);
+        static::assertSame(Severity::WARNING, $violations[0]->severity);
         static::assertSame('create', $violations[0]->offendingSurface);
     }
 
@@ -272,13 +272,13 @@ class ApiResourceAlignmentRuleTest extends TestCase
 
     /**
      * Test that rule id() returns 'R9' and severity() returns
-     * Severity::Warning.
+     * Severity::WARNING.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R9', $this->rule->id());
-        static::assertSame(Severity::Warning, $this->rule->severity());
+        static::assertSame(Severity::WARNING, $this->rule->severity());
     }
 }

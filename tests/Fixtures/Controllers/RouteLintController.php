@@ -14,6 +14,16 @@ namespace Tests\Fixtures\Controllers;
 class RouteLintController
 {
     /**
+     * Handle the incoming request as an invokable controller.
+     *
+     * @return array<string, bool>
+     */
+    public function __invoke(): array
+    {
+        return ['ok' => true];
+    }
+
+    /**
      * Handle the incoming request.
      *
      * @return array<string, bool>

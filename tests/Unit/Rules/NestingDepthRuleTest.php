@@ -66,7 +66,7 @@ class NestingDepthRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R11', $violations[0]->ruleId);
-        static::assertSame(Severity::Warning, $violations[0]->severity);
+        static::assertSame(Severity::WARNING, $violations[0]->severity);
         static::assertSame($uri, $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -172,7 +172,7 @@ class NestingDepthRuleTest extends TestCase
         // Assert - four literal segments exceeds the threshold of three
         static::assertCount(1, $violations);
         static::assertSame('R11', $violations[0]->ruleId);
-        static::assertSame(Severity::Warning, $violations[0]->severity);
+        static::assertSame(Severity::WARNING, $violations[0]->severity);
         static::assertSame($uri, $violations[0]->offendingSurface);
     }
 
@@ -328,13 +328,13 @@ class NestingDepthRuleTest extends TestCase
 
     /**
      * Test that rule id() returns 'R11' and severity() returns
-     * Severity::Warning.
+     * Severity::WARNING.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R11', $this->rule->id());
-        static::assertSame(Severity::Warning, $this->rule->severity());
+        static::assertSame(Severity::WARNING, $this->rule->severity());
     }
 }

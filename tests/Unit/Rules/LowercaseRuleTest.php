@@ -62,7 +62,7 @@ class LowercaseRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R3', $violations[0]->ruleId);
-        static::assertSame(Severity::Error, $violations[0]->severity);
+        static::assertSame(Severity::ERROR, $violations[0]->severity);
         static::assertSame('Users', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -189,7 +189,7 @@ class LowercaseRuleTest extends TestCase
         // Assert - 'Users' is uppercase and must be flagged despite the leading param
         static::assertCount(1, $violations);
         static::assertSame('R3', $violations[0]->ruleId);
-        static::assertSame(Severity::Error, $violations[0]->severity);
+        static::assertSame(Severity::ERROR, $violations[0]->severity);
         static::assertSame('Users', $violations[0]->offendingSurface);
     }
 
@@ -226,13 +226,13 @@ class LowercaseRuleTest extends TestCase
     }
 
     /**
-     * Test that rule id() returns 'R3' and severity() returns Severity::Error.
+     * Test that rule id() returns 'R3' and severity() returns Severity::ERROR.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R3', $this->rule->id());
-        static::assertSame(Severity::Error, $this->rule->severity());
+        static::assertSame(Severity::ERROR, $this->rule->severity());
     }
 }

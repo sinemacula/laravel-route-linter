@@ -62,7 +62,7 @@ class StandardMethodsRuleTest extends TestCase
         // Assert
         static::assertCount(1, $violations);
         static::assertSame('R7', $violations[0]->ruleId);
-        static::assertSame(Severity::Error, $violations[0]->severity);
+        static::assertSame(Severity::ERROR, $violations[0]->severity);
         static::assertSame('PURGE', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -119,7 +119,7 @@ class StandardMethodsRuleTest extends TestCase
         // Assert - one violation; non-standard methods must appear sorted
         static::assertCount(1, $violations);
         static::assertSame('R7', $violations[0]->ruleId);
-        static::assertSame(Severity::Error, $violations[0]->severity);
+        static::assertSame(Severity::ERROR, $violations[0]->severity);
         static::assertSame('AAA, ZZZ', $violations[0]->offendingSurface);
         static::assertNull($violations[0]->remediationHint);
     }
@@ -157,13 +157,13 @@ class StandardMethodsRuleTest extends TestCase
     }
 
     /**
-     * Test that rule id() returns 'R7' and severity() returns Severity::Error.
+     * Test that rule id() returns 'R7' and severity() returns Severity::ERROR.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
         static::assertSame('R7', $this->rule->id());
-        static::assertSame(Severity::Error, $this->rule->severity());
+        static::assertSame(Severity::ERROR, $this->rule->severity());
     }
 }

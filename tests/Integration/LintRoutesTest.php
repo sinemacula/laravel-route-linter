@@ -5,11 +5,14 @@ namespace Tests\Integration;
 use Illuminate\Routing\Router;
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Configuration\ConfigRuleConfiguration;
+use SineMacula\RouteLinter\Contracts\AggregateRule;
+use SineMacula\RouteLinter\Contracts\Rule;
 use SineMacula\RouteLinter\Inflection\FrameworkInflector;
 use SineMacula\RouteLinter\LintRoutes;
 use SineMacula\RouteLinter\RouteLintEngine;
 use SineMacula\RouteLinter\RouteLintReport;
 use SineMacula\RouteLinter\Rules\ApiResourceAlignmentRule;
+use SineMacula\RouteLinter\Rules\DuplicateRouteNameRule;
 use SineMacula\RouteLinter\Rules\KebabCaseRule;
 use SineMacula\RouteLinter\Rules\LowercaseRule;
 use SineMacula\RouteLinter\Rules\NestingDepthRule;
@@ -21,6 +24,7 @@ use SineMacula\RouteLinter\Rules\Support\SegmentNormaliser;
 use SineMacula\RouteLinter\Rules\Support\VerbDenylist;
 use SineMacula\RouteLinter\Rules\VerbInPathRule;
 use SineMacula\RouteLinter\Sources\RouterRouteSource;
+use Tests\Fixtures\Rules\GlobalAggregateRule;
 use Tests\Fixtures\Rules\ParameterEchoRule;
 use Tests\TestCase;
 
@@ -722,6 +726,157 @@ class LintRoutesTest extends TestCase
         $surfaces = array_map(static fn ($violation) => $violation->offendingSurface, $report->warnings());
 
         static::assertContains('team,member', $surfaces, 'Rules must receive brace-stripped parameter names extracted by the use case.');
+    }
+
+    /**
+     * Test that two routes sharing a name produce one R6 duplicate-name error
+     * attributed to the second (duplicate) registration, end to end.
+     *
+     * @return void
+     */
+    public function testDuplicateRouteNameIsFlagged(): void
+    {
+        $this->seedDefaultConfig();
+
+        $router = $this->getRouter();
+        $router->get('people', fn () => [])->name('shared.index');
+        $router->get('teams', fn () => [])->name('shared.index');
+
+        $report = $this->buildUseCaseWithRules($router, new DuplicateRouteNameRule)->lint();
+
+        $errors = $report->errors();
+
+        static::assertCount(1, $errors);
+        static::assertSame('R6', $errors[0]->ruleId);
+        static::assertSame('GET,HEAD teams shared.index', $errors[0]->routeIdentity);
+        static::assertSame('shared.index', $errors[0]->offendingSurface);
+    }
+
+    /**
+     * Test that an inline waiver on the duplicate route suppresses its aggregate
+     * R6 violation and is not reported as stale (aggregate suppression path).
+     *
+     * @return void
+     */
+    public function testAggregateViolationIsSuppressedInline(): void
+    {
+        $this->seedDefaultConfig();
+
+        $router = $this->getRouter();
+        $router->get('people', fn () => [])->name('shared.index');
+        $router->get('teams', fn () => [])->name('shared.index')
+            // @phpstan-ignore method.notFound
+            ->ignoreRouteLint(['R6'], 'Intentional alias kept during migration.');
+
+        $report = $this->buildUseCaseWithRules($router, new DuplicateRouteNameRule)->lint();
+
+        static::assertSame([], $report->errors(), 'Aggregate violation should be suppressed by the inline waiver.');
+        static::assertSame([], $report->staleWaivers(), 'A waiver that suppressed an aggregate violation is not stale.');
+    }
+
+    /**
+     * Test that an aggregate violation whose identity matches no live route is
+     * reported directly, since it cannot be per-route suppressed.
+     *
+     * @return void
+     */
+    public function testUnattributedAggregateViolationIsReported(): void
+    {
+        $this->seedDefaultConfig();
+
+        $router = $this->getRouter();
+        $router->get('users', fn () => [])->name('users.index');
+
+        $report = $this->buildUseCaseWithRules($router, new GlobalAggregateRule)->lint();
+
+        $warnings = $report->warnings();
+
+        // Both unattributed findings must be reported; neither can be suppressed
+        static::assertCount(2, $warnings);
+        static::assertSame('GLOBAL', $warnings[0]->ruleId);
+        static::assertSame('route-table', $warnings[0]->routeIdentity);
+        static::assertSame('global-finding-1', $warnings[0]->offendingSurface);
+        static::assertSame('global-finding-2', $warnings[1]->offendingSurface);
+    }
+
+    /**
+     * Test that inline waivers firing on per-route violations across several
+     * routes are all tracked as used, so none is wrongly reported as stale.
+     *
+     * Kills the mutant turning the per-route `$inlineUsed +=` accumulation into a
+     * plain assignment, which would drop every route's used-waiver record but the
+     * last.
+     *
+     * @return void
+     */
+    public function testPerRouteInlineWaiversAcrossRoutesAreAllTracked(): void
+    {
+        $this->seedDefaultConfig();
+
+        $router = $this->getRouter();
+        $router->get('getUsers', fn () => [])->name('get-users')
+            // @phpstan-ignore method.notFound
+            ->ignoreRouteLint(['R1'], 'First route waiver.');
+        $router->get('fetchData', fn () => [])->name('fetch-data')
+            // @phpstan-ignore method.notFound
+            ->ignoreRouteLint(['R1'], 'Second route waiver.');
+
+        $report = $this->buildUseCaseWithRules(
+            $router,
+            new VerbInPathRule(new SegmentNormaliser(new FrameworkInflector), new VerbDenylist(
+                config('route-linter.verb_denylist', []),
+                config('route-linter.remediation_hints', []),
+            )),
+        )->lint();
+
+        static::assertSame([], $report->errors(), 'Both R1 violations should be suppressed inline.');
+        static::assertSame([], $report->staleWaivers(), 'Both inline waivers fired and must not be stale.');
+    }
+
+    /**
+     * Test that inline waivers firing on aggregate violations across several
+     * routes are all tracked as used.
+     *
+     * Kills the mutants that drop aggregate-pass used-waiver records (the
+     * `$inlineUsed +=` becoming `=`, and the truncation of the returned map):
+     * with two duplicate routes each waiving R6, neither waiver may be stale.
+     *
+     * @return void
+     */
+    public function testAggregateInlineWaiversAcrossRoutesAreAllTracked(): void
+    {
+        $this->seedDefaultConfig();
+
+        $router = $this->getRouter();
+        $router->get('alpha', fn () => [])->name('shared.name');
+        $router->get('beta', fn () => [])->name('shared.name')
+            // @phpstan-ignore method.notFound
+            ->ignoreRouteLint(['R6'], 'Second alias waiver.');
+        $router->get('gamma', fn () => [])->name('shared.name')
+            // @phpstan-ignore method.notFound
+            ->ignoreRouteLint(['R6'], 'Third alias waiver.');
+
+        $report = $this->buildUseCaseWithRules($router, new DuplicateRouteNameRule)->lint();
+
+        static::assertSame([], $report->errors(), 'Both duplicate R6 violations should be suppressed.');
+        static::assertSame([], $report->staleWaivers(), 'Both aggregate waivers fired and must not be stale.');
+    }
+
+    /**
+     * Build the LintRoutes use case with an explicit rule set (per-route and/or
+     * aggregate) against the given router.
+     *
+     * @param  \Illuminate\Routing\Router  $router
+     * @param  \SineMacula\RouteLinter\Contracts\AggregateRule|\SineMacula\RouteLinter\Contracts\Rule  ...$rules
+     * @return \SineMacula\RouteLinter\LintRoutes
+     */
+    private function buildUseCaseWithRules(Router $router, AggregateRule|Rule ...$rules): LintRoutes
+    {
+        return new LintRoutes(
+            new RouterRouteSource($router),
+            new ConfigRuleConfiguration,
+            new RouteLintEngine(...$rules),
+        );
     }
 
     /**
