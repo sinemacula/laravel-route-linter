@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/sinemacula/laravel-route-linter/compare/v1.0.0...v1.1.0) (2026-06-18)
+
+
+### Features
+
+* add route-integrity rules and a cross-route rule pass ([#3](https://github.com/sinemacula/laravel-route-linter/issues/3)) ([6d1c2b6](https://github.com/sinemacula/laravel-route-linter/commit/6d1c2b6a4d4ace9a6f0b0282c9b754298c91853e))
+
 ## 1.0.0 (2026-06-18)
 
 
