@@ -196,6 +196,38 @@ final class KebabCaseRuleTest extends TestCase
     }
 
     /**
+     * Test that a non-kebab segment following a valid kebab segment is still
+     * flagged.
+     *
+     * Kills the Continue_ mutant on the kebab-match skip: replacing `continue`
+     * with `break` would stop the loop at the first already-valid segment, so a
+     * later offending segment would never be inspected.
+     *
+     * @return void
+     */
+    public function testNonKebabSegmentAfterValidSegmentIsFlagged(): void
+    {
+        // Arrange - 'users' is valid kebab-case and skipped; 'userProfiles'
+        // follows and must still be inspected
+        $route = new NormalisedRoute(
+            uri: 'users/userProfiles',
+            methods: ['GET'],
+            name: null,
+            segments: ['users', 'userProfiles'],
+            parameters: [],
+        );
+
+        // Act
+        $violations = $this->rule->inspect($route, $this->config);
+
+        // Assert - 'userProfiles' violates kebab-case despite the valid leader
+        self::assertCount(1, $violations);
+        self::assertSame('R2', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('userProfiles', $violations[0]->offendingSurface);
+    }
+
+    /**
      * Test that two non-kebab segments each produce their own R2 violation.
      *
      * Kills the ArrayOneItem mutant (#43): when more than one violation is

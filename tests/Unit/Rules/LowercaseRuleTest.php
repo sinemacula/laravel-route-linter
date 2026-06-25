@@ -200,6 +200,38 @@ final class LowercaseRuleTest extends TestCase
     }
 
     /**
+     * Test that an uppercase segment after a valid lowercase segment is still
+     * flagged.
+     *
+     * Kills the Continue_ mutant on the lowercase-match skip: with `break`
+     * instead of `continue`, a later offending segment is never inspected.
+     *
+     * @return void
+     */
+    public function testUppercaseSegmentAfterValidSegmentIsFlagged(): void
+    {
+        // Arrange - 'users' is lowercase and skipped; 'Posts' follows and must
+        // still be inspected
+        $route = new NormalisedRoute(
+            uri: 'users/Posts',
+            methods: ['GET'],
+            name: null,
+            segments: ['users', 'Posts'],
+            parameters: [],
+        );
+
+        // Act
+        $violations = $this->rule->inspect($route, $this->config);
+
+        // Assert - 'Posts' is uppercase and must be flagged despite the valid
+        // leader
+        self::assertCount(1, $violations);
+        self::assertSame('R3', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('Posts', $violations[0]->offendingSurface);
+    }
+
+    /**
      * Test that two uppercase segments each produce their own R3 violation.
      *
      * Kills the ArrayOneItem mutant (#45): when more than one violation is

@@ -209,6 +209,34 @@ final class ExemptionAllowlistTest extends TestCase
     }
 
     /**
+     * Test that a matched-but-unused entry following a used entry still appears
+     * in unused().
+     *
+     * Kills the Continue_ mutant in unused(): replacing `continue` with `break`
+     * would stop the scan at the first used or unmatched entry, so a later
+     * matched-but-unused entry would be missed.
+     *
+     * @return void
+     */
+    public function testUnusedEntryAfterUsedEntryIsStillReported(): void
+    {
+        // Arrange - entry 0 becomes used; entry 1 only matches
+        $allowlist = new ExemptionAllowlist([
+            new AllowlistEntry('login', 'Legacy auth endpoint.', ['R1']),
+            new AllowlistEntry('users.index', 'Waived for migration.', ['R1']),
+        ]);
+
+        // Act - entry 0 suppresses a violation; entry 1 is observed only
+        $allowlist->observe(null, 'login');
+        $allowlist->suppresses(null, 'login', 'R1');
+        $allowlist->observe('users.index', 'users');
+
+        // Assert - the later matched-but-unused entry is still reported
+        self::assertCount(1, $allowlist->unused());
+        self::assertStringContainsString('users.index', $allowlist->unused()[0]);
+    }
+
+    /**
      * Test that an entry that never matched any live route is reported as
      * unmatched, NOT as unused.
      *
