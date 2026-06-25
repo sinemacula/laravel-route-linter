@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\SlashSanityRule;
-use SineMacula\RouteLinter\Severity;
 use Tests\TestCase;
 
 /**
@@ -18,7 +20,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(SlashSanityRule::class)]
-class SlashSanityRuleTest extends TestCase
+final class SlashSanityRuleTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Rules\SlashSanityRule */
     private SlashSanityRule $rule;
@@ -31,6 +33,7 @@ class SlashSanityRuleTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -59,11 +62,11 @@ class SlashSanityRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R5', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
-        static::assertSame('users/', $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R5', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('users/', $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -86,11 +89,11 @@ class SlashSanityRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R5', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
-        static::assertSame('users//posts', $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R5', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('users//posts', $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -114,7 +117,7 @@ class SlashSanityRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - one violation regardless of defect count
-        static::assertCount(1, $violations);
+        self::assertCount(1, $violations);
     }
 
     /**
@@ -137,7 +140,7 @@ class SlashSanityRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -160,7 +163,7 @@ class SlashSanityRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -183,7 +186,7 @@ class SlashSanityRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -193,7 +196,7 @@ class SlashSanityRuleTest extends TestCase
      */
     public function testRuleMetadata(): void
     {
-        static::assertSame('R5', $this->rule->id());
-        static::assertSame(Severity::ERROR, $this->rule->severity());
+        self::assertSame('R5', $this->rule->id());
+        self::assertSame(Severity::ERROR, $this->rule->severity());
     }
 }

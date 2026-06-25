@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Rules\Support;
 
 /**
@@ -32,7 +34,6 @@ final class VerbDenylist
 
         /** Per-verb RESTful-rewrite hints, keyed by the denylisted verb */
         private readonly array $hints,
-
     ) {
         $this->verbIndex = array_fill_keys(
             array_map('strtolower', $verbs),

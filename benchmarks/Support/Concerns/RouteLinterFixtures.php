@@ -1,12 +1,15 @@
 <?php
 
-namespace Benchmarks\Support;
+declare(strict_types = 1);
+
+namespace Benchmarks\Support\Concerns;
 
 use SineMacula\RouteLinter\Contracts\Inflector;
 use SineMacula\RouteLinter\Dto\AllowlistEntry;
 use SineMacula\RouteLinter\Dto\RouteDescriptor;
 use SineMacula\RouteLinter\Dto\RouteSuppression;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\Inflection\FrameworkInflector;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\RouteLintEngine;
@@ -21,7 +24,6 @@ use SineMacula\RouteLinter\Rules\StandardMethodsRule;
 use SineMacula\RouteLinter\Rules\Support\SegmentNormaliser;
 use SineMacula\RouteLinter\Rules\Support\VerbDenylist;
 use SineMacula\RouteLinter\Rules\VerbInPathRule;
-use SineMacula\RouteLinter\Severity;
 use SineMacula\RouteLinter\Violation;
 
 /**
@@ -153,9 +155,11 @@ trait RouteLinterFixtures
         $parameters = [];
 
         foreach ($segments as $segment) {
-            if (str_starts_with($segment, '{')) {
-                $parameters[] = trim($segment, '{}');
+            if (!str_starts_with($segment, '{')) {
+                continue;
             }
+
+            $parameters[] = trim($segment, '{}');
         }
 
         return new NormalisedRoute(

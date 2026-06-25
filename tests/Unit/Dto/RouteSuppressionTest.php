@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Dto;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,7 +17,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RouteSuppression::class)]
-class RouteSuppressionTest extends TestCase
+final class RouteSuppressionTest extends TestCase
 {
     /**
      * Test that covers() returns true for any rule ID when the rules list is
@@ -27,9 +29,9 @@ class RouteSuppressionTest extends TestCase
     {
         $suppression = new RouteSuppression([], 'Suppresses all rules.');
 
-        static::assertTrue($suppression->covers('R1'));
-        static::assertTrue($suppression->covers('R9'));
-        static::assertTrue($suppression->covers('PLURAL_COLLECTIONS'));
+        self::assertTrue($suppression->covers('R1'));
+        self::assertTrue($suppression->covers('R9'));
+        self::assertTrue($suppression->covers('PLURAL_COLLECTIONS'));
     }
 
     /**
@@ -42,8 +44,8 @@ class RouteSuppressionTest extends TestCase
     {
         $suppression = new RouteSuppression(['R9', 'R3'], 'Specific rules suppressed.');
 
-        static::assertTrue($suppression->covers('R9'));
-        static::assertTrue($suppression->covers('R3'));
+        self::assertTrue($suppression->covers('R9'));
+        self::assertTrue($suppression->covers('R3'));
     }
 
     /**
@@ -56,8 +58,8 @@ class RouteSuppressionTest extends TestCase
     {
         $suppression = new RouteSuppression(['R9'], 'Only R9 suppressed.');
 
-        static::assertFalse($suppression->covers('R1'));
-        static::assertFalse($suppression->covers('PLURAL_COLLECTIONS'));
+        self::assertFalse($suppression->covers('R1'));
+        self::assertFalse($suppression->covers('PLURAL_COLLECTIONS'));
     }
 
     /**
@@ -70,7 +72,7 @@ class RouteSuppressionTest extends TestCase
     {
         $suppression = new RouteSuppression(['R9', 'R3'], 'Legacy route.');
 
-        static::assertSame(['R9', 'R3'], $suppression->rules);
-        static::assertSame('Legacy route.', $suppression->reason);
+        self::assertSame(['R9', 'R3'], $suppression->rules);
+        self::assertSame('Legacy route.', $suppression->reason);
     }
 }

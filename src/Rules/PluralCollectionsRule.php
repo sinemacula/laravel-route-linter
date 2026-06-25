@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Rules;
 
 use SineMacula\RouteLinter\Contracts\Inflector;
 use SineMacula\RouteLinter\Contracts\Rule;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
-use SineMacula\RouteLinter\Severity;
 use SineMacula\RouteLinter\Violation;
 
 /**
@@ -31,9 +33,11 @@ final class PluralCollectionsRule implements Rule
      */
     public function __construct(
 
-        /** Inflector port used to test whether a collection segment is plural */
+        /**
+         * Inflector port used to test whether a collection
+         * segment is plural.
+         */
         private readonly Inflector $inflector,
-
     ) {}
 
     /**
@@ -50,7 +54,7 @@ final class PluralCollectionsRule implements Rule
     /**
      * Return the severity tier for this rule.
      *
-     * @return \SineMacula\RouteLinter\Severity
+     * @return \SineMacula\RouteLinter\Enums\Severity
      */
     #[\Override]
     public function severity(): Severity

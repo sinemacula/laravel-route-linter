@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -16,7 +18,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(ExemptionAllowlist::class)]
-class ExemptionAllowlistTest extends TestCase
+final class ExemptionAllowlistTest extends TestCase
 {
     /**
      * Test that an empty allowlist never suppresses any violation and reports
@@ -33,9 +35,9 @@ class ExemptionAllowlistTest extends TestCase
         $allowlist->observe('users.index', 'users');
 
         // Assert
-        static::assertFalse($allowlist->suppresses('users.index', 'users', 'R1'));
-        static::assertSame([], $allowlist->unmatched());
-        static::assertSame([], $allowlist->unused());
+        self::assertFalse($allowlist->suppresses('users.index', 'users', 'R1'));
+        self::assertSame([], $allowlist->unmatched());
+        self::assertSame([], $allowlist->unused());
     }
 
     /**
@@ -52,9 +54,9 @@ class ExemptionAllowlistTest extends TestCase
         ]);
 
         // Act & Assert - suppresses any rule ID on the matching route
-        static::assertTrue($allowlist->suppresses('users.store', 'users', 'R1'));
-        static::assertTrue($allowlist->suppresses('users.store', 'users', 'R9'));
-        static::assertTrue($allowlist->suppresses('users.store', 'users', 'R99'));
+        self::assertTrue($allowlist->suppresses('users.store', 'users', 'R1'));
+        self::assertTrue($allowlist->suppresses('users.store', 'users', 'R9'));
+        self::assertTrue($allowlist->suppresses('users.store', 'users', 'R99'));
     }
 
     /**
@@ -71,8 +73,8 @@ class ExemptionAllowlistTest extends TestCase
         ]);
 
         // Act & Assert - R1 is suppressed; R2 is not
-        static::assertTrue($allowlist->suppresses(null, 'login', 'R1'));
-        static::assertFalse($allowlist->suppresses(null, 'login', 'R2'));
+        self::assertTrue($allowlist->suppresses(null, 'login', 'R1'));
+        self::assertFalse($allowlist->suppresses(null, 'login', 'R2'));
     }
 
     /**
@@ -88,10 +90,10 @@ class ExemptionAllowlistTest extends TestCase
         ]);
 
         // Act & Assert - exact name match suppresses
-        static::assertTrue($allowlist->suppresses('users.store', 'users', 'R1'));
+        self::assertTrue($allowlist->suppresses('users.store', 'users', 'R1'));
 
         // A different name is not suppressed even if the URI matches
-        static::assertFalse($allowlist->suppresses('users.index', 'users', 'R1'));
+        self::assertFalse($allowlist->suppresses('users.index', 'users', 'R1'));
     }
 
     /**
@@ -107,11 +109,11 @@ class ExemptionAllowlistTest extends TestCase
         ]);
 
         // Act & Assert - wildcard matches the URI
-        static::assertTrue($allowlist->suppresses(null, 'users/create', 'R1'));
-        static::assertTrue($allowlist->suppresses(null, 'users/profile', 'R2'));
+        self::assertTrue($allowlist->suppresses(null, 'users/create', 'R1'));
+        self::assertTrue($allowlist->suppresses(null, 'users/profile', 'R2'));
 
         // A URI that does not match the pattern is not suppressed
-        static::assertFalse($allowlist->suppresses(null, 'articles/create', 'R1'));
+        self::assertFalse($allowlist->suppresses(null, 'articles/create', 'R1'));
     }
 
     /**
@@ -132,7 +134,7 @@ class ExemptionAllowlistTest extends TestCase
         $allowlist->observe('users.store', 'users');
 
         // Assert - only the unmatched second entry is stale
-        static::assertSame(['articles.old'], $allowlist->unmatched());
+        self::assertSame(['articles.old'], $allowlist->unmatched());
     }
 
     /**
@@ -151,9 +153,8 @@ class ExemptionAllowlistTest extends TestCase
         ]);
 
         // Act - no observe() calls, so all entries are unmatched
-
         // Assert - keys returned in ascending lexicographic order
-        static::assertSame(
+        self::assertSame(
             ['articles.old', 'beta/feature', 'users/*'],
             $allowlist->unmatched(),
         );
@@ -177,11 +178,11 @@ class ExemptionAllowlistTest extends TestCase
         $allowlist->observe('users.index', 'users');
 
         // Assert - entry appears in unused() but not unmatched()
-        static::assertSame([], $allowlist->unmatched());
-        static::assertCount(1, $allowlist->unused());
-        static::assertStringContainsString('users.index', $allowlist->unused()[0]);
-        static::assertStringContainsString('suppressed nothing', $allowlist->unused()[0]);
-        static::assertStringContainsString('Waived for migration.', $allowlist->unused()[0]);
+        self::assertSame([], $allowlist->unmatched());
+        self::assertCount(1, $allowlist->unused());
+        self::assertStringContainsString('users.index', $allowlist->unused()[0]);
+        self::assertStringContainsString('suppressed nothing', $allowlist->unused()[0]);
+        self::assertStringContainsString('Waived for migration.', $allowlist->unused()[0]);
     }
 
     /**
@@ -201,9 +202,10 @@ class ExemptionAllowlistTest extends TestCase
         $allowlist->observe(null, 'login');
         $allowlist->suppresses(null, 'login', 'R1');
 
-        // Assert - entry was used; it appears in neither unused() nor unmatched()
-        static::assertSame([], $allowlist->unmatched());
-        static::assertSame([], $allowlist->unused());
+        // Assert - entry was used; it appears in neither unused() nor
+        // unmatched()
+        self::assertSame([], $allowlist->unmatched());
+        self::assertSame([], $allowlist->unused());
     }
 
     /**
@@ -223,11 +225,12 @@ class ExemptionAllowlistTest extends TestCase
             new AllowlistEntry('never.matched', 'Waiver that never matched a live route.'),
         ]);
 
-        // Act - no observe() / suppresses() calls, so the entry's matched flag stays unset
-
-        // Assert - a never-matched entry belongs in unmatched(), never in unused()
-        static::assertSame([], $allowlist->unused(), 'A never-matched entry must not appear in unused().');
-        static::assertSame(['never.matched'], $allowlist->unmatched());
+        // Act - no observe() / suppresses() calls, so the entry's matched flag
+        // stays unset
+        // Assert - a never-matched entry belongs in unmatched(), never in
+        // unused()
+        self::assertSame([], $allowlist->unused(), 'A never-matched entry must not appear in unused().');
+        self::assertSame(['never.matched'], $allowlist->unmatched());
     }
 
     /**
@@ -237,7 +240,8 @@ class ExemptionAllowlistTest extends TestCase
      */
     public function testUnusedIsSorted(): void
     {
-        // Arrange - two entries that both match a live route but suppress nothing
+        // Arrange - two entries that both match a live route but suppress
+        // nothing
         $allowlist = new ExemptionAllowlist([
             new AllowlistEntry('z-route', 'Last alphabetically.', ['R9']),
             new AllowlistEntry('a-route', 'First alphabetically.', ['R9']),
@@ -249,14 +253,15 @@ class ExemptionAllowlistTest extends TestCase
 
         // Assert - sorted ascending
         $unused = $allowlist->unused();
-        static::assertCount(2, $unused);
-        static::assertStringContainsString('a-route', $unused[0]);
-        static::assertStringContainsString('z-route', $unused[1]);
+        self::assertCount(2, $unused);
+        self::assertStringContainsString('a-route', $unused[0]);
+        self::assertStringContainsString('z-route', $unused[1]);
     }
 
     /**
      * Test that observe() records a match so the entry does NOT appear in
-     * unmatched() (kills TrueValue mutant #6: `$this->matched[$index] = false`).
+     * unmatched() (kills TrueValue mutant #6: `$this->matched[$index] =
+     * false`).
      *
      * If `matched[$index]` is stored as false instead of true, the entry would
      * appear in unmatched() even though observe() was called for a matching
@@ -275,7 +280,7 @@ class ExemptionAllowlistTest extends TestCase
         $allowlist->observe('users.index', 'users');
 
         // Assert - entry must NOT appear in unmatched()
-        static::assertSame([], $allowlist->unmatched());
+        self::assertSame([], $allowlist->unmatched());
     }
 
     /**
@@ -296,12 +301,13 @@ class ExemptionAllowlistTest extends TestCase
         ]);
 
         // Act & Assert - the matching second entry must suppress the violation
-        static::assertTrue($allowlist->suppresses('users.store', 'users', 'R1'));
+        self::assertTrue($allowlist->suppresses('users.store', 'users', 'R1'));
     }
 
     /**
      * Test that suppresses() marks a matched entry so it does NOT appear in
-     * unmatched() (kills TrueValue mutant #8: `$this->matched[$index] = false`).
+     * unmatched() (kills TrueValue mutant #8: `$this->matched[$index] =
+     * false`).
      *
      * The suppresses() method also records match state. If it stores false, the
      * entry would appear in unmatched() even when suppresses() was called for a
@@ -319,8 +325,9 @@ class ExemptionAllowlistTest extends TestCase
         // Act - call suppresses() (not observe()) for a matching route
         $allowlist->suppresses('users.store', 'users', 'R1');
 
-        // Assert - entry was matched via suppresses(), must not appear in unmatched()
-        static::assertSame([], $allowlist->unmatched());
+        // Assert - entry was matched via suppresses(), must not appear in
+        // unmatched()
+        self::assertSame([], $allowlist->unmatched());
     }
 
     /**
@@ -343,8 +350,8 @@ class ExemptionAllowlistTest extends TestCase
         $result = $allowlist->suppresses('users.store', 'users', 'R1');
 
         // Assert - suppresses() returned true and entry is not in unused()
-        static::assertTrue($result);
-        static::assertSame([], $allowlist->unused());
+        self::assertTrue($result);
+        self::assertSame([], $allowlist->unused());
     }
 
     /**
@@ -366,7 +373,7 @@ class ExemptionAllowlistTest extends TestCase
 
         // Assert exact string format
         $unused = $allowlist->unused();
-        static::assertCount(1, $unused);
-        static::assertSame('legacy.route (suppressed nothing): Migration period waiver.', $unused[0]);
+        self::assertCount(1, $unused);
+        self::assertSame('legacy.route (suppressed nothing): Migration period waiver.', $unused[0]);
     }
 }

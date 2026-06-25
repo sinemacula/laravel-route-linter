@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Benchmarks;
 
-use Benchmarks\Support\RouteLinterFixtures;
+use Benchmarks\Support\Concerns\RouteLinterFixtures;
 use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\Inflection\FrameworkInflector;
 
@@ -22,9 +24,6 @@ use SineMacula\RouteLinter\Inflection\FrameworkInflector;
 final class InflectorBench
 {
     use RouteLinterFixtures;
-
-    /** @var mixed Sink preventing the measured expression from being optimised away. */
-    public mixed $sink = null;
 
     /** @var \SineMacula\RouteLinter\Inflection\FrameworkInflector The inflector under test. */
     private FrameworkInflector $inflector;
@@ -48,7 +47,7 @@ final class InflectorBench
     #[Bench\Warmup(2)]
     public function benchSingularCountable(): void
     {
-        $this->sink = $this->inflector->singular('categories');
+        $this->inflector->singular('categories');
     }
 
     /**
@@ -61,7 +60,7 @@ final class InflectorBench
     #[Bench\Warmup(2)]
     public function benchSingularUncountable(): void
     {
-        $this->sink = $this->inflector->singular('media');
+        $this->inflector->singular('media');
     }
 
     /**
@@ -74,7 +73,7 @@ final class InflectorBench
     #[Bench\Warmup(2)]
     public function benchIsPluralCountable(): void
     {
-        $this->sink = $this->inflector->isPlural('invoices');
+        $this->inflector->isPlural('invoices');
     }
 
     /**
@@ -87,6 +86,6 @@ final class InflectorBench
     #[Bench\Warmup(2)]
     public function benchIsPluralSingular(): void
     {
-        $this->sink = $this->inflector->isPlural('invoice');
+        $this->inflector->isPlural('invoice');
     }
 }

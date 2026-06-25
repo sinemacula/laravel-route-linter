@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Integration\Console;
 
 use Illuminate\Routing\Router;
@@ -20,7 +22,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(LintRoutesCommand::class)]
-class LintRoutesCommandTest extends TestCase
+final class LintRoutesCommandTest extends TestCase
 {
     /** @var string The command signature under test. */
     private const string COMMAND = 'route:lint';
@@ -104,7 +106,8 @@ class LintRoutesCommandTest extends TestCase
     {
         $this->seedConfig();
 
-        // A named route whose name does not follow {resource}.{action} - triggers R8 (warning)
+        // A named route whose name does not follow {resource}.{action} -
+        // triggers R8 (warning)
         $this->getRouter()->get('users', fn () => [])->name('users.getAll');
 
         $this->runCommand()->assertExitCode(0);
@@ -121,7 +124,8 @@ class LintRoutesCommandTest extends TestCase
     {
         $this->seedConfig();
 
-        // /users is a clean route; the inline suppression for R1 fires on nothing
+        // /users is a clean route; the inline suppression for R1 fires on
+        // nothing
         $this->getRouter()->get('users', fn () => [])
             ->name('users.index')
             // @phpstan-ignore method.notFound

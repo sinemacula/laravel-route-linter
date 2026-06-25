@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules\Support;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,7 +17,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(VerbDenylist::class)]
-class VerbDenylistTest extends TestCase
+final class VerbDenylistTest extends TestCase
 {
     /**
      * Test that contains() returns true for a word that is in the denylist.
@@ -28,9 +30,9 @@ class VerbDenylistTest extends TestCase
         $denylist = new VerbDenylist(['get', 'post', 'delete'], []);
 
         // Act & Assert
-        static::assertTrue($denylist->contains('get'));
-        static::assertTrue($denylist->contains('post'));
-        static::assertTrue($denylist->contains('delete'));
+        self::assertTrue($denylist->contains('get'));
+        self::assertTrue($denylist->contains('post'));
+        self::assertTrue($denylist->contains('delete'));
     }
 
     /**
@@ -44,8 +46,8 @@ class VerbDenylistTest extends TestCase
         $denylist = new VerbDenylist(['get', 'post'], []);
 
         // Act & Assert
-        static::assertFalse($denylist->contains('users'));
-        static::assertFalse($denylist->contains('transfer'));
+        self::assertFalse($denylist->contains('users'));
+        self::assertFalse($denylist->contains('transfer'));
     }
 
     /**
@@ -60,7 +62,7 @@ class VerbDenylistTest extends TestCase
         $denylist = new VerbDenylist(['get', 'post', 'delete'], []);
 
         // Act & Assert - 'transfer' was never added, so it must not be present
-        static::assertFalse($denylist->contains('transfer'));
+        self::assertFalse($denylist->contains('transfer'));
     }
 
     /**
@@ -75,10 +77,10 @@ class VerbDenylistTest extends TestCase
         $denylist = new VerbDenylist(['GET', 'Post'], []);
 
         // Act & Assert
-        static::assertTrue($denylist->contains('get'));
-        static::assertTrue($denylist->contains('GET'));
-        static::assertTrue($denylist->contains('post'));
-        static::assertTrue($denylist->contains('POST'));
+        self::assertTrue($denylist->contains('get'));
+        self::assertTrue($denylist->contains('GET'));
+        self::assertTrue($denylist->contains('post'));
+        self::assertTrue($denylist->contains('POST'));
     }
 
     /**
@@ -96,12 +98,12 @@ class VerbDenylistTest extends TestCase
         );
 
         // Act & Assert - mapped verbs return their hint
-        static::assertSame('Use POST /sessions instead.', $denylist->hint('login'));
-        static::assertSame('Use DELETE /sessions/{session} instead.', $denylist->hint('logout'));
+        self::assertSame('Use POST /sessions instead.', $denylist->hint('login'));
+        self::assertSame('Use DELETE /sessions/{session} instead.', $denylist->hint('logout'));
 
         // A verb in the denylist but absent from hints returns null
         $denylistWithoutHint = new VerbDenylist(['get'], []);
-        static::assertNull($denylistWithoutHint->hint('get'));
+        self::assertNull($denylistWithoutHint->hint('get'));
     }
 
     /**
@@ -115,9 +117,9 @@ class VerbDenylistTest extends TestCase
         $denylist = new VerbDenylist([], []);
 
         // Act & Assert
-        static::assertFalse($denylist->contains('get'));
-        static::assertFalse($denylist->contains('post'));
-        static::assertFalse($denylist->contains(''));
+        self::assertFalse($denylist->contains('get'));
+        self::assertFalse($denylist->contains('post'));
+        self::assertFalse($denylist->contains(''));
     }
 
     /**
@@ -132,13 +134,13 @@ class VerbDenylistTest extends TestCase
         $denylist = new VerbDenylist(['fetch'], []);
 
         // Act & Assert
-        static::assertNull($denylist->hint('fetch'));
-        static::assertNull($denylist->hint('unknown'));
+        self::assertNull($denylist->hint('fetch'));
+        self::assertNull($denylist->hint('unknown'));
     }
 
     /**
-     * Test that hint() is case-insensitive - the lookup applies strtolower() so
-     * that 'LOGIN' resolves to the same hint as 'login'.
+     * Test that hint() is case-insensitive - the lookup applies
+     * strtolower() so that 'LOGIN' resolves to the same hint as 'login'.
      *
      * Targets UnwrapStrToLower on hint(): without lowercasing, 'LOGIN' would
      * not match the 'login' key in the hints array and would return null
@@ -154,9 +156,10 @@ class VerbDenylistTest extends TestCase
             ['login' => 'Use POST /sessions instead.'],
         );
 
-        // Act & Assert - uppercase lookup must resolve the same hint as lowercase
-        static::assertSame('Use POST /sessions instead.', $denylist->hint('LOGIN'));
-        static::assertSame('Use POST /sessions instead.', $denylist->hint('Login'));
-        static::assertSame('Use POST /sessions instead.', $denylist->hint('login'));
+        // Act & Assert - uppercase lookup must resolve the same hint as
+        // lowercase
+        self::assertSame('Use POST /sessions instead.', $denylist->hint('LOGIN'));
+        self::assertSame('Use POST /sessions instead.', $denylist->hint('Login'));
+        self::assertSame('Use POST /sessions instead.', $denylist->hint('login'));
     }
 }

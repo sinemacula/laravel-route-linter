@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Benchmarks;
 
-use Benchmarks\Support\RouteLinterFixtures;
+use Benchmarks\Support\Concerns\RouteLinterFixtures;
 use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\Rules\Support\SegmentNormaliser;
 
@@ -31,9 +33,6 @@ final class SegmentNormaliserBench
     /** @var string A deep path packed with prefixes, parameters, and compound segments. */
     private const string COMPOUND_URI = 'api/v2/userProfiles/{user}/order-items/{item}/audit_logs/exportReports';
 
-    /** @var mixed Sink preventing the measured expression from being optimised away. */
-    public mixed $sink = null;
-
     /** @var \SineMacula\RouteLinter\Rules\Support\SegmentNormaliser The normaliser under test. */
     private SegmentNormaliser $normaliser;
 
@@ -55,7 +54,7 @@ final class SegmentNormaliserBench
     #[Bench\Warmup(2)]
     public function benchNormaliseSimple(): void
     {
-        $this->sink = $this->normaliser->normalise(self::SIMPLE_URI, self::UNCOUNTABLES);
+        $this->normaliser->normalise(self::SIMPLE_URI, self::UNCOUNTABLES);
     }
 
     /**
@@ -68,6 +67,6 @@ final class SegmentNormaliserBench
     #[Bench\Warmup(2)]
     public function benchNormaliseCompound(): void
     {
-        $this->sink = $this->normaliser->normalise(self::COMPOUND_URI, self::UNCOUNTABLES);
+        $this->normaliser->normalise(self::COMPOUND_URI, self::UNCOUNTABLES);
     }
 }

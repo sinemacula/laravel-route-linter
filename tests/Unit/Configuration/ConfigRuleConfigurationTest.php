@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Configuration;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -16,7 +18,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(ConfigRuleConfiguration::class)]
-class ConfigRuleConfigurationTest extends TestCase
+final class ConfigRuleConfigurationTest extends TestCase
 {
     /**
      * Test that load() returns an empty exemptions array when no app overrides
@@ -29,7 +31,7 @@ class ConfigRuleConfigurationTest extends TestCase
         $adapter = new ConfigRuleConfiguration;
         $config  = $adapter->load();
 
-        static::assertSame([], $config->exemptions);
+        self::assertSame([], $config->exemptions);
     }
 
     /**
@@ -50,12 +52,12 @@ class ConfigRuleConfigurationTest extends TestCase
         $adapter = new ConfigRuleConfiguration;
         $result  = $adapter->load();
 
-        static::assertSame(['get', 'fetch'], $result->verbDenylist);
-        static::assertSame(['get' => 'Use a noun resource instead.'], $result->remediationHints);
-        static::assertCount(1, $result->exemptions);
-        static::assertSame('users.store', $result->exemptions[0]->match);
-        static::assertSame('Legacy endpoint kept for backward compatibility.', $result->exemptions[0]->reason);
-        static::assertSame(['media', 'data'], $result->uncountables);
+        self::assertSame(['get', 'fetch'], $result->verbDenylist);
+        self::assertSame(['get' => 'Use a noun resource instead.'], $result->remediationHints);
+        self::assertCount(1, $result->exemptions);
+        self::assertSame('users.store', $result->exemptions[0]->match);
+        self::assertSame('Legacy endpoint kept for backward compatibility.', $result->exemptions[0]->reason);
+        self::assertSame(['media', 'data'], $result->uncountables);
     }
 
     /**
@@ -101,7 +103,7 @@ class ConfigRuleConfigurationTest extends TestCase
     {
         config()->set('route-linter.nesting_max_depth', 5);
 
-        static::assertSame(5, (new ConfigRuleConfiguration)->load()->nestingMaxDepth);
+        self::assertSame(5, (new ConfigRuleConfiguration)->load()->nestingMaxDepth);
     }
 
     /**
@@ -155,11 +157,11 @@ class ConfigRuleConfigurationTest extends TestCase
         $adapter = new ConfigRuleConfiguration;
         $result  = $adapter->load();
 
-        static::assertSame([], $result->verbDenylist);
-        static::assertSame([], $result->remediationHints);
-        static::assertSame([], $result->exemptions);
-        static::assertSame([], $result->uncountables);
-        static::assertSame(3, $result->nestingMaxDepth);
+        self::assertSame([], $result->verbDenylist);
+        self::assertSame([], $result->remediationHints);
+        self::assertSame([], $result->exemptions);
+        self::assertSame([], $result->uncountables);
+        self::assertSame(3, $result->nestingMaxDepth);
     }
 
     /**
@@ -177,14 +179,14 @@ class ConfigRuleConfigurationTest extends TestCase
         $adapter = new ConfigRuleConfiguration;
         $result  = $adapter->load();
 
-        static::assertCount(1, $result->exemptions);
+        self::assertCount(1, $result->exemptions);
 
         $entry = $result->exemptions[0];
 
-        static::assertSame(['R9', 'R3'], $entry->rules);
-        static::assertTrue($entry->covers('R9'));
-        static::assertTrue($entry->covers('R3'));
-        static::assertFalse($entry->covers('R1'));
+        self::assertSame(['R9', 'R3'], $entry->rules);
+        self::assertTrue($entry->covers('R9'));
+        self::assertTrue($entry->covers('R3'));
+        self::assertFalse($entry->covers('R1'));
     }
 
     /**
@@ -202,13 +204,13 @@ class ConfigRuleConfigurationTest extends TestCase
         $adapter = new ConfigRuleConfiguration;
         $result  = $adapter->load();
 
-        static::assertCount(1, $result->exemptions);
+        self::assertCount(1, $result->exemptions);
 
         $entry = $result->exemptions[0];
 
-        static::assertSame([], $entry->rules);
-        static::assertTrue($entry->covers('R9'));
-        static::assertTrue($entry->covers('R1'));
+        self::assertSame([], $entry->rules);
+        self::assertTrue($entry->covers('R9'));
+        self::assertTrue($entry->covers('R1'));
     }
 
     /**
@@ -227,8 +229,8 @@ class ConfigRuleConfigurationTest extends TestCase
         $adapter = new ConfigRuleConfiguration;
         $result  = $adapter->load();
 
-        static::assertCount(1, $result->exemptions);
-        static::assertSame([], $result->exemptions[0]->rules);
+        self::assertCount(1, $result->exemptions);
+        self::assertSame([], $result->exemptions[0]->rules);
     }
 
     /**
@@ -258,7 +260,8 @@ class ConfigRuleConfigurationTest extends TestCase
 
     /**
      * Test that an array exemption item with no 'match' key throws
-     * InvalidConfigurationException (kills LogicalOr mutant #2: `... && !is_string($item['match'])`).
+     * InvalidConfigurationException (kills LogicalOr mutant #2: `... &&
+     * !is_string($item['match'])`).
      *
      * The original guard requires `isset($item['match'])` as well as
      * `is_string($item['match'])`. The mutant changes the second `||` to `&&`,
@@ -284,7 +287,8 @@ class ConfigRuleConfigurationTest extends TestCase
      * filtered out, keeping only string entries (kills UnwrapArrayFilter
      * mutant).
      *
-     * `array_filter($rawRules, 'is_string')` must remove the integer; without the
+     * `array_filter($rawRules, 'is_string')` must remove the integer; without
+     * the
      * filter the mutant returns the integer entry inside
      * `AllowlistEntry::$rules`.
      *
@@ -299,12 +303,12 @@ class ConfigRuleConfigurationTest extends TestCase
         $adapter = new ConfigRuleConfiguration;
         $result  = $adapter->load();
 
-        static::assertCount(1, $result->exemptions);
+        self::assertCount(1, $result->exemptions);
 
         $rules = $result->exemptions[0]->rules;
 
         // Only the two string values should survive
-        static::assertSame(['R1', 'R3'], $rules);
+        self::assertSame(['R1', 'R3'], $rules);
     }
 
     /**
@@ -315,13 +319,15 @@ class ConfigRuleConfigurationTest extends TestCase
      * After filtering, `array_values` guarantees integer keys 0, 1, 2... even
      * when the source array had gaps. Without `array_values` the mutant returns
      * a
-     * non-contiguous array that fails an assertSame against [0 => 'R1', 1 => 'R3'].
+     * non-contiguous array that fails an assertSame against [0 => 'R1', 1 =>
+     * 'R3'].
      *
      * @return void
      */
     public function testFilteredRulesListIsReIndexed(): void
     {
-        // Place a non-string at index 0 so after filtering index 1 would remain 1
+        // Place a non-string at index 0 so after filtering index 1 would remain
+        // 1
         // without array_values - with array_values it becomes index 0.
         config()->set('route-linter.exemptions', [
             ['match' => 'users.index', 'reason' => 'Reindex test.', 'rules' => [0 => 99, 1 => 'R1', 2 => 'R3']],
@@ -330,19 +336,20 @@ class ConfigRuleConfigurationTest extends TestCase
         $adapter = new ConfigRuleConfiguration;
         $result  = $adapter->load();
 
-        static::assertCount(1, $result->exemptions);
+        self::assertCount(1, $result->exemptions);
 
         $rules = $result->exemptions[0]->rules;
 
         // Must be a contiguous 0-based list
-        static::assertSame([0 => 'R1', 1 => 'R3'], $rules);
+        self::assertSame([0 => 'R1', 1 => 'R3'], $rules);
     }
 
     /**
      * Test that two valid exemption entries both survive (kills ArrayOneItem
      * mutant).
      *
-     * The ArrayOneItem mutant returns `array_slice($entries, 0, 1)` when count > 1,
+     * The ArrayOneItem mutant returns `array_slice($entries, 0, 1)` when count
+     * > 1,
      * truncating to the first entry only.
      *
      * @return void
@@ -358,10 +365,10 @@ class ConfigRuleConfigurationTest extends TestCase
         $adapter = new ConfigRuleConfiguration;
         $result  = $adapter->load();
 
-        static::assertCount(3, $result->exemptions);
-        static::assertSame('users.index', $result->exemptions[0]->match);
-        static::assertSame('orders.index', $result->exemptions[1]->match);
-        static::assertSame('products.index', $result->exemptions[2]->match);
+        self::assertCount(3, $result->exemptions);
+        self::assertSame('users.index', $result->exemptions[0]->match);
+        self::assertSame('orders.index', $result->exemptions[1]->match);
+        self::assertSame('products.index', $result->exemptions[2]->match);
     }
 
     /**
@@ -372,7 +379,7 @@ class ConfigRuleConfigurationTest extends TestCase
      */
     public function testDefaultRequiredMiddlewareIsEmpty(): void
     {
-        static::assertSame([], (new ConfigRuleConfiguration)->load()->requiredMiddleware);
+        self::assertSame([], (new ConfigRuleConfiguration)->load()->requiredMiddleware);
     }
 
     /**
@@ -390,7 +397,7 @@ class ConfigRuleConfigurationTest extends TestCase
 
         $result = (new ConfigRuleConfiguration)->load();
 
-        static::assertSame([
+        self::assertSame([
             'admin/*' => ['auth', 'can:access-admin'],
             'api/*'   => ['auth:sanctum'],
         ], $result->requiredMiddleware);

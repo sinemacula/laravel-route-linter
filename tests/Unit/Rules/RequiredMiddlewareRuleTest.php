@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\RequiredMiddlewareRule;
-use SineMacula\RouteLinter\Severity;
 use Tests\TestCase;
 
 /**
@@ -18,7 +20,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RequiredMiddlewareRule::class)]
-class RequiredMiddlewareRuleTest extends TestCase
+final class RequiredMiddlewareRuleTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Rules\RequiredMiddlewareRule */
     private RequiredMiddlewareRule $rule;
@@ -28,6 +30,7 @@ class RequiredMiddlewareRuleTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -46,11 +49,12 @@ class RequiredMiddlewareRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route('admin/users', ['auth']), $this->config([]));
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
-     * Test that a route matching a pattern and declaring the required middleware
+     * Test that a route matching a pattern and declaring the required
+     * middleware
      * is not flagged.
      *
      * @return void
@@ -64,7 +68,7 @@ class RequiredMiddlewareRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route('admin/users', ['auth']), $config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -82,12 +86,12 @@ class RequiredMiddlewareRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route('admin/users', ['throttle']), $config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R10', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame('GET admin/users admin.users', $violations[0]->routeIdentity);
-        static::assertSame('auth', $violations[0]->offendingSurface);
-        static::assertSame('add the `auth` middleware (route matches `admin/*`)', $violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R10', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame('GET admin/users admin.users', $violations[0]->routeIdentity);
+        self::assertSame('auth', $violations[0]->offendingSurface);
+        self::assertSame('add the `auth` middleware (route matches `admin/*`)', $violations[0]->remediationHint);
     }
 
     /**
@@ -108,7 +112,7 @@ class RequiredMiddlewareRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route('api/users', []), $config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -125,8 +129,8 @@ class RequiredMiddlewareRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route('admin/users', ['auth']), $config);
 
         // Assert - only the absent `can:access-admin` is flagged
-        static::assertCount(1, $violations);
-        static::assertSame('can:access-admin', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('can:access-admin', $violations[0]->offendingSurface);
     }
 
     /**
@@ -146,9 +150,9 @@ class RequiredMiddlewareRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route('admin/users/5', []), $config);
 
         // Assert
-        static::assertCount(2, $violations);
-        static::assertSame('auth', $violations[0]->offendingSurface);
-        static::assertSame('can:manage-users', $violations[1]->offendingSurface);
+        self::assertCount(2, $violations);
+        self::assertSame('auth', $violations[0]->offendingSurface);
+        self::assertSame('can:manage-users', $violations[1]->offendingSurface);
     }
 
     /**
@@ -172,19 +176,20 @@ class RequiredMiddlewareRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route('admin/users', []), $config);
 
         // Assert - the second pattern still produced its violation
-        static::assertCount(1, $violations);
-        static::assertSame('auth', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('auth', $violations[0]->offendingSurface);
     }
 
     /**
-     * Test that rule id() returns 'R10' and severity() returns Severity::WARNING.
+     * Test that rule id() returns 'R10' and severity() returns
+     * Severity::WARNING.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
-        static::assertSame('R10', $this->rule->id());
-        static::assertSame(Severity::WARNING, $this->rule->severity());
+        self::assertSame('R10', $this->rule->id());
+        self::assertSame(Severity::WARNING, $this->rule->severity());
     }
 
     /**

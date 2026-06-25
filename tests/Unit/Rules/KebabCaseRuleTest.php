@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\KebabCaseRule;
-use SineMacula\RouteLinter\Severity;
 use Tests\TestCase;
 
 /**
@@ -18,7 +20,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(KebabCaseRule::class)]
-class KebabCaseRuleTest extends TestCase
+final class KebabCaseRuleTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Rules\KebabCaseRule */
     private KebabCaseRule $rule;
@@ -31,6 +33,7 @@ class KebabCaseRuleTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -59,11 +62,11 @@ class KebabCaseRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R2', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
-        static::assertSame('userProfiles', $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R2', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('userProfiles', $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -86,7 +89,7 @@ class KebabCaseRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -109,7 +112,7 @@ class KebabCaseRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -132,7 +135,7 @@ class KebabCaseRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -156,7 +159,7 @@ class KebabCaseRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - 'users' is valid kebab; '' is skipped; no violations
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -172,7 +175,8 @@ class KebabCaseRuleTest extends TestCase
      */
     public function testNonKebabSegmentAfterParameterIsFlagged(): void
     {
-        // Arrange - '{user}' is first; 'userProfiles' follows and must still be inspected
+        // Arrange - '{user}' is first; 'userProfiles' follows and must still be
+        // inspected
         $route = new NormalisedRoute(
             uri: '{user}/userProfiles',
             methods: ['GET'],
@@ -185,10 +189,10 @@ class KebabCaseRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - 'userProfiles' violates kebab-case despite the leading param
-        static::assertCount(1, $violations);
-        static::assertSame('R2', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
-        static::assertSame('userProfiles', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('R2', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('userProfiles', $violations[0]->offendingSurface);
     }
 
     /**
@@ -203,7 +207,8 @@ class KebabCaseRuleTest extends TestCase
      */
     public function testTwoNonKebabSegmentsProduceTwoViolations(): void
     {
-        // Arrange - both 'userProfiles' and 'some_other_stuff' violate kebab-case
+        // Arrange - both 'userProfiles' and 'some_other_stuff' violate
+        // kebab-case
         $route = new NormalisedRoute(
             uri: 'userProfiles/some_other_stuff',
             methods: ['GET'],
@@ -216,11 +221,11 @@ class KebabCaseRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - two violations, one per offending segment, in segment order
-        static::assertCount(2, $violations);
-        static::assertSame('R2', $violations[0]->ruleId);
-        static::assertSame('userProfiles', $violations[0]->offendingSurface);
-        static::assertSame('R2', $violations[1]->ruleId);
-        static::assertSame('some_other_stuff', $violations[1]->offendingSurface);
+        self::assertCount(2, $violations);
+        self::assertSame('R2', $violations[0]->ruleId);
+        self::assertSame('userProfiles', $violations[0]->offendingSurface);
+        self::assertSame('R2', $violations[1]->ruleId);
+        self::assertSame('some_other_stuff', $violations[1]->offendingSurface);
     }
 
     /**
@@ -230,7 +235,7 @@ class KebabCaseRuleTest extends TestCase
      */
     public function testRuleMetadata(): void
     {
-        static::assertSame('R2', $this->rule->id());
-        static::assertSame(Severity::ERROR, $this->rule->severity());
+        self::assertSame('R2', $this->rule->id());
+        self::assertSame(Severity::ERROR, $this->rule->severity());
     }
 }

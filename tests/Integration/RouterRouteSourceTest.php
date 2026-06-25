@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Integration;
 
 use Illuminate\Routing\Route;
@@ -24,7 +26,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RouterRouteSource::class)]
-class RouterRouteSourceTest extends TestCase
+final class RouterRouteSourceTest extends TestCase
 {
     /** @var string The vendor-segment path marker used in vendor detection. */
     private const string VENDOR_SEGMENT = DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR;
@@ -45,30 +47,32 @@ class RouterRouteSourceTest extends TestCase
         $source      = new RouterRouteSource($router);
         $descriptors = $source->appRoutes();
 
-        static::assertContainsOnlyInstancesOf(RouteDescriptor::class, $descriptors);
+        self::assertContainsOnlyInstancesOf(RouteDescriptor::class, $descriptors);
 
         $byName = [];
 
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name !== null) {
-                $byName[$descriptor->name] = $descriptor;
+            if ($descriptor->name === null) {
+                continue;
             }
+
+            $byName[$descriptor->name] = $descriptor;
         }
 
-        static::assertArrayHasKey('users.index', $byName);
-        static::assertArrayHasKey('users.store', $byName);
+        self::assertArrayHasKey('users.index', $byName);
+        self::assertArrayHasKey('users.store', $byName);
 
         $index = $byName['users.index'];
 
-        static::assertSame('users', $index->uri);
-        static::assertContains('GET', $index->methods);
-        static::assertFalse($index->isVendor);
+        self::assertSame('users', $index->uri);
+        self::assertContains('GET', $index->methods);
+        self::assertFalse($index->isVendor);
 
         $store = $byName['users.store'];
 
-        static::assertSame('users', $store->uri);
-        static::assertContains('POST', $store->methods);
-        static::assertFalse($store->isVendor);
+        self::assertSame('users', $store->uri);
+        self::assertContains('POST', $store->methods);
+        self::assertFalse($store->isVendor);
     }
 
     /**
@@ -84,7 +88,8 @@ class RouterRouteSourceTest extends TestCase
         // App-owned closure route
         $router->get('app-route', fn () => [])->name('app.route');
 
-        // Vendor-backed controller route: the controller class file lives under vendor/
+        // Vendor-backed controller route: the controller class file lives under
+        // vendor/
         $router->get('vendor-route', '\Illuminate\Routing\RedirectController@__invoke')
             ->name('vendor.route');
 
@@ -93,8 +98,8 @@ class RouterRouteSourceTest extends TestCase
 
         $names = array_map(static fn (RouteDescriptor $d) => $d->name, $descriptors);
 
-        static::assertContains('app.route', $names);
-        static::assertNotContains('vendor.route', $names);
+        self::assertContains('app.route', $names);
+        self::assertNotContains('vendor.route', $names);
     }
 
     /**
@@ -122,7 +127,7 @@ class RouterRouteSourceTest extends TestCase
         // Second call simulates a warm-cache environment
         $secondPass = $source->appRoutes();
 
-        static::assertCount(count($firstPass), $secondPass);
+        self::assertCount(count($firstPass), $secondPass);
 
         $firstUris  = array_map(static fn (RouteDescriptor $d) => $d->uri, $firstPass);
         $secondUris = array_map(static fn (RouteDescriptor $d) => $d->uri, $secondPass);
@@ -130,7 +135,7 @@ class RouterRouteSourceTest extends TestCase
         sort($firstUris);
         sort($secondUris);
 
-        static::assertSame($firstUris, $secondUris);
+        self::assertSame($firstUris, $secondUris);
     }
 
     /**
@@ -156,12 +161,14 @@ class RouterRouteSourceTest extends TestCase
         $expectedCount = 0;
 
         foreach ($router->getRoutes()->getRoutes() as $route) {
-            if (!$this->isVendorRoute($route)) {
-                $expectedCount++;
+            if ($this->isVendorRoute($route)) {
+                continue;
             }
+
+            $expectedCount++;
         }
 
-        static::assertCount($expectedCount, $descriptors);
+        self::assertCount($expectedCount, $descriptors);
     }
 
     /**
@@ -180,8 +187,8 @@ class RouterRouteSourceTest extends TestCase
         $descriptors = $source->appRoutes();
 
         foreach ($descriptors as $descriptor) {
-            static::assertInstanceOf(RouteDescriptor::class, $descriptor);
-            static::assertNotInstanceOf(Route::class, $descriptor);
+            self::assertInstanceOf(RouteDescriptor::class, $descriptor);
+            self::assertNotInstanceOf(Route::class, $descriptor);
         }
     }
 
@@ -194,7 +201,7 @@ class RouterRouteSourceTest extends TestCase
     {
         $source = new RouterRouteSource($this->getRouter());
 
-        static::assertSame([], $source->appRoutes());
+        self::assertSame([], $source->appRoutes());
     }
 
     /**
@@ -217,19 +224,21 @@ class RouterRouteSourceTest extends TestCase
         $byName = [];
 
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name !== null) {
-                $byName[$descriptor->name] = $descriptor;
+            if ($descriptor->name === null) {
+                continue;
             }
+
+            $byName[$descriptor->name] = $descriptor;
         }
 
-        static::assertArrayHasKey('invoices.index', $byName);
+        self::assertArrayHasKey('invoices.index', $byName);
 
         $descriptor = $byName['invoices.index'];
 
-        static::assertCount(1, $descriptor->suppressions);
-        static::assertInstanceOf(RouteSuppression::class, $descriptor->suppressions[0]);
-        static::assertSame(['R9'], $descriptor->suppressions[0]->rules);
-        static::assertSame('Legacy naming kept for migration period.', $descriptor->suppressions[0]->reason);
+        self::assertCount(1, $descriptor->suppressions);
+        self::assertInstanceOf(RouteSuppression::class, $descriptor->suppressions[0]);
+        self::assertSame(['R9'], $descriptor->suppressions[0]->rules);
+        self::assertSame('Legacy naming kept for migration period.', $descriptor->suppressions[0]->reason);
     }
 
     /**
@@ -250,19 +259,22 @@ class RouterRouteSourceTest extends TestCase
         $byName = [];
 
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name !== null) {
-                $byName[$descriptor->name] = $descriptor;
+            if ($descriptor->name === null) {
+                continue;
             }
+
+            $byName[$descriptor->name] = $descriptor;
         }
 
-        static::assertArrayHasKey('categories.index', $byName);
-        static::assertSame([], $byName['categories.index']->suppressions);
+        self::assertArrayHasKey('categories.index', $byName);
+        self::assertSame([], $byName['categories.index']->suppressions);
     }
 
     /**
      * Test that a suppression entry with a non-array `rules` value is skipped
      * and the valid entry alongside it is still mapped
-     * (kills LogicalAnd mutant #85: `isset($entry['rules']) || is_array(...)` vs `&&`).
+     * (kills LogicalAnd mutant #85: `isset($entry['rules']) || is_array(...)`
+     * vs `&&`).
      *
      * With `||` instead of `&&`, a missing `rules` key combined with `is_array`
      * being false would still satisfy the condition (because `isset` is true
@@ -289,19 +301,22 @@ class RouterRouteSourceTest extends TestCase
         $byName = [];
 
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name !== null) {
-                $byName[$descriptor->name] = $descriptor;
+            if ($descriptor->name === null) {
+                continue;
             }
+
+            $byName[$descriptor->name] = $descriptor;
         }
 
-        static::assertArrayHasKey('billing.index', $byName);
+        self::assertArrayHasKey('billing.index', $byName);
 
         $descriptor = $byName['billing.index'];
 
-        // The missing-rules entry still produces a RouteSuppression with empty rules
-        static::assertCount(1, $descriptor->suppressions);
-        static::assertSame([], $descriptor->suppressions[0]->rules);
-        static::assertSame('No rules key present.', $descriptor->suppressions[0]->reason);
+        // The missing-rules entry still produces a RouteSuppression with empty
+        // rules
+        self::assertCount(1, $descriptor->suppressions);
+        self::assertSame([], $descriptor->suppressions[0]->rules);
+        self::assertSame('No rules key present.', $descriptor->suppressions[0]->reason);
     }
 
     /**
@@ -327,17 +342,19 @@ class RouterRouteSourceTest extends TestCase
         $byName = [];
 
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name !== null) {
-                $byName[$descriptor->name] = $descriptor;
+            if ($descriptor->name === null) {
+                continue;
             }
+
+            $byName[$descriptor->name] = $descriptor;
         }
 
-        static::assertArrayHasKey('analytics.index', $byName);
+        self::assertArrayHasKey('analytics.index', $byName);
 
         $suppression = $byName['analytics.index']->suppressions[0];
 
         // Non-array rules must be treated as empty
-        static::assertSame([], $suppression->rules);
+        self::assertSame([], $suppression->rules);
     }
 
     /**
@@ -367,17 +384,19 @@ class RouterRouteSourceTest extends TestCase
         $byName = [];
 
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name !== null) {
-                $byName[$descriptor->name] = $descriptor;
+            if ($descriptor->name === null) {
+                continue;
             }
+
+            $byName[$descriptor->name] = $descriptor;
         }
 
-        static::assertArrayHasKey('reports.index', $byName);
+        self::assertArrayHasKey('reports.index', $byName);
 
         $rules = $byName['reports.index']->suppressions[0]->rules;
 
         // Must be a 0-based indexed list
-        static::assertSame([0 => 'R1', 1 => 'R3'], $rules);
+        self::assertSame([0 => 'R1', 1 => 'R3'], $rules);
     }
 
     /**
@@ -408,17 +427,19 @@ class RouterRouteSourceTest extends TestCase
         $byName = [];
 
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name !== null) {
-                $byName[$descriptor->name] = $descriptor;
+            if ($descriptor->name === null) {
+                continue;
             }
+
+            $byName[$descriptor->name] = $descriptor;
         }
 
-        static::assertArrayHasKey('exports.index', $byName);
+        self::assertArrayHasKey('exports.index', $byName);
 
         $suppression = $byName['exports.index']->suppressions[0];
 
         // Non-string reason must fall back to empty string
-        static::assertSame('', $suppression->reason);
+        self::assertSame('', $suppression->reason);
     }
 
     /**
@@ -443,29 +464,32 @@ class RouterRouteSourceTest extends TestCase
         $byName = [];
 
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name !== null) {
-                $byName[$descriptor->name] = $descriptor;
+            if ($descriptor->name === null) {
+                continue;
             }
+
+            $byName[$descriptor->name] = $descriptor;
         }
 
-        static::assertArrayHasKey('notifications.index', $byName);
+        self::assertArrayHasKey('notifications.index', $byName);
 
         $suppressions = $byName['notifications.index']->suppressions;
 
-        static::assertCount(3, $suppressions);
-        static::assertSame(['R1'], $suppressions[0]->rules);
-        static::assertSame('First suppression reason.', $suppressions[0]->reason);
-        static::assertSame(['R3'], $suppressions[1]->rules);
-        static::assertSame('Second suppression reason.', $suppressions[1]->reason);
-        static::assertSame([], $suppressions[2]->rules);
-        static::assertSame('Third suppression, all rules.', $suppressions[2]->reason);
+        self::assertCount(3, $suppressions);
+        self::assertSame(['R1'], $suppressions[0]->rules);
+        self::assertSame('First suppression reason.', $suppressions[0]->reason);
+        self::assertSame(['R3'], $suppressions[1]->rules);
+        self::assertSame('Second suppression reason.', $suppressions[1]->reason);
+        self::assertSame([], $suppressions[2]->rules);
+        self::assertSame('Third suppression, all rules.', $suppressions[2]->reason);
     }
 
     /**
      * Test that an app-owned controller route registered as a string action
      * appears in appRoutes() with isVendor === false.
      *
-     * Kills the `is_string($uses) && isControllerVendor` → `||` mutant: under the
+     * Kills the `is_string($uses) && isControllerVendor` → `||` mutant: under
+     * the
      * mutant a string controller action is evaluated with the short-circuit OR
      * so the vendor check fires even for non-string uses values, and conversely
      * a string action that resolves to an app-owned file may be wrongly
@@ -479,7 +503,8 @@ class RouterRouteSourceTest extends TestCase
     {
         $router = $this->getRouter();
 
-        // Register using the string controller@method notation so `uses` is a string.
+        // Register using the string controller@method notation so `uses` is a
+        // string.
         // RouteLintController lives under tests/, so ReflectionClass resolves a
         // non-vendor file - the adapter must return it with isVendor === false.
         $router->get('widgets', [RouteLintController::class, 'index'])->name('widgets.index');
@@ -490,13 +515,15 @@ class RouterRouteSourceTest extends TestCase
         $byName = [];
 
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name !== null) {
-                $byName[$descriptor->name] = $descriptor;
+            if ($descriptor->name === null) {
+                continue;
             }
+
+            $byName[$descriptor->name] = $descriptor;
         }
 
-        static::assertArrayHasKey('widgets.index', $byName, 'App-owned controller route must appear in appRoutes().');
-        static::assertFalse($byName['widgets.index']->isVendor, 'Controller whose file is under tests/ must not be flagged as vendor.');
+        self::assertArrayHasKey('widgets.index', $byName, 'App-owned controller route must appear in appRoutes().');
+        self::assertFalse($byName['widgets.index']->isVendor, 'Controller whose file is under tests/ must not be flagged as vendor.');
     }
 
     /**
@@ -504,7 +531,8 @@ class RouterRouteSourceTest extends TestCase
      * Closure is treated as app-owned (kills LogicalAnd mutant #89:
      * `is_string($uses) || $this->isControllerVendor($route)` vs `&&`).
      *
-     * With `||`, a non-string `uses` value would still trigger isControllerVendor
+     * With `||`, a non-string `uses` value would still trigger
+     * isControllerVendor
      * (which could return true and incorrectly mark the route as vendor). The
      * `&&` guard ensures isControllerVendor is only called for string uses
      * values.
@@ -526,13 +554,15 @@ class RouterRouteSourceTest extends TestCase
         $names = array_map(static fn (RouteDescriptor $d) => $d->name, $descriptors);
 
         // The closure-backed app route must appear in the results
-        static::assertContains('health.check', $names);
+        self::assertContains('health.check', $names);
 
         // Confirm the returned descriptor is not flagged as vendor
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name === 'health.check') {
-                static::assertFalse($descriptor->isVendor);
+            if ($descriptor->name !== 'health.check') {
+                continue;
             }
+
+            self::assertFalse($descriptor->isVendor);
         }
     }
 
@@ -561,17 +591,20 @@ class RouterRouteSourceTest extends TestCase
         $byName = [];
 
         foreach ($descriptors as $descriptor) {
-            if ($descriptor->name !== null) {
-                $byName[$descriptor->name] = $descriptor;
+            if ($descriptor->name === null) {
+                continue;
             }
+
+            $byName[$descriptor->name] = $descriptor;
         }
 
-        static::assertArrayHasKey('subscriptions.index', $byName);
+        self::assertArrayHasKey('subscriptions.index', $byName);
 
-        // The scalar entry is skipped; only the valid array entry becomes a suppression
-        static::assertCount(1, $byName['subscriptions.index']->suppressions);
-        static::assertSame(['R1'], $byName['subscriptions.index']->suppressions[0]->rules);
-        static::assertSame('Valid entry beside a malformed one.', $byName['subscriptions.index']->suppressions[0]->reason);
+        // The scalar entry is skipped; only the valid array entry becomes a
+        // suppression
+        self::assertCount(1, $byName['subscriptions.index']->suppressions);
+        self::assertSame(['R1'], $byName['subscriptions.index']->suppressions[0]->rules);
+        self::assertSame('Valid entry beside a malformed one.', $byName['subscriptions.index']->suppressions[0]->reason);
     }
 
     /**
@@ -596,7 +629,7 @@ class RouterRouteSourceTest extends TestCase
 
         $names = array_map(static fn (RouteDescriptor $d) => $d->name, $descriptors);
 
-        static::assertContains('ghost.index', $names, 'A route with an unresolvable controller must default to app-owned.');
+        self::assertContains('ghost.index', $names, 'A route with an unresolvable controller must default to app-owned.');
     }
 
     /**
@@ -627,7 +660,7 @@ class RouterRouteSourceTest extends TestCase
 
         $names = array_map(static fn (RouteDescriptor $d) => $d->name, $descriptors);
 
-        static::assertContains('cached.closure', $names, 'A serialized-closure route must default to app-owned.');
+        self::assertContains('cached.closure', $names, 'A serialized-closure route must default to app-owned.');
     }
 
     /**
@@ -642,7 +675,7 @@ class RouterRouteSourceTest extends TestCase
 
         $descriptor = $this->descriptorByName((new RouterRouteSource($router))->appRoutes(), 'users.index');
 
-        static::assertNull($descriptor->handler);
+        self::assertNull($descriptor->handler);
     }
 
     /**
@@ -657,14 +690,15 @@ class RouterRouteSourceTest extends TestCase
 
         $descriptor = $this->descriptorByName((new RouterRouteSource($router))->appRoutes(), 'reports.index');
 
-        static::assertSame(RouteLintController::class . '@index', $descriptor->handler);
+        self::assertSame(RouteLintController::class . '@index', $descriptor->handler);
     }
 
     /**
      * Test that the gathered middleware is returned as a contiguous, zero-based
      * list of strings.
      *
-     * A duplicate middleware entry makes the router's `array_unique` leave a gap
+     * A duplicate middleware entry makes the router's `array_unique` leave a
+     * gap
      * in the keys, so the result must be re-indexed.
      *
      * @return void
@@ -677,7 +711,7 @@ class RouterRouteSourceTest extends TestCase
 
         $descriptor = $this->descriptorByName((new RouterRouteSource($router))->appRoutes(), 'admin.index');
 
-        static::assertSame(['auth', 'can:manage'], $descriptor->middleware);
+        self::assertSame(['auth', 'can:manage'], $descriptor->middleware);
     }
 
     /**
@@ -695,7 +729,7 @@ class RouterRouteSourceTest extends TestCase
             }
         }
 
-        static::fail(sprintf('No descriptor found for route name "%s".', $name));
+        self::fail(sprintf('No descriptor found for route name "%s".', $name));
     }
 
     /**

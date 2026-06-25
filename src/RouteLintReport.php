@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter;
+
+use SineMacula\RouteLinter\Enums\Severity;
 
 /**
  * Mutable verdict aggregate for a route-linting run.
@@ -100,7 +104,7 @@ final class RouteLintReport
      * same inputs produce byte-identical arrays regardless of insertion order
      * (NFR-01).
      *
-     * @param  \SineMacula\RouteLinter\Severity  $severity
+     * @param  \SineMacula\RouteLinter\Enums\Severity  $severity
      * @return array<int, \SineMacula\RouteLinter\Violation>
      */
     private function sorted(Severity $severity): array

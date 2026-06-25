@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Support;
 
 use Illuminate\Routing\Route;
@@ -18,7 +20,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RouteLintMacros::class)]
-class RouteLintMacrosTest extends TestCase
+final class RouteLintMacrosTest extends TestCase
 {
     /**
      * Test that the ignoreRouteLint macro is registered after calling
@@ -28,9 +30,10 @@ class RouteLintMacrosTest extends TestCase
      */
     public function testMacroIsRegisteredAfterRegisterCall(): void
     {
-        // The ApiServiceProvider already calls RouteLintMacros::register() during
+        // The ApiServiceProvider already calls RouteLintMacros::register()
+        // during
         // test bootstrap via getPackageProviders(); confirm the macro exists.
-        static::assertTrue(Route::hasMacro('ignoreRouteLint'));
+        self::assertTrue(Route::hasMacro('ignoreRouteLint'));
     }
 
     /**
@@ -44,7 +47,7 @@ class RouteLintMacrosTest extends TestCase
         RouteLintMacros::register();
         RouteLintMacros::register();
 
-        static::assertTrue(Route::hasMacro('ignoreRouteLint'));
+        self::assertTrue(Route::hasMacro('ignoreRouteLint'));
     }
 
     /**
@@ -71,10 +74,10 @@ class RouteLintMacrosTest extends TestCase
 
         $action = $route->getAction('route-linter::lint-ignore');
 
-        static::assertIsArray($action);
-        static::assertCount(1, $action);
-        static::assertSame(['R1'], $action[0]['rules']);
-        static::assertSame('Still works after second register.', $action[0]['reason']);
+        self::assertIsArray($action);
+        self::assertCount(1, $action);
+        self::assertSame(['R1'], $action[0]['rules']);
+        self::assertSame('Still works after second register.', $action[0]['reason']);
     }
 
     /**
@@ -92,13 +95,13 @@ class RouteLintMacrosTest extends TestCase
 
         $action = $route->getAction('route-linter::lint-ignore');
 
-        static::assertIsArray($action);
-        static::assertCount(1, $action);
-        static::assertSame(['R9'], $action[0]['rules']);
-        static::assertSame('Legacy naming kept for backward compatibility.', $action[0]['reason']);
+        self::assertIsArray($action);
+        self::assertCount(1, $action);
+        self::assertSame(['R9'], $action[0]['rules']);
+        self::assertSame('Legacy naming kept for backward compatibility.', $action[0]['reason']);
 
         // Return value must be the route itself for fluent chaining
-        static::assertSame($route, $result);
+        self::assertSame($route, $result);
     }
 
     /**
@@ -117,12 +120,12 @@ class RouteLintMacrosTest extends TestCase
 
         $action = $route->getAction('route-linter::lint-ignore');
 
-        static::assertIsArray($action);
-        static::assertCount(2, $action);
-        static::assertSame(['R9'], $action[0]['rules']);
-        static::assertSame('First suppression.', $action[0]['reason']);
-        static::assertSame([], $action[1]['rules']);
-        static::assertSame('Second suppression, all rules.', $action[1]['reason']);
+        self::assertIsArray($action);
+        self::assertCount(2, $action);
+        self::assertSame(['R9'], $action[0]['rules']);
+        self::assertSame('First suppression.', $action[0]['reason']);
+        self::assertSame([], $action[1]['rules']);
+        self::assertSame('Second suppression, all rules.', $action[1]['reason']);
     }
 
     /**
@@ -171,8 +174,8 @@ class RouteLintMacrosTest extends TestCase
 
         $action = $route->getAction('route-linter::lint-ignore');
 
-        static::assertIsArray($action);
-        static::assertSame([], $action[0]['rules']);
+        self::assertIsArray($action);
+        self::assertSame([], $action[0]['rules']);
     }
 
     /**
@@ -196,13 +199,13 @@ class RouteLintMacrosTest extends TestCase
 
         $action = $route->getAction('route-linter::lint-ignore');
 
-        static::assertIsArray($action);
-        static::assertCount(1, $action);
+        self::assertIsArray($action);
+        self::assertCount(1, $action);
 
         $rules = $action[0]['rules'];
 
         // Must be a 0-based indexed list, not the original associative array
-        static::assertSame([0 => 'R1', 1 => 'R3'], $rules);
+        self::assertSame([0 => 'R1', 1 => 'R3'], $rules);
     }
 
     /**
@@ -225,18 +228,19 @@ class RouteLintMacrosTest extends TestCase
 
         try {
             Route::flushMacros();
-            static::assertFalse(Route::hasMacro('ignoreRouteLint'));
+            self::assertFalse(Route::hasMacro('ignoreRouteLint'));
 
             RouteLintMacros::register();
 
-            static::assertTrue(Route::hasMacro('ignoreRouteLint'));
+            self::assertTrue(Route::hasMacro('ignoreRouteLint'));
 
-            // The freshly-bound closure must still append the entry and return the route
+            // The freshly-bound closure must still append the entry and return
+            // the route
             $route  = $this->getRouter()->get('flush-test', fn () => []);
             $result = $route->ignoreRouteLint(['R1'], 'Re-registered macro still returns the route.'); // @phpstan-ignore method.notFound
 
-            static::assertSame($route, $result);
-            static::assertIsArray($route->getAction('route-linter::lint-ignore'));
+            self::assertSame($route, $result);
+            self::assertIsArray($route->getAction('route-linter::lint-ignore'));
         } finally {
             $registry->setValue(null, $saved);
         }

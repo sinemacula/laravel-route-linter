@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Fixtures\Rules;
 
 use SineMacula\RouteLinter\Contracts\AggregateRule;
 use SineMacula\RouteLinter\Dto\RuleConfig;
-use SineMacula\RouteLinter\Severity;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\Violation;
 
 /**
@@ -12,7 +14,8 @@ use SineMacula\RouteLinter\Violation;
  * to any live route.
  *
  * Its violation carries a synthetic identity that matches no descriptor, so it
- * exercises the path where an aggregate violation cannot be per-route suppressed
+ * exercises the path where an aggregate violation cannot be per-route
+ * suppressed
  * and is reported directly.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
@@ -34,7 +37,7 @@ final class GlobalAggregateRule implements AggregateRule
     /**
      * Return the severity tier for this rule.
      *
-     * @return \SineMacula\RouteLinter\Severity
+     * @return \SineMacula\RouteLinter\Enums\Severity
      */
     #[\Override]
     public function severity(): Severity

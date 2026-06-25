@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Fixtures\Rules;
 
 use SineMacula\RouteLinter\Contracts\AggregateRule;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
-use SineMacula\RouteLinter\Severity;
 use SineMacula\RouteLinter\Violation;
 
 /**
@@ -25,7 +27,7 @@ final class StaticAggregateRule implements AggregateRule
      * Create a new static aggregate rule.
      *
      * @param  string  $ruleId
-     * @param  \SineMacula\RouteLinter\Severity  $severityTier
+     * @param  \SineMacula\RouteLinter\Enums\Severity  $severityTier
      */
     public function __construct(
 
@@ -34,7 +36,6 @@ final class StaticAggregateRule implements AggregateRule
 
         /** The severity tier this fixture emits */
         private readonly Severity $severityTier = Severity::WARNING,
-
     ) {}
 
     /**
@@ -51,7 +52,7 @@ final class StaticAggregateRule implements AggregateRule
     /**
      * Return the severity tier for this rule.
      *
-     * @return \SineMacula\RouteLinter\Severity
+     * @return \SineMacula\RouteLinter\Enums\Severity
      */
     #[\Override]
     public function severity(): Severity

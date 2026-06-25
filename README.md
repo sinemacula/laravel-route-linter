@@ -149,7 +149,7 @@ violations:
 use SineMacula\RouteLinter\Contracts\Rule;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\NormalisedRoute;
-use SineMacula\RouteLinter\Severity;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\Violation;
 
 class NoSnakeCaseRule implements Rule

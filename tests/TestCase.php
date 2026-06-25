@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests;
 
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
@@ -23,6 +25,7 @@ abstract class TestCase extends OrchestraTestCase
      * @param  mixed  $app
      * @return array<int, class-string>
      */
+    #[\Override]
     protected function getPackageProviders(mixed $app): array
     {
         return [

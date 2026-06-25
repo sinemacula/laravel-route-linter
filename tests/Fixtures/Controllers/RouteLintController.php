@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Fixtures\Controllers;
 
 /**
@@ -11,7 +13,7 @@ namespace Tests\Fixtures\Controllers;
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
-class RouteLintController
+final class RouteLintController
 {
     /**
      * Handle the incoming request as an invokable controller.

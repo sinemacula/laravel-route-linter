@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Dto;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,7 +17,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(AllowlistEntry::class)]
-class AllowlistEntryTest extends TestCase
+final class AllowlistEntryTest extends TestCase
 {
     /**
      * Test that covers() returns true for any rule ID when the rules list
@@ -27,9 +29,9 @@ class AllowlistEntryTest extends TestCase
     {
         $entry = new AllowlistEntry('users.store', 'Legacy endpoint.');
 
-        static::assertTrue($entry->covers('R1'));
-        static::assertTrue($entry->covers('R9'));
-        static::assertTrue($entry->covers('PLURAL_COLLECTIONS'));
+        self::assertTrue($entry->covers('R1'));
+        self::assertTrue($entry->covers('R9'));
+        self::assertTrue($entry->covers('PLURAL_COLLECTIONS'));
     }
 
     /**
@@ -42,8 +44,8 @@ class AllowlistEntryTest extends TestCase
     {
         $entry = new AllowlistEntry('users.store', 'Scoped waiver.', ['R9', 'R3']);
 
-        static::assertTrue($entry->covers('R9'));
-        static::assertTrue($entry->covers('R3'));
+        self::assertTrue($entry->covers('R9'));
+        self::assertTrue($entry->covers('R3'));
     }
 
     /**
@@ -56,8 +58,8 @@ class AllowlistEntryTest extends TestCase
     {
         $entry = new AllowlistEntry('users.store', 'Scoped waiver.', ['R9']);
 
-        static::assertFalse($entry->covers('R1'));
-        static::assertFalse($entry->covers('PLURAL_COLLECTIONS'));
+        self::assertFalse($entry->covers('R1'));
+        self::assertFalse($entry->covers('PLURAL_COLLECTIONS'));
     }
 
     /**
@@ -70,12 +72,12 @@ class AllowlistEntryTest extends TestCase
     {
         $defaultEntry = new AllowlistEntry('api/*', 'All API routes waived.');
 
-        static::assertSame('api/*', $defaultEntry->match);
-        static::assertSame('All API routes waived.', $defaultEntry->reason);
-        static::assertSame([], $defaultEntry->rules);
+        self::assertSame('api/*', $defaultEntry->match);
+        self::assertSame('All API routes waived.', $defaultEntry->reason);
+        self::assertSame([], $defaultEntry->rules);
 
         $scopedEntry = new AllowlistEntry('orders.index', 'Scoped.', ['R9']);
 
-        static::assertSame(['R9'], $scopedEntry->rules);
+        self::assertSame(['R9'], $scopedEntry->rules);
     }
 }

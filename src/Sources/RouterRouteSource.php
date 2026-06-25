@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Sources;
 
 use Illuminate\Routing\Route;
@@ -34,7 +36,6 @@ final class RouterRouteSource implements RouteSource
 
         /** Laravel router whose live route table is enumerated */
         private readonly Router $router,
-
     ) {}
 
     /**
@@ -50,9 +51,11 @@ final class RouterRouteSource implements RouteSource
         foreach ($this->router->getRoutes()->getRoutes() as $route) {
             $descriptor = $this->toDescriptor($route);
 
-            if (!$descriptor->isVendor) {
-                $descriptors[] = $descriptor;
+            if ($descriptor->isVendor) {
+                continue;
             }
+
+            $descriptors[] = $descriptor;
         }
 
         return $descriptors;
@@ -110,10 +113,10 @@ final class RouterRouteSource implements RouteSource
     /**
      * Extract inline suppressions from the route action array.
      *
-     * Reads the `route-linter::lint-ignore` key written by the `ignoreRouteLint`
-     * macro. Each entry must be an array with a `rules` array and a `reason`
-     * string; entries that do not conform to this shape are silently skipped so
-     * a corrupt route cache never crashes the linter.
+     * Reads the `route-linter::lint-ignore` key written by the
+     * `ignoreRouteLint` macro. Each entry must be an array with a `rules` array
+     * and a `reason` string; entries that do not conform to this shape are
+     * silently skipped so a corrupt route cache never crashes the linter.
      *
      * @param  \Illuminate\Routing\Route  $route
      * @return list<\SineMacula\RouteLinter\Dto\RouteSuppression>
@@ -176,12 +179,13 @@ final class RouterRouteSource implements RouteSource
         try {
             $file = (new \ReflectionFunction($closure))->getFileName();
         } catch (\ReflectionException) { // @codeCoverageIgnore
-            // Unreachable for a real Closure (always reflectable); defaulting to
-            // app-owned is the safe direction - a route is never silently dropped.
+            // Unreachable for a real Closure (always reflectable); defaulting
+            // to app-owned is the safe direction - a route is never silently
+            // dropped.
             return false; // @codeCoverageIgnore
         }
 
-        return $this->fileIsVendor($file ?: null);
+        return $this->isVendorFile($file ?: null);
     }
 
     /**
@@ -199,7 +203,7 @@ final class RouterRouteSource implements RouteSource
             return false;
         }
 
-        return $this->fileIsVendor($this->classFile($controllerClass));
+        return $this->isVendorFile($this->classFile($controllerClass));
     }
 
     /**
@@ -208,7 +212,7 @@ final class RouterRouteSource implements RouteSource
      * @param  string|null  $file
      * @return bool
      */
-    private function fileIsVendor(?string $file): bool
+    private function isVendorFile(?string $file): bool
     {
         if ($file === null) {
             return false;
@@ -228,8 +232,10 @@ final class RouterRouteSource implements RouteSource
         try {
             return (new \ReflectionClass($class))->getFileName() ?: null;
         } catch (\ReflectionException) {
-            // An unresolvable controller class yields null, which fileIsVendor()
-            // maps to app-owned - the conservative direction that never drops a route.
+            // An unresolvable controller class yields null, which
+            // isVendorFile() maps to app-owned - the conservative direction
+            // that
+            // never drops a route.
             return null;
         }
     }

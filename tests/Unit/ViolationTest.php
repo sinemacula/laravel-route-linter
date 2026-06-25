@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use SineMacula\RouteLinter\Severity;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\Violation;
 use Tests\TestCase;
 
@@ -16,7 +18,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(Violation::class)]
-class ViolationTest extends TestCase
+final class ViolationTest extends TestCase
 {
     /**
      * Test that all constructor arguments are exposed verbatim on the value
@@ -36,11 +38,11 @@ class ViolationTest extends TestCase
         );
 
         // Assert
-        static::assertSame('R1', $violation->ruleId);
-        static::assertSame(Severity::ERROR, $violation->severity);
-        static::assertSame('GET getUsers get-users', $violation->routeIdentity);
-        static::assertSame('get', $violation->offendingSurface);
-        static::assertSame('GET /users', $violation->remediationHint);
+        self::assertSame('R1', $violation->ruleId);
+        self::assertSame(Severity::ERROR, $violation->severity);
+        self::assertSame('GET getUsers get-users', $violation->routeIdentity);
+        self::assertSame('get', $violation->offendingSurface);
+        self::assertSame('GET /users', $violation->remediationHint);
     }
 
     /**
@@ -61,7 +63,7 @@ class ViolationTest extends TestCase
         );
 
         // Assert
-        static::assertSame(Severity::WARNING, $violation->severity);
-        static::assertNull($violation->remediationHint);
+        self::assertSame(Severity::WARNING, $violation->severity);
+        self::assertNull($violation->remediationHint);
     }
 }

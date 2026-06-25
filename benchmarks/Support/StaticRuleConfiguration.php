@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Benchmarks\Support;
 
 use SineMacula\RouteLinter\Contracts\RuleConfiguration;
@@ -23,7 +25,11 @@ final readonly class StaticRuleConfiguration implements RuleConfiguration
      *
      * @param  \SineMacula\RouteLinter\Dto\RuleConfig  $config
      */
-    public function __construct(private RuleConfig $config) {}
+    public function __construct(
+
+        /** The pre-built rule configuration returned on every load */
+        private RuleConfig $config,
+    ) {}
 
     /**
      * Return the pre-built rule configuration.

@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Contracts\Inflector;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\PluralCollectionsRule;
-use SineMacula\RouteLinter\Severity;
 use Tests\TestCase;
 
 /**
@@ -19,7 +21,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(PluralCollectionsRule::class)]
-class PluralCollectionsRuleTest extends TestCase
+final class PluralCollectionsRuleTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Rules\PluralCollectionsRule */
     private PluralCollectionsRule $rule;
@@ -29,6 +31,7 @@ class PluralCollectionsRuleTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -58,11 +61,11 @@ class PluralCollectionsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R4', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
-        static::assertSame('user', $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R4', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('user', $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -88,7 +91,7 @@ class PluralCollectionsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -100,7 +103,8 @@ class PluralCollectionsRuleTest extends TestCase
     public function testUncountableSegmentIsNotFlagged(): void
     {
         // Arrange - `media` is in the uncountables list; the fake inflector
-        // would return false for isPlural('media'), but uncountable bypass fires first
+        // would return false for isPlural('media'), but the
+        // uncountable bypass fires first
         $route = new NormalisedRoute(
             uri: 'media/{item}',
             methods: ['GET'],
@@ -115,7 +119,7 @@ class PluralCollectionsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -141,8 +145,8 @@ class PluralCollectionsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('user', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('user', $violations[0]->offendingSurface);
     }
 
     /**
@@ -167,7 +171,7 @@ class PluralCollectionsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -193,7 +197,7 @@ class PluralCollectionsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -204,7 +208,8 @@ class PluralCollectionsRuleTest extends TestCase
      */
     public function testEmptySegmentBeforeCollectionDoesNotBreakLoop(): void
     {
-        // Arrange - leading empty string from a double-slash URI; `user` must still be detected
+        // Arrange - leading empty string from a double-slash URI;
+        // `user` must still be detected
         $route = new NormalisedRoute(
             uri: '/user/{user}',
             methods: ['GET'],
@@ -219,8 +224,8 @@ class PluralCollectionsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $config);
 
         // Assert - empty segment at index 0 must be skipped, not break the loop
-        static::assertCount(1, $violations);
-        static::assertSame('user', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('user', $violations[0]->offendingSurface);
     }
 
     /**
@@ -231,8 +236,9 @@ class PluralCollectionsRuleTest extends TestCase
      */
     public function testUncountableCollectionBeforeSingularCollectionDoesNotBreakLoop(): void
     {
-        // Arrange - `media` is uncountable (at index 0, followed by `{item}` so it IS a collection),
-        // `user` is the final literal segment after `{item}` and is singular
+        // Arrange - `media` is uncountable (at index 0, followed by
+        // `{item}` so it IS a collection), `user` is the final literal
+        // segment after `{item}` and is singular
         $route = new NormalisedRoute(
             uri: 'media/{item}/user',
             methods: ['GET'],
@@ -246,10 +252,11 @@ class PluralCollectionsRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert - `media` is skipped via uncountable bypass (not broken out of loop),
-        // `user` is the remaining singular collection and must be flagged
-        static::assertCount(1, $violations);
-        static::assertSame('user', $violations[0]->offendingSurface);
+        // Assert - `media` is skipped via uncountable bypass (not
+        // broken out of loop), `user` is the remaining singular
+        // collection and must be flagged
+        self::assertCount(1, $violations);
+        self::assertSame('user', $violations[0]->offendingSurface);
     }
 
     /**
@@ -260,7 +267,8 @@ class PluralCollectionsRuleTest extends TestCase
      */
     public function testPluralCollectionBeforeSingularCollectionDoesNotBreakLoop(): void
     {
-        // Arrange - `users` is plural (skipped), `comment` is a singular final literal
+        // Arrange - `users` is plural (skipped), `comment` is a
+        // singular final literal
         $route = new NormalisedRoute(
             uri: 'users/{user}/comment',
             methods: ['GET'],
@@ -274,9 +282,10 @@ class PluralCollectionsRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert - `users` plural short-circuit must continue, not break; `comment` is flagged
-        static::assertCount(1, $violations);
-        static::assertSame('comment', $violations[0]->offendingSurface);
+        // Assert - `users` plural short-circuit must continue, not
+        // break; `comment` is flagged
+        self::assertCount(1, $violations);
+        self::assertSame('comment', $violations[0]->offendingSurface);
     }
 
     /**
@@ -287,7 +296,8 @@ class PluralCollectionsRuleTest extends TestCase
      */
     public function testMultipleSingularCollectionsEachProduceViolation(): void
     {
-        // Arrange - `user` precedes `{user}`, `comment` precedes `{comment}`; both are singular
+        // Arrange - `user` precedes `{user}`, `comment` precedes
+        // `{comment}`; both are singular
         $route = new NormalisedRoute(
             uri: 'user/{user}/comment/{comment}',
             methods: ['GET'],
@@ -301,13 +311,14 @@ class PluralCollectionsRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert - both collections must be reported; verifies the full array is returned
-        static::assertCount(2, $violations);
+        // Assert - both collections must be reported; verifies the
+        // full array is returned
+        self::assertCount(2, $violations);
 
         $surfaces = array_map(fn ($v) => $v->offendingSurface, $violations);
 
-        static::assertContains('user', $surfaces);
-        static::assertContains('comment', $surfaces);
+        self::assertContains('user', $surfaces);
+        self::assertContains('comment', $surfaces);
     }
 
     /**
@@ -322,7 +333,8 @@ class PluralCollectionsRuleTest extends TestCase
      */
     public function testCollectionDetectionUsesNextSegmentIndex(): void
     {
-        // Arrange - `user` is a collection (next is `{user}`); `comment` is the final literal
+        // Arrange - `user` is a collection (next is `{user}`); `comment` is the
+        // final literal
         $route = new NormalisedRoute(
             uri: 'user/{user}/comment',
             methods: ['GET'],
@@ -336,13 +348,14 @@ class PluralCollectionsRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert - both `user` (next is param) and `comment` (final literal) must be violations
-        static::assertCount(2, $violations);
+        // Assert - both `user` (next is param) and `comment` (final
+        // literal) must be violations
+        self::assertCount(2, $violations);
 
         $surfaces = array_map(fn ($v) => $v->offendingSurface, $violations);
 
-        static::assertContains('user', $surfaces);
-        static::assertContains('comment', $surfaces);
+        self::assertContains('user', $surfaces);
+        self::assertContains('comment', $surfaces);
     }
 
     /**
@@ -368,10 +381,11 @@ class PluralCollectionsRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert - only `page` (immediately before `{user}`) is a collection and is flagged;
-        // `user` must not be flagged (it has a literal between itself and the parameter)
-        static::assertCount(1, $violations);
-        static::assertSame('page', $violations[0]->offendingSurface);
+        // Assert - only `page` (immediately before `{user}`) is a
+        // collection and is flagged; `user` must not be flagged (it
+        // has a literal between itself and the parameter)
+        self::assertCount(1, $violations);
+        self::assertSame('page', $violations[0]->offendingSurface);
     }
 
     /**
@@ -401,13 +415,11 @@ class PluralCollectionsRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert - neither `user` nor `extra` is a collection (both have literals following them
-        // or `extra` is the last literal after `user`, meaning `extra` IS the last literal,
-        // `user` is NOT since `extra` follows it)
-        // Actually `extra` is the final literal → IS a collection, singular → violation
-        // `user` has `extra` (literal) after → NOT a collection
-        static::assertCount(1, $violations);
-        static::assertSame('extra', $violations[0]->offendingSurface);
+        // Assert - `extra` is the final literal and IS a collection
+        // (singular, so a violation); `user` has `extra` (literal)
+        // after it and is NOT a collection
+        self::assertCount(1, $violations);
+        self::assertSame('extra', $violations[0]->offendingSurface);
     }
 
     /**
@@ -418,9 +430,12 @@ class PluralCollectionsRuleTest extends TestCase
      */
     public function testLiteralFollowedByLiteralIsNotCollection(): void
     {
-        // Arrange - `user` at index 0, `users` at index 1; neither is followed by a param
-        // `user` (index 0) has `users` (literal) after it → for-loop finds literal → NOT collection
-        // `users` (index 1) is the final literal → IS a collection but is plural → no violation
+        // Arrange - `user` at index 0, `users` at index 1; neither
+        // is followed by a param. `user` (index 0) has `users`
+        // (literal) after it so the for-loop finds a literal and does
+        // not treat it as a collection. `users` (index 1) is the
+        // final literal and IS a collection but is plural, so no
+        // violation.
         $route = new NormalisedRoute(
             uri: 'user/users',
             methods: ['GET'],
@@ -434,8 +449,9 @@ class PluralCollectionsRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $config);
 
-        // Assert - `user` must not be misidentified as a collection just because next is !== null
-        static::assertEmpty($violations);
+        // Assert - `user` must not be misidentified as a collection
+        // just because next is !== null
+        self::assertEmpty($violations);
     }
 
     /**
@@ -469,9 +485,9 @@ class PluralCollectionsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $config);
 
         // Assert - exactly one R4 violation for the singular segment 'comment'
-        static::assertCount(1, $violations);
-        static::assertSame('R4', $violations[0]->ruleId);
-        static::assertSame('comment', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('R4', $violations[0]->ruleId);
+        self::assertSame('comment', $violations[0]->offendingSurface);
     }
 
     /**
@@ -481,8 +497,8 @@ class PluralCollectionsRuleTest extends TestCase
      */
     public function testRuleMetadata(): void
     {
-        static::assertSame('R4', $this->rule->id());
-        static::assertSame(Severity::ERROR, $this->rule->severity());
+        self::assertSame('R4', $this->rule->id());
+        self::assertSame(Severity::ERROR, $this->rule->severity());
     }
 
     /**
@@ -500,6 +516,7 @@ class PluralCollectionsRuleTest extends TestCase
              * @param  string  $value
              * @return string
              */
+            #[\Override]
             public function singular(string $value): string
             {
                 return rtrim($value, 's');
@@ -511,6 +528,7 @@ class PluralCollectionsRuleTest extends TestCase
              * @param  string  $value
              * @return bool
              */
+            #[\Override]
             public function isPlural(string $value): bool
             {
                 return str_ends_with($value, 's');

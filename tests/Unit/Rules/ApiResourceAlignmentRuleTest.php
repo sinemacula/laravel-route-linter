@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\ApiResourceAlignmentRule;
-use SineMacula\RouteLinter\Severity;
 use Tests\TestCase;
 
 /**
@@ -18,7 +20,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(ApiResourceAlignmentRule::class)]
-class ApiResourceAlignmentRuleTest extends TestCase
+final class ApiResourceAlignmentRuleTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Rules\ApiResourceAlignmentRule */
     private ApiResourceAlignmentRule $rule;
@@ -31,6 +33,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -47,7 +50,8 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testEditActionIsFlagged(): void
     {
-        // Arrange - GET /photos/{photo}/edit; 'edit' is the final literal segment
+        // Arrange - GET /photos/{photo}/edit; 'edit' is the final
+        // literal segment
         $route = new NormalisedRoute(
             uri: 'photos/{photo}/edit',
             methods: ['GET'],
@@ -60,11 +64,11 @@ class ApiResourceAlignmentRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame('edit', $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R9', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame('edit', $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -88,11 +92,11 @@ class ApiResourceAlignmentRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame('create', $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R9', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame('create', $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -119,7 +123,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -145,24 +149,25 @@ class ApiResourceAlignmentRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
      * Test that 'edit' followed by a route parameter is still flagged as the
      * final literal segment.
      *
-     * Kills the Continue_->break mutant (#41): without continue the loop would
-     * stop on the first parameter segment encountered in reverse order,
-     * returning null instead of scanning back to find 'edit'. The violation
-     * must still be produced.
+     * Kills the continue-to-break mutant (#41): without continue the
+     * loop would stop on the first parameter segment encountered in
+     * reverse order, returning null instead of scanning back to find
+     * 'edit'. The violation must still be produced.
      *
      * @return void
      */
     public function testEditBeforeTrailingParamIsFlagged(): void
     {
-        // Arrange - GET /users/edit/{user}; reversed segments are ['{user}', 'edit', 'users']
-        // The param '{user}' must be skipped (continue) to reach 'edit' as the last literal
+        // Arrange - GET /users/edit/{user}; reversed segments are
+        // {user}, edit, then users. The param {user} must be skipped to
+        // reach edit as the last literal segment
         $route = new NormalisedRoute(
             uri: 'users/edit/{user}',
             methods: ['GET'],
@@ -175,18 +180,19 @@ class ApiResourceAlignmentRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - 'edit' is the final literal segment and must be flagged
-        static::assertCount(1, $violations);
-        static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame('edit', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('R9', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame('edit', $violations[0]->offendingSurface);
     }
 
     /**
      * Test that 'create' followed by a route parameter is still flagged as the
      * final literal segment.
      *
-     * Provides additional coverage for the Continue_->break mutant (#41) and
-     * also kills the LogicalOr->LogicalAnd mutant (#40) on the skip condition:
+     * Provides additional coverage for the continue-to-break mutant
+     * (#41) and also kills the LogicalOr-to-LogicalAnd mutant (#40)
+     * on the skip condition:
      * if the condition were 'empty AND param', the empty segment would not be
      * skipped and would be returned instead of 'create'.
      *
@@ -194,7 +200,8 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testCreateBeforeTrailingParamIsFlagged(): void
     {
-        // Arrange - GET /photos/create/{photo}; reversed: ['{photo}', 'create', 'photos']
+        // Arrange - GET /photos/create/{photo}; reversed order is
+        // {photo}, create, then photos
         $route = new NormalisedRoute(
             uri: 'photos/create/{photo}',
             methods: ['GET'],
@@ -207,10 +214,10 @@ class ApiResourceAlignmentRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - 'create' is the final literal segment and must be flagged
-        static::assertCount(1, $violations);
-        static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame('create', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('R9', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame('create', $violations[0]->offendingSurface);
     }
 
     /**
@@ -227,7 +234,8 @@ class ApiResourceAlignmentRuleTest extends TestCase
     public function testTrailingEmptySegmentDoesNotMaskCreateViolation(): void
     {
         // Arrange - trailing slash produces an empty segment after 'create';
-        // reversed: ['', 'create', 'photos'] - empty must be skipped to reach 'create'
+        // reversed: ['', 'create', 'photos'] - empty must be skipped
+        // to reach 'create'
         $route = new NormalisedRoute(
             uri: 'photos/create/',
             methods: ['GET'],
@@ -240,9 +248,9 @@ class ApiResourceAlignmentRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - 'create' is still the final meaningful literal
-        static::assertCount(1, $violations);
-        static::assertSame('R9', $violations[0]->ruleId);
-        static::assertSame('create', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('R9', $violations[0]->ruleId);
+        self::assertSame('create', $violations[0]->offendingSurface);
     }
 
     /**
@@ -254,7 +262,8 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testRouteWithNoLiteralSegmentIsNotFlagged(): void
     {
-        // Arrange - every segment is a route parameter, so there is no literal to test
+        // Arrange - every segment is a route parameter, so there is
+        // no literal to test
         $route = new NormalisedRoute(
             uri: '{tenant}/{user}',
             methods: ['GET'],
@@ -266,8 +275,9 @@ class ApiResourceAlignmentRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert - lastLiteralSegment() scans every segment, finds none, and returns null
-        static::assertEmpty($violations);
+        // Assert - lastLiteralSegment() scans every segment, finds
+        // none, and returns null
+        self::assertEmpty($violations);
     }
 
     /**
@@ -278,7 +288,7 @@ class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testRuleMetadata(): void
     {
-        static::assertSame('R9', $this->rule->id());
-        static::assertSame(Severity::WARNING, $this->rule->severity());
+        self::assertSame('R9', $this->rule->id());
+        self::assertSame(Severity::WARNING, $this->rule->severity());
     }
 }

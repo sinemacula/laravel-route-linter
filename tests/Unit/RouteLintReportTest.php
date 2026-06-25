@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\RouteLintReport;
-use SineMacula\RouteLinter\Severity;
 use SineMacula\RouteLinter\Violation;
 use Tests\TestCase;
 
@@ -17,7 +19,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RouteLintReport::class)]
-class RouteLintReportTest extends TestCase
+final class RouteLintReportTest extends TestCase
 {
     /**
      * Test that errors() returns only ERROR-severity violations and warnings()
@@ -41,13 +43,13 @@ class RouteLintReportTest extends TestCase
         $warnings = $report->warnings();
 
         // Assert
-        static::assertCount(1, $errors);
-        static::assertSame(Severity::ERROR, $errors[0]->severity);
-        static::assertSame('R1', $errors[0]->ruleId);
+        self::assertCount(1, $errors);
+        self::assertSame(Severity::ERROR, $errors[0]->severity);
+        self::assertSame('R1', $errors[0]->ruleId);
 
-        static::assertCount(1, $warnings);
-        static::assertSame(Severity::WARNING, $warnings[0]->severity);
-        static::assertSame('R8', $warnings[0]->ruleId);
+        self::assertCount(1, $warnings);
+        self::assertSame(Severity::WARNING, $warnings[0]->severity);
+        self::assertSame('R8', $warnings[0]->ruleId);
     }
 
     /**
@@ -82,21 +84,23 @@ class RouteLintReportTest extends TestCase
         $errorsA = $reportA->errors();
         $errorsB = $reportB->errors();
 
-        // Assert - identical count and identical identity/ruleId/surface per position
-        static::assertCount(3, $errorsA);
-        static::assertCount(3, $errorsB);
+        // Assert - identical count and identical identity/ruleId/surface per
+        // position
+        self::assertCount(3, $errorsA);
+        self::assertCount(3, $errorsB);
 
         foreach ($errorsA as $index => $violation) {
-            static::assertSame($violation->routeIdentity, $errorsB[$index]->routeIdentity);
-            static::assertSame($violation->ruleId, $errorsB[$index]->ruleId);
-            static::assertSame($violation->offendingSurface, $errorsB[$index]->offendingSurface);
+            self::assertSame($violation->routeIdentity, $errorsB[$index]->routeIdentity);
+            self::assertSame($violation->ruleId, $errorsB[$index]->ruleId);
+            self::assertSame($violation->offendingSurface, $errorsB[$index]->offendingSurface);
         }
 
-        // Assert the concrete order: gamma sorts before alpha/beta (route identity 'GET articles' < 'GET,HEAD users')
-        static::assertSame('GET articles', $errorsA[0]->routeIdentity);
+        // Assert the concrete order: gamma sorts before alpha/beta (route
+        // identity 'GET articles' < 'GET,HEAD users')
+        self::assertSame('GET articles', $errorsA[0]->routeIdentity);
         // Within 'GET,HEAD users': R1 before R2
-        static::assertSame('R1', $errorsA[1]->ruleId);
-        static::assertSame('R2', $errorsA[2]->ruleId);
+        self::assertSame('R1', $errorsA[1]->ruleId);
+        self::assertSame('R2', $errorsA[2]->ruleId);
     }
 
     /**
@@ -115,9 +119,9 @@ class RouteLintReportTest extends TestCase
         $report->addStaleWaiver('users.legacy');
 
         // Act & Assert
-        static::assertFalse($report->hasErrors());
-        static::assertCount(2, $report->warnings());
-        static::assertEmpty($report->errors());
+        self::assertFalse($report->hasErrors());
+        self::assertCount(2, $report->warnings());
+        self::assertEmpty($report->errors());
     }
 
     /**
@@ -139,7 +143,7 @@ class RouteLintReportTest extends TestCase
         $stale = $report->staleWaivers();
 
         // Assert
-        static::assertSame(['articles.old', 'beta.route', 'users.legacy'], $stale);
+        self::assertSame(['articles.old', 'beta.route', 'users.legacy'], $stale);
     }
 
     /**
@@ -154,15 +158,16 @@ class RouteLintReportTest extends TestCase
         $report = new RouteLintReport;
 
         // Act & Assert
-        static::assertFalse($report->hasErrors());
-        static::assertSame([], $report->errors());
-        static::assertSame([], $report->warnings());
-        static::assertSame([], $report->staleWaivers());
+        self::assertFalse($report->hasErrors());
+        self::assertSame([], $report->errors());
+        self::assertSame([], $report->warnings());
+        self::assertSame([], $report->staleWaivers());
     }
 
     /**
      * Test the third sort key (offendingSurface ASC) in the deterministic order
-     * (kills Spaceship mutant #39: `$a->offendingSurface <=> $b->offendingSurface`
+     * (kills Spaceship mutant #39: `$a->offendingSurface <=>
+     * $b->offendingSurface`
      * reversed to `$b->offendingSurface <=> $a->offendingSurface`).
      *
      * Two violations share the same routeIdentity AND the same ruleId; the only
@@ -184,10 +189,10 @@ class RouteLintReportTest extends TestCase
         $errors = $report->errors();
 
         // Assert - must be ascending by offendingSurface
-        static::assertCount(3, $errors);
-        static::assertSame('apple', $errors[0]->offendingSurface);
-        static::assertSame('mango', $errors[1]->offendingSurface);
-        static::assertSame('zebra', $errors[2]->offendingSurface);
+        self::assertCount(3, $errors);
+        self::assertSame('apple', $errors[0]->offendingSurface);
+        self::assertSame('mango', $errors[1]->offendingSurface);
+        self::assertSame('zebra', $errors[2]->offendingSurface);
     }
 
     /**
@@ -214,9 +219,9 @@ class RouteLintReportTest extends TestCase
         $errorsB = $reportB->errors();
 
         // Assert - both produce the same ascending order
-        static::assertSame('alpha-surface', $errorsA[0]->offendingSurface);
-        static::assertSame('omega-surface', $errorsA[1]->offendingSurface);
-        static::assertSame('alpha-surface', $errorsB[0]->offendingSurface);
-        static::assertSame('omega-surface', $errorsB[1]->offendingSurface);
+        self::assertSame('alpha-surface', $errorsA[0]->offendingSurface);
+        self::assertSame('omega-surface', $errorsA[1]->offendingSurface);
+        self::assertSame('alpha-surface', $errorsB[0]->offendingSurface);
+        self::assertSame('omega-surface', $errorsB[1]->offendingSurface);
     }
 }

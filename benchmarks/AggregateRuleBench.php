@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Benchmarks;
 
-use Benchmarks\Support\RouteLinterFixtures;
+use Benchmarks\Support\Concerns\RouteLinterFixtures;
 use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\Rules\DuplicateRouteNameRule;
@@ -21,9 +23,6 @@ use SineMacula\RouteLinter\Rules\DuplicateRouteNameRule;
 final class AggregateRuleBench
 {
     use RouteLinterFixtures;
-
-    /** @var mixed Sink preventing the measured expression from being optimised away. */
-    public mixed $sink = null;
 
     /** @var \SineMacula\RouteLinter\Rules\DuplicateRouteNameRule The aggregate rule under test. */
     private DuplicateRouteNameRule $rule;
@@ -54,12 +53,12 @@ final class AggregateRuleBench
     #[Bench\Warmup(2)]
     public function benchDetectDuplicateNames(): void
     {
-        $this->sink = $this->rule->inspect($this->routes, $this->config);
+        $this->rule->inspect($this->routes, $this->config);
     }
 
     /**
-     * Build a route table of the given size, reusing one name every 25 routes so
-     * the rule has real duplicates to emit without dominating the scan cost.
+     * Build a route table of the given size, reusing one name every 25 routes
+     * so the rule has real duplicates to emit without dominating the scan cost.
      *
      * @param  int  $count
      * @return array<int, \SineMacula\RouteLinter\NormalisedRoute>

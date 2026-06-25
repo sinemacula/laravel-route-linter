@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\DuplicateRouteNameRule;
-use SineMacula\RouteLinter\Severity;
 use Tests\TestCase;
 
 /**
@@ -18,7 +20,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(DuplicateRouteNameRule::class)]
-class DuplicateRouteNameRuleTest extends TestCase
+final class DuplicateRouteNameRuleTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Rules\DuplicateRouteNameRule */
     private DuplicateRouteNameRule $rule;
@@ -31,6 +33,7 @@ class DuplicateRouteNameRuleTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -56,13 +59,14 @@ class DuplicateRouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($routes, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
      * Test that unnamed routes are ignored entirely.
      *
-     * Kills the mutant removing the null-name guard: two unnamed routes must not
+     * Kills the mutant removing the null-name guard: two unnamed routes must
+     * not
      * collide on a null name.
      *
      * @return void
@@ -79,7 +83,7 @@ class DuplicateRouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($routes, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -99,12 +103,12 @@ class DuplicateRouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($routes, $this->config);
 
         // Assert - attributed to the second registration
-        static::assertCount(1, $violations);
-        static::assertSame('R6', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
-        static::assertSame('GET people users.index', $violations[0]->routeIdentity);
-        static::assertSame('users.index', $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R6', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('GET people users.index', $violations[0]->routeIdentity);
+        self::assertSame('users.index', $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -125,13 +129,14 @@ class DuplicateRouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($routes, $this->config);
 
         // Assert
-        static::assertCount(2, $violations);
-        static::assertSame('GET b shared.name', $violations[0]->routeIdentity);
-        static::assertSame('GET c shared.name', $violations[1]->routeIdentity);
+        self::assertCount(2, $violations);
+        self::assertSame('GET b shared.name', $violations[0]->routeIdentity);
+        self::assertSame('GET c shared.name', $violations[1]->routeIdentity);
     }
 
     /**
-     * Test that an unnamed route between two duplicates does not halt detection.
+     * Test that an unnamed route between two duplicates does not halt
+     * detection.
      *
      * Kills the mutant turning the null-name `continue` into a `break`: the
      * duplicate registered after the unnamed route must still be flagged.
@@ -140,7 +145,8 @@ class DuplicateRouteNameRuleTest extends TestCase
      */
     public function testUnnamedRouteBetweenDuplicatesDoesNotStopDetection(): void
     {
-        // Arrange - an unnamed route sits between the canonical and the duplicate
+        // Arrange - an unnamed route sits between the canonical and the
+        // duplicate
         $routes = [
             $this->route('a', 'shared.name'),
             $this->route('b', null),
@@ -151,8 +157,8 @@ class DuplicateRouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($routes, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('GET c shared.name', $violations[0]->routeIdentity);
+        self::assertCount(1, $violations);
+        self::assertSame('GET c shared.name', $violations[0]->routeIdentity);
     }
 
     /**
@@ -162,8 +168,8 @@ class DuplicateRouteNameRuleTest extends TestCase
      */
     public function testRuleMetadata(): void
     {
-        static::assertSame('R6', $this->rule->id());
-        static::assertSame(Severity::ERROR, $this->rule->severity());
+        self::assertSame('R6', $this->rule->id());
+        self::assertSame(Severity::ERROR, $this->rule->severity());
     }
 
     /**
