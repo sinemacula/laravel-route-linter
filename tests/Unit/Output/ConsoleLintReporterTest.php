@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Output;
 
 use Illuminate\Console\OutputStyle;
 use PHPUnit\Framework\Attributes\CoversClass;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\Output\ConsoleLintReporter;
 use SineMacula\RouteLinter\RouteLintReport;
-use SineMacula\RouteLinter\Severity;
 use SineMacula\RouteLinter\Violation;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -21,7 +23,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(ConsoleLintReporter::class)]
-class ConsoleLintReporterTest extends TestCase
+final class ConsoleLintReporterTest extends TestCase
 {
     /** @var \Symfony\Component\Console\Output\BufferedOutput */
     private BufferedOutput $buffer;
@@ -34,6 +36,7 @@ class ConsoleLintReporterTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -68,13 +71,13 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert - error header and violation line are present
-        static::assertStringContainsString('Route linting errors', $output);
-        static::assertStringContainsString('[R1]', $output);
-        static::assertStringContainsString('GET /get-users', $output);
-        static::assertStringContainsString('get', $output);
-        static::assertStringContainsString('use a noun-based path instead', $output);
+        self::assertStringContainsString('Route linting errors', $output);
+        self::assertStringContainsString('[R1]', $output);
+        self::assertStringContainsString('GET /get-users', $output);
+        self::assertStringContainsString('get', $output);
+        self::assertStringContainsString('use a noun-based path instead', $output);
         // Hint segment must use the exact label
-        static::assertStringContainsString('Hint: use a noun-based path instead', $output);
+        self::assertStringContainsString('Hint: use a noun-based path instead', $output);
     }
 
     /**
@@ -100,12 +103,13 @@ class ConsoleLintReporterTest extends TestCase
         $this->reporter->report($report);
         $output = $this->buffer->fetch();
 
-        // Assert - warning header and violation line are present; no error header
-        static::assertStringContainsString('Route linting warnings', $output);
-        static::assertStringContainsString('[R8]', $output);
-        static::assertStringContainsString('GET users', $output);
-        static::assertStringContainsString('users.getAll', $output);
-        static::assertStringNotContainsString('Route linting errors', $output);
+        // Assert - warning header and violation line are present; no error
+        // header
+        self::assertStringContainsString('Route linting warnings', $output);
+        self::assertStringContainsString('[R8]', $output);
+        self::assertStringContainsString('GET users', $output);
+        self::assertStringContainsString('users.getAll', $output);
+        self::assertStringNotContainsString('Route linting errors', $output);
     }
 
     /**
@@ -125,8 +129,8 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert - stale-waivers header and entry key are present
-        static::assertStringContainsString('Stale waivers / unused suppressions', $output);
-        static::assertStringContainsString('users.legacy', $output);
+        self::assertStringContainsString('Stale waivers / unused suppressions', $output);
+        self::assertStringContainsString('users.legacy', $output);
     }
 
     /**
@@ -145,10 +149,10 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert - success message present; no finding headers
-        static::assertStringContainsString('All routes conform to the RESTful conventions.', $output);
-        static::assertStringNotContainsString('Route linting errors', $output);
-        static::assertStringNotContainsString('Route linting warnings', $output);
-        static::assertStringNotContainsString('Stale waivers / unused suppressions', $output);
+        self::assertStringContainsString('All routes conform to the RESTful conventions.', $output);
+        self::assertStringNotContainsString('Route linting errors', $output);
+        self::assertStringNotContainsString('Route linting warnings', $output);
+        self::assertStringNotContainsString('Stale waivers / unused suppressions', $output);
     }
 
     /**
@@ -175,9 +179,9 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert - violation line is present without a hint segment
-        static::assertStringContainsString('[R2]', $output);
-        static::assertStringContainsString('userProfiles', $output);
-        static::assertStringNotContainsString('Hint:', $output);
+        self::assertStringContainsString('[R2]', $output);
+        self::assertStringContainsString('userProfiles', $output);
+        self::assertStringNotContainsString('Hint:', $output);
     }
 
     /**
@@ -204,9 +208,9 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert - only the warning section header appears
-        static::assertStringContainsString('Route linting warnings', $output);
-        static::assertStringNotContainsString('Route linting errors', $output);
-        static::assertStringNotContainsString('Stale waivers / unused suppressions', $output);
+        self::assertStringContainsString('Route linting warnings', $output);
+        self::assertStringNotContainsString('Route linting errors', $output);
+        self::assertStringNotContainsString('Stale waivers / unused suppressions', $output);
     }
 
     /**
@@ -232,12 +236,12 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert - success line is present
-        static::assertStringContainsString('All routes conform to the RESTful conventions.', $output);
+        self::assertStringContainsString('All routes conform to the RESTful conventions.', $output);
 
         // Assert - none of the section headers are present (early-return guard)
-        static::assertStringNotContainsString('Route linting errors', $output);
-        static::assertStringNotContainsString('Route linting warnings', $output);
-        static::assertStringNotContainsString('Stale waivers', $output);
+        self::assertStringNotContainsString('Route linting errors', $output);
+        self::assertStringNotContainsString('Route linting warnings', $output);
+        self::assertStringNotContainsString('Stale waivers', $output);
     }
 
     /**
@@ -267,8 +271,8 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert - success line must NOT appear when there are warnings
-        static::assertStringNotContainsString('All routes conform to the RESTful conventions.', $output);
-        static::assertStringContainsString('Route linting warnings', $output);
+        self::assertStringNotContainsString('All routes conform to the RESTful conventions.', $output);
+        self::assertStringContainsString('Route linting warnings', $output);
     }
 
     /**
@@ -301,8 +305,8 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert - errors section is rendered; warnings section is NOT
-        static::assertStringContainsString('Route linting errors', $output);
-        static::assertStringNotContainsString('Route linting warnings', $output);
+        self::assertStringContainsString('Route linting errors', $output);
+        self::assertStringNotContainsString('Route linting warnings', $output);
     }
 
     /**
@@ -330,7 +334,7 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert exact line content
-        static::assertStringContainsString(
+        self::assertStringContainsString(
             '  [R5] GET /fetch-items (fetch) -- Hint: rename to /items',
             $output,
         );
@@ -361,8 +365,8 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert exact line content - no " -- Hint:" suffix
-        static::assertStringContainsString('  [R3] POST UserItems (UserItems)', $output);
-        static::assertStringNotContainsString('Hint:', $output);
+        self::assertStringContainsString('  [R3] POST UserItems (UserItems)', $output);
+        self::assertStringNotContainsString('Hint:', $output);
     }
 
     /**
@@ -383,7 +387,7 @@ class ConsoleLintReporterTest extends TestCase
         $output = $this->buffer->fetch();
 
         // Assert exact line content
-        static::assertStringContainsString(
+        self::assertStringContainsString(
             '  - orders.legacy (suppressed nothing): Old migration waiver.',
             $output,
         );

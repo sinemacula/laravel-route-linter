@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter;
 
 use SineMacula\RouteLinter\Dto\AllowlistEntry;
@@ -25,9 +27,6 @@ use SineMacula\RouteLinter\Dto\AllowlistEntry;
  */
 final class ExemptionAllowlist
 {
-    /** @var array<int, \SineMacula\RouteLinter\Dto\AllowlistEntry> */
-    private readonly array $entries;
-
     /** @var array<int, bool> Index positions of entries whose pattern matched at least one live route */
     private array $matched = [];
 
@@ -39,10 +38,11 @@ final class ExemptionAllowlist
      *
      * @param  array<int, \SineMacula\RouteLinter\Dto\AllowlistEntry>  $entries
      */
-    public function __construct(array $entries)
-    {
-        $this->entries = $entries;
-    }
+    public function __construct(
+
+        /** The waiver entries supplied by the rule-configuration port */
+        private readonly array $entries,
+    ) {}
 
     /**
      * Record that a live route has been observed.
@@ -59,9 +59,11 @@ final class ExemptionAllowlist
     public function observe(?string $routeName, string $uri): void
     {
         foreach ($this->entries as $index => $entry) {
-            if ($this->entryMatches($entry, $routeName, $uri)) {
-                $this->matched[$index] = true;
+            if (!$this->matches($entry, $routeName, $uri)) {
+                continue;
             }
+
+            $this->matched[$index] = true;
         }
     }
 
@@ -84,7 +86,7 @@ final class ExemptionAllowlist
     public function suppresses(?string $routeName, string $uri, string $ruleId): bool
     {
         foreach ($this->entries as $index => $entry) {
-            if (!$this->entryMatches($entry, $routeName, $uri)) {
+            if (!$this->matches($entry, $routeName, $uri)) {
                 continue;
             }
 
@@ -113,9 +115,11 @@ final class ExemptionAllowlist
         $stale = [];
 
         foreach ($this->entries as $index => $entry) {
-            if (!($this->matched[$index] ?? false)) {
-                $stale[] = $entry->match;
+            if ($this->matched[$index] ?? false) {
+                continue;
             }
+
+            $stale[] = $entry->match;
         }
 
         sort($stale);
@@ -139,9 +143,11 @@ final class ExemptionAllowlist
         $stale = [];
 
         foreach ($this->entries as $index => $entry) {
-            if (($this->matched[$index] ?? false) && !($this->used[$index] ?? false)) {
-                $stale[] = sprintf('%s (suppressed nothing): %s', $entry->match, $entry->reason);
+            if (!($this->matched[$index] ?? false) || ($this->used[$index] ?? false)) {
+                continue;
             }
+
+            $stale[] = sprintf('%s (suppressed nothing): %s', $entry->match, $entry->reason);
         }
 
         sort($stale);
@@ -160,7 +166,7 @@ final class ExemptionAllowlist
      * @param  string  $uri
      * @return bool
      */
-    private function entryMatches(AllowlistEntry $entry, ?string $routeName, string $uri): bool
+    private function matches(AllowlistEntry $entry, ?string $routeName, string $uri): bool
     {
         if ($routeName !== null && $routeName === $entry->match) {
             return true;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,7 +17,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(NormalisedRoute::class)]
-class NormalisedRouteTest extends TestCase
+final class NormalisedRouteTest extends TestCase
 {
     /**
      * Test that methods are sorted ascending regardless of construction order.
@@ -32,7 +34,7 @@ class NormalisedRouteTest extends TestCase
             parameters: [],
         );
 
-        static::assertStringStartsWith('GET,POST ', $route->identity());
+        self::assertStringStartsWith('GET,POST ', $route->identity());
     }
 
     /**
@@ -50,7 +52,7 @@ class NormalisedRouteTest extends TestCase
             parameters: ['user'],
         );
 
-        static::assertSame('GET users/{user}', $route->identity());
+        self::assertSame('GET users/{user}', $route->identity());
     }
 
     /**
@@ -68,7 +70,7 @@ class NormalisedRouteTest extends TestCase
             parameters: [],
         );
 
-        static::assertSame('GET,HEAD users users.index', $route->identity());
+        self::assertSame('GET,HEAD users users.index', $route->identity());
     }
 
     /**
@@ -86,6 +88,6 @@ class NormalisedRouteTest extends TestCase
             parameters: [],
         );
 
-        static::assertSame('GET orders', $route->identity());
+        self::assertSame('GET orders', $route->identity());
     }
 }

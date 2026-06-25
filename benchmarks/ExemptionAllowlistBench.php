@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Benchmarks;
 
-use Benchmarks\Support\RouteLinterFixtures;
+use Benchmarks\Support\Concerns\RouteLinterFixtures;
 use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\ExemptionAllowlist;
 
@@ -26,9 +28,6 @@ final class ExemptionAllowlistBench
 
     /** @var int Representative number of entries in a maintained allowlist. */
     private const int ALLOWLIST_SIZE = 20;
-
-    /** @var mixed Sink preventing the measured expression from being optimised away. */
-    public mixed $sink = null;
 
     /** @var \SineMacula\RouteLinter\ExemptionAllowlist The allowlist under test. */
     private ExemptionAllowlist $allowlist;
@@ -64,7 +63,7 @@ final class ExemptionAllowlistBench
     #[Bench\Warmup(2)]
     public function benchSuppressesHit(): void
     {
-        $this->sink = $this->allowlist->suppresses('orders.index', 'api/v1/orders', 'R4');
+        $this->allowlist->suppresses('orders.index', 'api/v1/orders', 'R4');
     }
 
     /**
@@ -77,6 +76,6 @@ final class ExemptionAllowlistBench
     #[Bench\Warmup(2)]
     public function benchSuppressesMiss(): void
     {
-        $this->sink = $this->allowlist->suppresses('unknown.route', 'api/v1/nonexistent/resource', 'R1');
+        $this->allowlist->suppresses('unknown.route', 'api/v1/nonexistent/resource', 'R1');
     }
 }

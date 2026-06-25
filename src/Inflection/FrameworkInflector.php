@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Inflection;
 
 use Illuminate\Support\Str;
@@ -27,7 +29,6 @@ final class FrameworkInflector implements Inflector
 
         /** Words treated as already-plural, bypassing singularisation */
         private readonly array $uncountables = [],
-
     ) {}
 
     /**

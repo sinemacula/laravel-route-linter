@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Contracts;
 
 use SineMacula\RouteLinter\Dto\RuleConfig;
-use SineMacula\RouteLinter\NormalisedRoute;
-use SineMacula\RouteLinter\Severity;
+use SineMacula\RouteLinter\Enums\Severity;
 
 /**
  * Domain contract for a cross-route ("aggregate") linting rule.
@@ -16,9 +17,10 @@ use SineMacula\RouteLinter\Severity;
  * pass after the per-route pass. Rules are pure: they read their inputs and
  * return findings without side effects.
  *
- * Each violation should carry the {@see NormalisedRoute::identity()} of the
- * route it is attributed to, so per-route suppression still applies; a violation
- * whose identity matches no live route is reported unsuppressed.
+ * Each violation should carry the
+ * {@see \SineMacula\RouteLinter\NormalisedRoute::identity()} of the route it is
+ * attributed to, so per-route suppression still applies; a violation whose
+ * identity matches no live route is reported unsuppressed.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -35,12 +37,13 @@ interface AggregateRule
     /**
      * The severity this rule emits (error gates CI; warning is reported only).
      *
-     * @return \SineMacula\RouteLinter\Severity
+     * @return \SineMacula\RouteLinter\Enums\Severity
      */
     public function severity(): Severity;
 
     /**
-     * Inspect the whole normalised route set and return zero or more violations.
+     * Inspect the whole normalised route set and return zero or more
+     * violations.
      *
      * Rules are pure and side-effect free. Any exception a rule raises
      * propagates uncaught to the caller (fail-loud).

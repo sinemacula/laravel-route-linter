@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Integration;
 
 use Illuminate\Console\OutputStyle;
@@ -42,7 +44,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RouteLinterServiceProvider::class)]
-class RouteLinterServiceProviderTest extends TestCase
+final class RouteLinterServiceProviderTest extends TestCase
 {
     /**
      * Test that the route-source port resolves to the router-backed adapter.
@@ -53,7 +55,7 @@ class RouteLinterServiceProviderTest extends TestCase
     {
         assert($this->app !== null);
 
-        static::assertInstanceOf(RouterRouteSource::class, $this->app->make(RouteSource::class));
+        self::assertInstanceOf(RouterRouteSource::class, $this->app->make(RouteSource::class));
     }
 
     /**
@@ -66,7 +68,7 @@ class RouteLinterServiceProviderTest extends TestCase
     {
         assert($this->app !== null);
 
-        static::assertInstanceOf(ConfigRuleConfiguration::class, $this->app->make(RuleConfiguration::class));
+        self::assertInstanceOf(ConfigRuleConfiguration::class, $this->app->make(RuleConfiguration::class));
     }
 
     /**
@@ -80,8 +82,8 @@ class RouteLinterServiceProviderTest extends TestCase
 
         $inflector = $this->app->make(Inflector::class);
 
-        static::assertInstanceOf(Inflector::class, $inflector);
-        static::assertInstanceOf(FrameworkInflector::class, $inflector);
+        self::assertInstanceOf(Inflector::class, $inflector);
+        self::assertInstanceOf(FrameworkInflector::class, $inflector);
     }
 
     /**
@@ -97,8 +99,8 @@ class RouteLinterServiceProviderTest extends TestCase
         $first  = $this->app->make(RouteLintEngine::class);
         $second = $this->app->make(RouteLintEngine::class);
 
-        static::assertInstanceOf(RouteLintEngine::class, $first);
-        static::assertSame($first, $second, 'The engine must be bound as a singleton.');
+        self::assertInstanceOf(RouteLintEngine::class, $first);
+        self::assertSame($first, $second, 'The engine must be bound as a singleton.');
     }
 
     /**
@@ -108,8 +110,8 @@ class RouteLinterServiceProviderTest extends TestCase
      */
     public function testMergesPackageConfiguration(): void
     {
-        static::assertIsArray(config('route-linter.verb_denylist'));
-        static::assertIsArray(config('route-linter.uncountables'));
+        self::assertIsArray(config('route-linter.verb_denylist'));
+        self::assertIsArray(config('route-linter.uncountables'));
     }
 
     /**
@@ -128,7 +130,7 @@ class RouteLinterServiceProviderTest extends TestCase
 
         $inflector = $this->app->make(Inflector::class);
 
-        static::assertSame('media', $inflector->singular('media'));
+        self::assertSame('media', $inflector->singular('media'));
     }
 
     /**
@@ -156,9 +158,9 @@ class RouteLinterServiceProviderTest extends TestCase
             static fn (Violation $violation): bool => $violation->ruleId === 'R1',
         ));
 
-        static::assertNotEmpty($violations, 'R1 must fire using the shipped verb denylist.');
-        static::assertSame('get', $violations[0]->offendingSurface);
-        static::assertNotNull($violations[0]->remediationHint, 'R1 must carry the shipped remediation hint.');
+        self::assertNotEmpty($violations, 'R1 must fire using the shipped verb denylist.');
+        self::assertSame('get', $violations[0]->offendingSurface);
+        self::assertNotNull($violations[0]->remediationHint, 'R1 must carry the shipped remediation hint.');
     }
 
     /**
@@ -171,13 +173,13 @@ class RouteLinterServiceProviderTest extends TestCase
     {
         $paths = RouteLinterServiceProvider::pathsToPublish(RouteLinterServiceProvider::class, 'route-linter-config');
 
-        static::assertNotEmpty($paths, 'The package config must be publishable under the route-linter-config tag.');
+        self::assertNotEmpty($paths, 'The package config must be publishable under the route-linter-config tag.');
 
         $source = array_key_first($paths);
 
-        static::assertIsString($source);
-        static::assertStringEndsWith('config/route-linter.php', $source);
-        static::assertFileExists($source);
+        self::assertIsString($source);
+        self::assertStringEndsWith('config/route-linter.php', $source);
+        self::assertFileExists($source);
     }
 
     /**
@@ -187,11 +189,11 @@ class RouteLinterServiceProviderTest extends TestCase
      */
     public function testBootRegistersMacroAndCommand(): void
     {
-        static::assertTrue(Route::hasMacro('ignoreRouteLint'), 'The ignoreRouteLint macro must be registered.');
+        self::assertTrue(Route::hasMacro('ignoreRouteLint'), 'The ignoreRouteLint macro must be registered.');
 
         $commands = array_map(static fn (object $command): string => $command::class, array_values(Artisan::all()));
 
-        static::assertContains(LintRoutesCommand::class, $commands, 'The route:lint command must be registered.');
+        self::assertContains(LintRoutesCommand::class, $commands, 'The route:lint command must be registered.');
     }
 
     /**
@@ -206,7 +208,7 @@ class RouteLinterServiceProviderTest extends TestCase
 
         $output = new OutputStyle(new ArrayInput([]), new BufferedOutput);
 
-        static::assertInstanceOf(ConsoleLintReporter::class, $this->app->make(LintReporter::class, ['output' => $output]));
+        self::assertInstanceOf(ConsoleLintReporter::class, $this->app->make(LintReporter::class, ['output' => $output]));
     }
 
     /**
@@ -238,7 +240,7 @@ class RouteLinterServiceProviderTest extends TestCase
             $report->warnings(),
         );
 
-        static::assertContains('team,member', $surfaces, 'A custom rule from config must run and observe the brace-stripped parameter names.');
+        self::assertContains('team,member', $surfaces, 'A custom rule from config must run and observe the brace-stripped parameter names.');
     }
 
     /**
@@ -273,7 +275,7 @@ class RouteLinterServiceProviderTest extends TestCase
 
         config()->set('route-linter.rules', 'not-an-array');
 
-        static::assertInstanceOf(RouteLintEngine::class, $this->app->make(RouteLintEngine::class));
+        self::assertInstanceOf(RouteLintEngine::class, $this->app->make(RouteLintEngine::class));
     }
 
     /**
@@ -293,7 +295,7 @@ class RouteLinterServiceProviderTest extends TestCase
         $provider->register();
         $provider->boot();
 
-        static::assertInstanceOf(RouterRouteSource::class, $this->app->make(RouteSource::class));
-        static::assertTrue(Route::hasMacro('ignoreRouteLint'));
+        self::assertInstanceOf(RouterRouteSource::class, $this->app->make(RouteSource::class));
+        self::assertTrue(Route::hasMacro('ignoreRouteLint'));
     }
 }

@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\RouteHandlerExistsRule;
-use SineMacula\RouteLinter\Severity;
 use Tests\Fixtures\Controllers\RouteLintController;
 use Tests\Fixtures\Rules\ParameterEchoRule;
 use Tests\TestCase;
@@ -20,7 +22,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RouteHandlerExistsRule::class)]
-class RouteHandlerExistsRuleTest extends TestCase
+final class RouteHandlerExistsRuleTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Rules\RouteHandlerExistsRule */
     private RouteHandlerExistsRule $rule;
@@ -33,6 +35,7 @@ class RouteHandlerExistsRuleTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -52,7 +55,7 @@ class RouteHandlerExistsRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route(null), $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -66,7 +69,7 @@ class RouteHandlerExistsRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route(RouteLintController::class . '@index'), $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -86,12 +89,12 @@ class RouteHandlerExistsRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route($handler), $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R12', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
-        static::assertSame('GET users users.index', $violations[0]->routeIdentity);
-        static::assertSame($handler, $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R12', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('GET users users.index', $violations[0]->routeIdentity);
+        self::assertSame($handler, $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -108,12 +111,13 @@ class RouteHandlerExistsRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route($handler), $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame($handler, $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame($handler, $violations[0]->offendingSurface);
     }
 
     /**
-     * Test that a bare invokable class with an `__invoke` method is not flagged.
+     * Test that a bare invokable class with an `__invoke` method is not
+     * flagged.
      *
      * Kills the literal mutant replacing the `__invoke` default: an invokable
      * controller must resolve against `__invoke` and pass.
@@ -126,7 +130,7 @@ class RouteHandlerExistsRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route(RouteLintController::class), $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -143,8 +147,8 @@ class RouteHandlerExistsRuleTest extends TestCase
         $violations = $this->rule->inspect($this->route($handler), $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame($handler, $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame($handler, $violations[0]->offendingSurface);
     }
 
     /**
@@ -154,8 +158,8 @@ class RouteHandlerExistsRuleTest extends TestCase
      */
     public function testRuleMetadata(): void
     {
-        static::assertSame('R12', $this->rule->id());
-        static::assertSame(Severity::ERROR, $this->rule->severity());
+        self::assertSame('R12', $this->rule->id());
+        self::assertSame(Severity::ERROR, $this->rule->severity());
     }
 
     /**

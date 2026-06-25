@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter;
 
 use Illuminate\Contracts\Foundation\Application;
@@ -40,6 +42,7 @@ final class RouteLinterServiceProvider extends ServiceProvider
      *
      * @return void
      */
+    #[\Override]
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/route-linter.php', 'route-linter');
@@ -80,14 +83,15 @@ final class RouteLinterServiceProvider extends ServiceProvider
     {
         RouteLintMacros::register();
 
-        if ($this->app->runningInConsole()) {
-
-            $this->publishes([
-                __DIR__ . '/../config/route-linter.php' => $this->app->configPath('route-linter.php'),
-            ], 'route-linter-config');
-
-            $this->commands([LintRoutesCommand::class]);
+        if (!$this->app->runningInConsole()) {
+            return;
         }
+
+        $this->publishes([
+            __DIR__ . '/../config/route-linter.php' => $this->app->configPath('route-linter.php'),
+        ], 'route-linter-config');
+
+        $this->commands([LintRoutesCommand::class]);
     }
 
     /**
@@ -96,9 +100,9 @@ final class RouteLinterServiceProvider extends ServiceProvider
      *
      * Each entry in `route-linter.rules` must be a class string implementing
      * the Rule or AggregateRule contract; rules are resolved through the
-     * container so they may declare constructor dependencies. A non-array config
-     * value yields an empty rule set. The engine partitions the resolved rules
-     * by kind, so per-route and cross-route rules share one ordered list.
+     * container so they may declare constructor dependencies. A non-array
+     * config value yields an empty rule set. The engine partitions the resolved
+     * rules by kind, so per-route and cross-route rules share one ordered list.
      *
      * @param  \Illuminate\Contracts\Foundation\Application  $app
      * @return array<int, \SineMacula\RouteLinter\Contracts\AggregateRule|\SineMacula\RouteLinter\Contracts\Rule>

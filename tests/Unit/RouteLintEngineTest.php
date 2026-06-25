@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Contracts\Rule;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\RouteLintEngine;
-use SineMacula\RouteLinter\Severity;
 use SineMacula\RouteLinter\Violation;
 use Tests\Fixtures\Rules\ParameterEchoRule;
 use Tests\Fixtures\Rules\StaticAggregateRule;
@@ -23,7 +25,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RouteLintEngine::class)]
-class RouteLintEngineTest extends TestCase
+final class RouteLintEngineTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\NormalisedRoute */
     private NormalisedRoute $route;
@@ -36,6 +38,7 @@ class RouteLintEngineTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -66,7 +69,11 @@ class RouteLintEngineTest extends TestCase
             /**
              * @param  \SineMacula\RouteLinter\Violation  $violation
              */
-            public function __construct(private readonly Violation $violation) {}
+            public function __construct(
+
+                /** The violation produced by the rule under test. */
+                private readonly Violation $violation,
+            ) {}
 
             /**
              * @return string
@@ -78,7 +85,7 @@ class RouteLintEngineTest extends TestCase
             }
 
             /**
-             * @return \SineMacula\RouteLinter\Severity
+             * @return \SineMacula\RouteLinter\Enums\Severity
              */
             #[\Override]
             public function severity(): Severity
@@ -102,7 +109,11 @@ class RouteLintEngineTest extends TestCase
             /**
              * @param  \SineMacula\RouteLinter\Violation  $violation
              */
-            public function __construct(private readonly Violation $violation) {}
+            public function __construct(
+
+                /** The violation produced by the rule under test. */
+                private readonly Violation $violation,
+            ) {}
 
             /**
              * @return string
@@ -114,7 +125,7 @@ class RouteLintEngineTest extends TestCase
             }
 
             /**
-             * @return \SineMacula\RouteLinter\Severity
+             * @return \SineMacula\RouteLinter\Enums\Severity
              */
             #[\Override]
             public function severity(): Severity
@@ -140,9 +151,9 @@ class RouteLintEngineTest extends TestCase
         $violations = $engine->inspect($this->route, $this->config);
 
         // Assert - both violations present in supplied rule order
-        static::assertCount(2, $violations);
-        static::assertSame('R1', $violations[0]->ruleId);
-        static::assertSame('R2', $violations[1]->ruleId);
+        self::assertCount(2, $violations);
+        self::assertSame('R1', $violations[0]->ruleId);
+        self::assertSame('R2', $violations[1]->ruleId);
     }
 
     /**
@@ -171,7 +182,7 @@ class RouteLintEngineTest extends TestCase
             }
 
             /**
-             * @return \SineMacula\RouteLinter\Severity
+             * @return \SineMacula\RouteLinter\Enums\Severity
              */
             #[\Override]
             public function severity(): Severity
@@ -195,7 +206,11 @@ class RouteLintEngineTest extends TestCase
             /**
              * @param  \SineMacula\RouteLinter\Violation  $violation
              */
-            public function __construct(private readonly Violation $violation) {}
+            public function __construct(
+
+                /** The violation produced by the rule under test. */
+                private readonly Violation $violation,
+            ) {}
 
             /**
              * @return string
@@ -207,7 +222,7 @@ class RouteLintEngineTest extends TestCase
             }
 
             /**
-             * @return \SineMacula\RouteLinter\Severity
+             * @return \SineMacula\RouteLinter\Enums\Severity
              */
             #[\Override]
             public function severity(): Severity
@@ -233,7 +248,11 @@ class RouteLintEngineTest extends TestCase
              * @param  \SineMacula\RouteLinter\Violation  $violation2
              */
             public function __construct(
+
+                /** The first violation emitted by the rule. */
                 private readonly Violation $violation1,
+
+                /** The second violation emitted by the rule. */
                 private readonly Violation $violation2,
             ) {}
 
@@ -247,7 +266,7 @@ class RouteLintEngineTest extends TestCase
             }
 
             /**
-             * @return \SineMacula\RouteLinter\Severity
+             * @return \SineMacula\RouteLinter\Enums\Severity
              */
             #[\Override]
             public function severity(): Severity
@@ -273,10 +292,10 @@ class RouteLintEngineTest extends TestCase
         $violations = $engine->inspect($this->route, $this->config);
 
         // Assert - 0 + 1 + 2 = 3 violations in a flat array
-        static::assertCount(3, $violations);
-        static::assertSame('R2', $violations[0]->ruleId);
-        static::assertSame('R3', $violations[1]->ruleId);
-        static::assertSame('R3', $violations[2]->ruleId);
+        self::assertCount(3, $violations);
+        self::assertSame('R2', $violations[0]->ruleId);
+        self::assertSame('R3', $violations[1]->ruleId);
+        self::assertSame('R3', $violations[2]->ruleId);
     }
 
     /**
@@ -293,7 +312,7 @@ class RouteLintEngineTest extends TestCase
         $violations = $engine->inspect($this->route, $this->config);
 
         // Assert
-        static::assertSame([], $violations);
+        self::assertSame([], $violations);
     }
 
     /**
@@ -330,7 +349,11 @@ class RouteLintEngineTest extends TestCase
              * @param  \SineMacula\RouteLinter\Violation  $violation2
              */
             public function __construct(
+
+                /** The first violation emitted by the rule. */
                 private readonly Violation $violation1,
+
+                /** The second violation emitted by the rule. */
                 private readonly Violation $violation2,
             ) {}
 
@@ -344,7 +367,7 @@ class RouteLintEngineTest extends TestCase
             }
 
             /**
-             * @return \SineMacula\RouteLinter\Severity
+             * @return \SineMacula\RouteLinter\Enums\Severity
              */
             #[\Override]
             public function severity(): Severity
@@ -371,14 +394,14 @@ class RouteLintEngineTest extends TestCase
         $secondRun = $engine->inspect($this->route, $this->config);
 
         // Assert - identical count, identical element identity per position
-        static::assertCount(2, $firstRun);
-        static::assertCount(2, $secondRun);
+        self::assertCount(2, $firstRun);
+        self::assertCount(2, $secondRun);
 
         foreach ($firstRun as $index => $violation) {
-            static::assertSame($violation->ruleId, $secondRun[$index]->ruleId);
-            static::assertSame($violation->routeIdentity, $secondRun[$index]->routeIdentity);
-            static::assertSame($violation->offendingSurface, $secondRun[$index]->offendingSurface);
-            static::assertSame($violation->severity, $secondRun[$index]->severity);
+            self::assertSame($violation->ruleId, $secondRun[$index]->ruleId);
+            self::assertSame($violation->routeIdentity, $secondRun[$index]->routeIdentity);
+            self::assertSame($violation->offendingSurface, $secondRun[$index]->offendingSurface);
+            self::assertSame($violation->severity, $secondRun[$index]->severity);
         }
     }
 
@@ -404,10 +427,10 @@ class RouteLintEngineTest extends TestCase
         $violations = $engine->inspectAll([$this->route, $second], $this->config);
 
         // Assert - one violation per route, in supplied order
-        static::assertCount(2, $violations);
-        static::assertSame('AGG-1', $violations[0]->ruleId);
-        static::assertSame('GET users users.index', $violations[0]->routeIdentity);
-        static::assertSame('GET orders orders.index', $violations[1]->routeIdentity);
+        self::assertCount(2, $violations);
+        self::assertSame('AGG-1', $violations[0]->ruleId);
+        self::assertSame('GET users users.index', $violations[0]->routeIdentity);
+        self::assertSame('GET orders orders.index', $violations[1]->routeIdentity);
     }
 
     /**
@@ -426,11 +449,12 @@ class RouteLintEngineTest extends TestCase
         $perRoute  = $engine->inspect($this->route, $this->config);
         $aggregate = $engine->inspectAll([$this->route], $this->config);
 
-        // Assert - inspect() sees only the per-route rule; inspectAll() only the aggregate
-        static::assertCount(1, $perRoute);
-        static::assertSame('TEST-PARAMS', $perRoute[0]->ruleId);
-        static::assertCount(1, $aggregate);
-        static::assertSame('AGG-2', $aggregate[0]->ruleId);
+        // Assert - inspect() sees only the per-route rule; inspectAll()
+        // only the aggregate
+        self::assertCount(1, $perRoute);
+        self::assertSame('TEST-PARAMS', $perRoute[0]->ruleId);
+        self::assertCount(1, $aggregate);
+        self::assertSame('AGG-2', $aggregate[0]->ruleId);
     }
 
     /**
@@ -448,7 +472,7 @@ class RouteLintEngineTest extends TestCase
         $violations = $engine->inspectAll([$this->route], $this->config);
 
         // Assert
-        static::assertSame([], $violations);
+        self::assertSame([], $violations);
     }
 
     /**

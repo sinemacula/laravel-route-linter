@@ -1,6 +1,8 @@
 <?php
 
-namespace SineMacula\RouteLinter;
+declare(strict_types = 1);
+
+namespace SineMacula\RouteLinter\Enums;
 
 /**
  * The severity tier for a route-linting finding.
@@ -15,7 +17,9 @@ namespace SineMacula\RouteLinter;
  */
 enum Severity: string
 {
-    /** A finding that must be resolved before the route passes the linter gate. */
+    /**
+     * A finding that must be resolved before the route passes the linter gate.
+     */
     case ERROR = 'error';
 
     /** A finding that is surfaced for awareness but does not block the gate. */

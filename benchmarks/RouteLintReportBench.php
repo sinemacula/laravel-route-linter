@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Benchmarks;
 
-use Benchmarks\Support\RouteLinterFixtures;
+use Benchmarks\Support\Concerns\RouteLinterFixtures;
 use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\RouteLintReport;
 
@@ -29,9 +31,6 @@ final class RouteLintReportBench
 
     /** @var int Representative number of stale waivers accumulated by a defect-heavy run. */
     private const int STALE_WAIVER_COUNT = 20;
-
-    /** @var mixed Sink preventing the measured expression from being optimised away. */
-    public mixed $sink = null;
 
     /** @var \SineMacula\RouteLinter\RouteLintReport A report pre-loaded with a representative finding set. */
     private RouteLintReport $report;
@@ -62,7 +61,7 @@ final class RouteLintReportBench
     #[Bench\Warmup(2)]
     public function benchErrors(): void
     {
-        $this->sink = $this->report->errors();
+        $this->report->errors();
     }
 
     /**
@@ -75,7 +74,7 @@ final class RouteLintReportBench
     #[Bench\Warmup(2)]
     public function benchWarnings(): void
     {
-        $this->sink = $this->report->warnings();
+        $this->report->warnings();
     }
 
     /**
@@ -88,6 +87,6 @@ final class RouteLintReportBench
     #[Bench\Warmup(2)]
     public function benchStaleWaivers(): void
     {
-        $this->sink = $this->report->staleWaivers();
+        $this->report->staleWaivers();
     }
 }

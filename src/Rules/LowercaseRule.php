@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Rules;
 
 use SineMacula\RouteLinter\Contracts\Rule;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
-use SineMacula\RouteLinter\Severity;
 use SineMacula\RouteLinter\Violation;
 
 /**
@@ -34,7 +36,7 @@ final class LowercaseRule implements Rule
     /**
      * Return the severity tier for this rule.
      *
-     * @return \SineMacula\RouteLinter\Severity
+     * @return \SineMacula\RouteLinter\Enums\Severity
      */
     #[\Override]
     public function severity(): Severity
@@ -59,15 +61,17 @@ final class LowercaseRule implements Rule
                 continue;
             }
 
-            if ($segment !== strtolower($segment)) {
-                $violations[] = new Violation(
-                    ruleId: $this->id(),
-                    severity: $this->severity(),
-                    routeIdentity: $route->identity(),
-                    offendingSurface: $segment,
-                    remediationHint: null,
-                );
+            if ($segment === strtolower($segment)) {
+                continue;
             }
+
+            $violations[] = new Violation(
+                ruleId: $this->id(),
+                severity: $this->severity(),
+                routeIdentity: $route->identity(),
+                offendingSurface: $segment,
+                remediationHint: null,
+            );
         }
 
         return $violations;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter;
 
 /**
@@ -28,7 +30,10 @@ final readonly class NormalisedRoute
      */
     public function __construct(
 
-        /** The route URI as registered, e.g. `users/{user}` (no leading slash assumed; stored as given) */
+        /**
+         * The route URI as registered, e.g. `users/{user}` (no
+         * leading slash assumed; stored as given).
+         */
         public string $uri,
 
         /** Uppercase HTTP methods for this route, e.g. `['GET', 'HEAD']` */
@@ -37,7 +42,10 @@ final readonly class NormalisedRoute
         /** The route name, or null when the route is unnamed */
         public ?string $name,
 
-        /** URI split on `/`, with empty segments preserved so trailing/duplicate slashes remain detectable */
+        /**
+         * URI split on `/`, with empty segments preserved so
+         * trailing/duplicate slashes remain detectable.
+         */
         public array $segments,
 
         /**
@@ -48,12 +56,17 @@ final readonly class NormalisedRoute
          */
         public array $parameters,
 
-        /** The handler as `Class@method` (or `Class` for invokables), or null for closure routes */
+        /**
+         * The handler as `Class@method` (or `Class` for
+         * invokables), or null for closure routes.
+         */
         public ?string $handler = null,
 
-        /** Gathered middleware names, e.g. `['auth:sanctum']`; closure middleware is excluded */
+        /**
+         * Gathered middleware names, e.g. `['auth:sanctum']`;
+         * closure middleware is excluded.
+         */
         public array $middleware = [],
-
     ) {}
 
     /**

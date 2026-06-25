@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Support;
 
 use Illuminate\Routing\Route;
@@ -39,14 +41,16 @@ final class RouteLintMacros
          * route action. Data is stored as plain arrays so it survives
          * `route:cache` serialisation.
          *
-         * @param  list<string>  $ruleIds  Rule IDs to suppress; empty list means all rules.
-         * @param  string  $reason  Non-empty written justification for this suppression.
+         * @param  list<string>  $ruleIds  Rule IDs to suppress; an empty list
+         *   means all rules.
+         * @param  string  $reason  Non-empty written justification for this
+         *   suppression.
          * @return \Illuminate\Routing\Route
          *
-         * @throws \SineMacula\RouteLinter\Exceptions\InvalidConfigurationException
+         * @throws InvalidConfigurationException
          */
         Route::macro('ignoreRouteLint', function (array $ruleIds, string $reason): Route {
-            // @var \Illuminate\Routing\Route $this
+            // The macro closure is bound to the Illuminate Route instance.
             if (trim($reason) === '') {
                 throw new InvalidConfigurationException('A non-empty reason is required for ignoreRouteLint().');
             }

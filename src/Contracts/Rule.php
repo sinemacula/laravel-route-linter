@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Contracts;
 
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
-use SineMacula\RouteLinter\Severity;
-use SineMacula\RouteLinter\Violation;
 
 /**
  * Domain contract for a single route-linting rule.
@@ -30,7 +31,7 @@ interface Rule
     /**
      * The severity this rule emits (error gates CI; warning is reported only).
      *
-     * @return \SineMacula\RouteLinter\Severity
+     * @return \SineMacula\RouteLinter\Enums\Severity
      */
     public function severity(): Severity;
 

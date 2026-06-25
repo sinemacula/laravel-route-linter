@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Inflection;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,7 +17,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(FrameworkInflector::class)]
-class FrameworkInflectorTest extends TestCase
+final class FrameworkInflectorTest extends TestCase
 {
     /**
      * Test that singular() returns the singular form of a regular plural word.
@@ -26,7 +28,7 @@ class FrameworkInflectorTest extends TestCase
     {
         $inflector = new FrameworkInflector;
 
-        static::assertSame('user', $inflector->singular('users'));
+        self::assertSame('user', $inflector->singular('users'));
     }
 
     /**
@@ -39,8 +41,8 @@ class FrameworkInflectorTest extends TestCase
     {
         $inflector = new FrameworkInflector(['media']);
 
-        static::assertSame('media', $inflector->singular('media'));
-        static::assertTrue($inflector->isPlural('media'));
+        self::assertSame('media', $inflector->singular('media'));
+        self::assertTrue($inflector->isPlural('media'));
     }
 
     /**
@@ -52,8 +54,8 @@ class FrameworkInflectorTest extends TestCase
     {
         $inflector = new FrameworkInflector;
 
-        static::assertTrue($inflector->isPlural('users'));
-        static::assertFalse($inflector->isPlural('user'));
+        self::assertTrue($inflector->isPlural('users'));
+        self::assertFalse($inflector->isPlural('user'));
     }
 
     /**
@@ -66,8 +68,8 @@ class FrameworkInflectorTest extends TestCase
     {
         $inflector = new FrameworkInflector;
 
-        static::assertSame('', $inflector->singular(''));
-        static::assertFalse($inflector->isPlural(''));
+        self::assertSame('', $inflector->singular(''));
+        self::assertFalse($inflector->isPlural(''));
     }
 
     /**
@@ -79,8 +81,8 @@ class FrameworkInflectorTest extends TestCase
     {
         $inflector = new FrameworkInflector(['media']);
 
-        static::assertSame('Media', $inflector->singular('Media'));
-        static::assertTrue($inflector->isPlural('MEDIA'));
+        self::assertSame('Media', $inflector->singular('Media'));
+        self::assertTrue($inflector->isPlural('MEDIA'));
     }
 
     /**
@@ -100,7 +102,7 @@ class FrameworkInflectorTest extends TestCase
         // early return the result would be false.
         $inflector = new FrameworkInflector(['data']);
 
-        static::assertTrue($inflector->isPlural('data'));
+        self::assertTrue($inflector->isPlural('data'));
     }
 
     /**
@@ -123,7 +125,7 @@ class FrameworkInflectorTest extends TestCase
         // Str::singular('DATA') === 'DATA' would make isPlural return false.
         $inflector = new FrameworkInflector(['data']);
 
-        static::assertTrue($inflector->isPlural('DATA'));
-        static::assertTrue($inflector->isPlural('Data'));
+        self::assertTrue($inflector->isPlural('DATA'));
+        self::assertTrue($inflector->isPlural('Data'));
     }
 }

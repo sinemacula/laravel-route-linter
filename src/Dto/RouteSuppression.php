@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Dto;
 
 /**
@@ -28,7 +30,6 @@ final readonly class RouteSuppression
 
         /** The non-empty written justification for this suppression */
         public string $reason,
-
     ) {}
 
     /**

@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Benchmarks;
 
-use Benchmarks\Support\RouteLinterFixtures;
+use Benchmarks\Support\Concerns\RouteLinterFixtures;
 use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\NormalisedRoute;
@@ -25,9 +27,6 @@ use SineMacula\RouteLinter\RouteLintEngine;
 final class RouteLintEngineBench
 {
     use RouteLinterFixtures;
-
-    /** @var mixed Sink preventing the measured expression from being optimised away. */
-    public mixed $sink = null;
 
     /** @var \SineMacula\RouteLinter\RouteLintEngine The fully-assembled rule engine. */
     private RouteLintEngine $engine;
@@ -62,7 +61,7 @@ final class RouteLintEngineBench
     #[Bench\Warmup(2)]
     public function benchInspectClean(): void
     {
-        $this->sink = $this->engine->inspect($this->cleanRoute, $this->config);
+        $this->engine->inspect($this->cleanRoute, $this->config);
     }
 
     /**
@@ -75,6 +74,6 @@ final class RouteLintEngineBench
     #[Bench\Warmup(2)]
     public function benchInspectDirty(): void
     {
-        $this->sink = $this->engine->inspect($this->dirtyRoute, $this->config);
+        $this->engine->inspect($this->dirtyRoute, $this->config);
     }
 }

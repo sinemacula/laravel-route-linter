@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Benchmarks;
 
 use Benchmarks\Support\ArrayRouteSource;
-use Benchmarks\Support\RouteLinterFixtures;
+use Benchmarks\Support\Concerns\RouteLinterFixtures;
 use Benchmarks\Support\StaticRuleConfiguration;
 use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\LintRoutes;
@@ -29,9 +31,6 @@ final class LintRoutesBench
 
     /** @var int Representative number of app-owned routes in a mid-size API. */
     private const int ROUTE_TABLE_SIZE = 50;
-
-    /** @var mixed Sink preventing the measured expression from being optimised away. */
-    public mixed $sink = null;
 
     /** @var \SineMacula\RouteLinter\LintRoutes Use case wired over a fully-clean route table. */
     private LintRoutes $cleanLinter;
@@ -69,7 +68,7 @@ final class LintRoutesBench
     #[Bench\Warmup(2)]
     public function benchLintCleanTable(): void
     {
-        $this->sink = $this->cleanLinter->lint();
+        $this->cleanLinter->lint();
     }
 
     /**
@@ -83,6 +82,6 @@ final class LintRoutesBench
     #[Bench\Warmup(2)]
     public function benchLintMixedTable(): void
     {
-        $this->sink = $this->mixedLinter->lint();
+        $this->mixedLinter->lint();
     }
 }

@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter;
 
 use SineMacula\RouteLinter\Contracts\RouteSource;
 use SineMacula\RouteLinter\Contracts\RuleConfiguration;
 use SineMacula\RouteLinter\Dto\RouteDescriptor;
+use SineMacula\RouteLinter\Dto\RouteSuppression;
 
 /**
  * Application use case that composes the route-linting ports and runs the
@@ -45,7 +48,6 @@ final class LintRoutes
 
         /** Engine that runs the ordered rule set over each route */
         private readonly RouteLintEngine $engine,
-
     ) {}
 
     /**
@@ -57,15 +59,16 @@ final class LintRoutes
      * 2. Build the ExemptionAllowlist from config exemptions.
      * 3. Source app-owned RouteDescriptors and observe every one so allowlist
      *    pattern-match tracking covers all live routes.
-     * 4. Normalise every descriptor, keeping each paired with its descriptor for
-     *    suppression.
+     * 4. Normalise every descriptor, keeping each paired with its descriptor
+     *    for suppression.
      * 5. Per-route pass: run the per-route rules over each route and apply
      *    suppression.
      * 6. Aggregate pass: run the cross-route rules over the whole route set and
      *    apply suppression, attributing each violation to its offending route;
      *    a violation matching no live route is reported unsuppressed.
      * 7. Record stale inline suppressions (those that fired on no violation in
-     *    either pass), unmatched allowlist entries, and unused allowlist entries.
+     *    either pass), unmatched allowlist entries, and unused allowlist
+     *    entries.
      *
      * @return \SineMacula\RouteLinter\RouteLintReport
      *
@@ -128,12 +131,8 @@ final class LintRoutes
      * @param  \SineMacula\RouteLinter\RouteLintReport  $report
      * @return array<int, true>
      */
-    private function suppressAggregate(
-        array $violations,
-        array $descriptorByIdentity,
-        ExemptionAllowlist $allowlist,
-        RouteLintReport $report,
-    ): array {
+    private function suppressAggregate(array $violations, array $descriptorByIdentity, ExemptionAllowlist $allowlist, RouteLintReport $report): array
+    {
         $inlineUsed = [];
 
         foreach ($violations as $violation) {
@@ -179,7 +178,8 @@ final class LintRoutes
     }
 
     /**
-     * Record allowlist entries that matched no live route or suppressed nothing.
+     * Record allowlist entries that matched no live route or suppressed
+     * nothing.
      *
      * @param  \SineMacula\RouteLinter\ExemptionAllowlist  $allowlist
      * @param  \SineMacula\RouteLinter\RouteLintReport  $report
@@ -211,35 +211,45 @@ final class LintRoutes
      * @param  array<int, \SineMacula\RouteLinter\Violation>  $violations
      * @return array<int, true>
      */
-    private function applyViolations(
-        RouteDescriptor $descriptor,
-        ExemptionAllowlist $allowlist,
-        RouteLintReport $report,
-        array $violations,
-    ): array {
+    private function applyViolations(RouteDescriptor $descriptor, ExemptionAllowlist $allowlist, RouteLintReport $report, array $violations): array
+    {
         $inlineUsed = [];
 
         foreach ($violations as $violation) {
-            $suppressed = false;
+            $suppression = $this->matchingSuppression($descriptor, $violation);
 
-            foreach ($descriptor->suppressions as $suppression) {
-                if ($suppression->covers($violation->ruleId)) {
-                    $inlineUsed[spl_object_id($suppression)] = true;
-                    $suppressed                              = true;
-                    break;
-                }
+            if ($suppression !== null) {
+                $inlineUsed[spl_object_id($suppression)] = true;
+
+                continue;
             }
 
-            if (!$suppressed && $allowlist->suppresses($descriptor->name, $descriptor->uri, $violation->ruleId)) {
-                $suppressed = true;
+            if ($allowlist->suppresses($descriptor->name, $descriptor->uri, $violation->ruleId)) {
+                continue;
             }
 
-            if (!$suppressed) {
-                $report->addViolation($violation);
-            }
+            $report->addViolation($violation);
         }
 
         return $inlineUsed;
+    }
+
+    /**
+     * Find the first inline suppression that covers the given violation.
+     *
+     * @param  \SineMacula\RouteLinter\Dto\RouteDescriptor  $descriptor
+     * @param  \SineMacula\RouteLinter\Violation  $violation
+     * @return \SineMacula\RouteLinter\Dto\RouteSuppression|null
+     */
+    private function matchingSuppression(RouteDescriptor $descriptor, Violation $violation): ?RouteSuppression
+    {
+        foreach ($descriptor->suppressions as $suppression) {
+            if ($suppression->covers($violation->ruleId)) {
+                return $suppression;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -297,9 +307,11 @@ final class LintRoutes
         $parameters = [];
 
         foreach ($segments as $segment) {
-            if (str_starts_with($segment, '{')) {
-                $parameters[] = trim($segment, '{}');
+            if (!str_starts_with($segment, '{')) {
+                continue;
             }
+
+            $parameters[] = trim($segment, '{}');
         }
 
         return $parameters;

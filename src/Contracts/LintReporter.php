@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Contracts;
 
 use SineMacula\RouteLinter\RouteLintReport;

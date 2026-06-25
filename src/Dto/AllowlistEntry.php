@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Dto;
 
 /**
@@ -33,7 +35,6 @@ final readonly class AllowlistEntry
 
         /** The rule IDs covered by this entry; empty means all rules */
         public array $rules = [],
-
     ) {}
 
     /**

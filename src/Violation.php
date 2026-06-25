@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter;
+
+use SineMacula\RouteLinter\Enums\Severity;
 
 /**
  * Immutable finding emitted by a route-linting rule.
@@ -18,7 +22,7 @@ final readonly class Violation
      * Create a new violation.
      *
      * @param  string  $ruleId
-     * @param  \SineMacula\RouteLinter\Severity  $severity
+     * @param  \SineMacula\RouteLinter\Enums\Severity  $severity
      * @param  string  $routeIdentity
      * @param  string  $offendingSurface
      * @param  string|null  $remediationHint
@@ -39,6 +43,5 @@ final readonly class Violation
 
         /** A RESTful-rewrite hint where the rule provides one, or null */
         public ?string $remediationHint,
-
     ) {}
 }

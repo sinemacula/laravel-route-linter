@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Rules;
 
 use SineMacula\RouteLinter\Contracts\AggregateRule;
 use SineMacula\RouteLinter\Dto\RuleConfig;
-use SineMacula\RouteLinter\Severity;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\Violation;
 
 /**
@@ -34,7 +36,7 @@ final class DuplicateRouteNameRule implements AggregateRule
     /**
      * Return the severity tier for this rule.
      *
-     * @return \SineMacula\RouteLinter\Severity
+     * @return \SineMacula\RouteLinter\Enums\Severity
      */
     #[\Override]
     public function severity(): Severity

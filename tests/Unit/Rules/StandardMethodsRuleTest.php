@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\StandardMethodsRule;
-use SineMacula\RouteLinter\Severity;
 use Tests\TestCase;
 
 /**
@@ -18,7 +20,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(StandardMethodsRule::class)]
-class StandardMethodsRuleTest extends TestCase
+final class StandardMethodsRuleTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Rules\StandardMethodsRule */
     private StandardMethodsRule $rule;
@@ -31,6 +33,7 @@ class StandardMethodsRuleTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -60,11 +63,11 @@ class StandardMethodsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R7', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
-        static::assertSame('PURGE', $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R7', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('PURGE', $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -87,7 +90,7 @@ class StandardMethodsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -117,11 +120,11 @@ class StandardMethodsRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - one violation; non-standard methods must appear sorted
-        static::assertCount(1, $violations);
-        static::assertSame('R7', $violations[0]->ruleId);
-        static::assertSame(Severity::ERROR, $violations[0]->severity);
-        static::assertSame('AAA, ZZZ', $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R7', $violations[0]->ruleId);
+        self::assertSame(Severity::ERROR, $violations[0]->severity);
+        self::assertSame('AAA, ZZZ', $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -139,7 +142,8 @@ class StandardMethodsRuleTest extends TestCase
      */
     public function testOnlyNonStandardMethodAppearsInOffendingSurface(): void
     {
-        // Arrange - only FOO is non-standard; GET is standard and must be excluded
+        // Arrange - only FOO is non-standard; GET is standard and must be
+        // excluded
         $route = new NormalisedRoute(
             uri: 'users',
             methods: ['GET', 'FOO'],
@@ -151,9 +155,10 @@ class StandardMethodsRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert - exactly one non-standard method; offendingSurface is 'FOO' alone
-        static::assertCount(1, $violations);
-        static::assertSame('FOO', $violations[0]->offendingSurface);
+        // Assert - exactly one non-standard method; offendingSurface is 'FOO'
+        // alone
+        self::assertCount(1, $violations);
+        self::assertSame('FOO', $violations[0]->offendingSurface);
     }
 
     /**
@@ -163,7 +168,7 @@ class StandardMethodsRuleTest extends TestCase
      */
     public function testRuleMetadata(): void
     {
-        static::assertSame('R7', $this->rule->id());
-        static::assertSame(Severity::ERROR, $this->rule->severity());
+        self::assertSame('R7', $this->rule->id());
+        self::assertSame(Severity::ERROR, $this->rule->severity());
     }
 }

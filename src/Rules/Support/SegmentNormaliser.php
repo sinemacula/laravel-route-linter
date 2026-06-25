@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Rules\Support;
 
 use SineMacula\RouteLinter\Contracts\Inflector;
@@ -28,7 +30,6 @@ final readonly class SegmentNormaliser
 
         /** Inflector port used to singularise candidate words */
         private Inflector $inflector,
-
     ) {}
 
     /**
@@ -48,26 +49,33 @@ final readonly class SegmentNormaliser
         // Step 1 - split on '/' and discard empty segments
         $segments = array_values(array_filter(explode('/', $uri), fn (string $s): bool => $s !== ''));
 
-        // Step 2 - drop route parameters (wrapped in braces, optional or required)
+        // Step 2 - drop route parameters (wrapped in braces, optional or
+        // required)
         $segments = array_values(array_filter($segments, fn (string $s): bool => !preg_match('/^\{[^}]+}$/', $s)));
 
-        // Step 3 - drop version segments (v1, v2, …) and the literal 'api' prefix
+        // Step 3 - drop version segments (v1, v2, …) and the literal 'api'
+        // prefix
         $segments = array_values(array_filter($segments, fn (string $s): bool => !preg_match('/^v\d+$/i', $s) && strtolower($s) !== 'api'));
 
-        // Step 4 - decompose compound segments across camelCase, kebab, snake, and dot boundaries
+        // Step 4 - decompose compound segments across camelCase, kebab,
+        // snake, and dot boundaries
         $words = [];
 
         foreach ($segments as $segment) {
-            // Insert a space before each uppercase letter preceded by a lowercase letter (camelCase boundary)
+            // Insert a space before each uppercase letter preceded by a
+            // lowercase letter (camelCase boundary)
             $spaced = preg_replace('/([a-z])([A-Z])/', '$1 $2', $segment) ?? $segment;
 
-            // Split on whitespace, hyphen, underscore, and dot; guard against preg_split returning false
+            // Split on whitespace, hyphen, underscore, and dot; guard
+            // against preg_split returning false
             $parts = preg_split('/[\s\-_.]+/', $spaced) ?: [];
 
             foreach ($parts as $part) {
-                if ($part !== '') {
-                    $words[] = $part;
+                if ($part === '') {
+                    continue;
                 }
+
+                $words[] = $part;
             }
         }
 

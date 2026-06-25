@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Output;
 
 use Illuminate\Console\OutputStyle;
@@ -31,7 +33,6 @@ final readonly class ConsoleLintReporter implements LintReporter
 
         /** Console output channel the report is rendered to */
         private OutputStyle $output,
-
     ) {}
 
     /**
@@ -121,7 +122,8 @@ final readonly class ConsoleLintReporter implements LintReporter
     /**
      * Format a single violation as a console line.
      *
-     * Produces: `  [R1] GET /users (getUsers) -- Hint: use a noun-based path instead`
+     * Produces:
+     * `  [R1] GET /users (getUsers) -- Hint: use a noun-based path instead`
      * When remediationHint is null the hint segment is omitted.
      *
      * @param  \SineMacula\RouteLinter\Violation  $violation

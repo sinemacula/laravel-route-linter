@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\RouteNameRule;
-use SineMacula\RouteLinter\Severity;
 use Tests\TestCase;
 
 /**
@@ -18,7 +20,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RouteNameRule::class)]
-class RouteNameRuleTest extends TestCase
+final class RouteNameRuleTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Rules\RouteNameRule */
     private RouteNameRule $rule;
@@ -31,6 +33,7 @@ class RouteNameRuleTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -60,11 +63,11 @@ class RouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame('users.getAll', $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R8', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame('users.getAll', $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -88,7 +91,7 @@ class RouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -111,7 +114,7 @@ class RouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -122,7 +125,7 @@ class RouteNameRuleTest extends TestCase
      */
     public function testNestedResourceNameIsNotFlagged(): void
     {
-        // Arrange - 'users.posts.show': resource='users.posts', action='show'
+        // Arrange - users.posts.show has resource users.posts and action show
         $route = new NormalisedRoute(
             uri: 'users/{user}/posts/{post}',
             methods: ['GET'],
@@ -135,7 +138,7 @@ class RouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -158,10 +161,10 @@ class RouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame('login', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('R8', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame('login', $violations[0]->offendingSurface);
     }
 
     /**
@@ -189,10 +192,10 @@ class RouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - the name must be flagged: offendingSurface is the full name
-        static::assertCount(1, $violations);
-        static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame('.index', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('R8', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame('.index', $violations[0]->offendingSurface);
     }
 
     /**
@@ -220,7 +223,7 @@ class RouteNameRuleTest extends TestCase
 
             $violations = $this->rule->inspect($route, $this->config);
 
-            static::assertEmpty($violations, "Action '{$action}' should be accepted but produced a violation.");
+            self::assertEmpty($violations, "Action '{$action}' should be accepted but produced a violation.");
         }
     }
 
@@ -236,7 +239,8 @@ class RouteNameRuleTest extends TestCase
      */
     public function testDisallowedActionOnShortResourceIsFlagged(): void
     {
-        // Arrange - 'a.list': resource='a' (one char), action='list' (not allowed)
+        // Arrange - a.list has resource a of one char and action list, which
+        // is not allowed
         $route = new NormalisedRoute(
             uri: 'a',
             methods: ['GET'],
@@ -249,10 +253,10 @@ class RouteNameRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R8', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame('a.list', $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('R8', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame('a.list', $violations[0]->offendingSurface);
     }
 
     /**
@@ -263,7 +267,7 @@ class RouteNameRuleTest extends TestCase
      */
     public function testRuleMetadata(): void
     {
-        static::assertSame('R8', $this->rule->id());
-        static::assertSame(Severity::WARNING, $this->rule->severity());
+        self::assertSame('R8', $this->rule->id());
+        self::assertSame(Severity::WARNING, $this->rule->severity());
     }
 }

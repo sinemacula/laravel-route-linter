@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Dto;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -16,7 +18,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RuleConfig::class)]
-class RuleConfigTest extends TestCase
+final class RuleConfigTest extends TestCase
 {
     /**
      * Test that all four surfaces are stored independently and round-trip
@@ -41,15 +43,15 @@ class RuleConfigTest extends TestCase
         );
 
         // Assert - each surface is exactly the value passed in
-        static::assertSame($denylist, $config->verbDenylist);
-        static::assertSame($hints, $config->remediationHints);
-        static::assertCount(1, $config->exemptions);
-        static::assertSame($exemption, $config->exemptions[0]);
-        static::assertSame($uncountables, $config->uncountables);
+        self::assertSame($denylist, $config->verbDenylist);
+        self::assertSame($hints, $config->remediationHints);
+        self::assertCount(1, $config->exemptions);
+        self::assertSame($exemption, $config->exemptions[0]);
+        self::assertSame($uncountables, $config->uncountables);
 
         // Assert AllowlistEntry properties round-trip through exemptions
-        static::assertSame('users.legacy', $config->exemptions[0]->match);
-        static::assertSame('Pre-REST route kept for backward compat', $config->exemptions[0]->reason);
+        self::assertSame('users.legacy', $config->exemptions[0]->match);
+        self::assertSame('Pre-REST route kept for backward compat', $config->exemptions[0]->reason);
     }
 
     /**
@@ -69,7 +71,7 @@ class RuleConfigTest extends TestCase
         );
 
         // Assert
-        static::assertSame([], $config->exemptions);
+        self::assertSame([], $config->exemptions);
     }
 
     /**
@@ -87,7 +89,7 @@ class RuleConfigTest extends TestCase
             uncountables: [],
         );
 
-        static::assertSame(3, $default->nestingMaxDepth);
+        self::assertSame(3, $default->nestingMaxDepth);
 
         $custom = new RuleConfig(
             verbDenylist: [],
@@ -97,6 +99,6 @@ class RuleConfigTest extends TestCase
             nestingMaxDepth: 5,
         );
 
-        static::assertSame(5, $custom->nestingMaxDepth);
+        self::assertSame(5, $custom->nestingMaxDepth);
     }
 }

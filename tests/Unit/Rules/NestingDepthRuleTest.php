@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\NestingDepthRule;
-use SineMacula\RouteLinter\Severity;
 use Tests\TestCase;
 
 /**
@@ -18,7 +20,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(NestingDepthRule::class)]
-class NestingDepthRuleTest extends TestCase
+final class NestingDepthRuleTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Rules\NestingDepthRule */
     private NestingDepthRule $rule;
@@ -31,6 +33,7 @@ class NestingDepthRuleTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -64,11 +67,11 @@ class NestingDepthRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertCount(1, $violations);
-        static::assertSame('R11', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame($uri, $violations[0]->offendingSurface);
-        static::assertNull($violations[0]->remediationHint);
+        self::assertCount(1, $violations);
+        self::assertSame('R11', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame($uri, $violations[0]->offendingSurface);
+        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
@@ -95,7 +98,7 @@ class NestingDepthRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -135,11 +138,11 @@ class NestingDepthRuleTest extends TestCase
         $cleanViolations   = $this->rule->inspect($threeLevelRoute, $this->config);
 
         // Assert - four levels after prefix exclusion triggers warning
-        static::assertCount(1, $flaggedViolations);
-        static::assertSame($fourLevelUri, $flaggedViolations[0]->offendingSurface);
+        self::assertCount(1, $flaggedViolations);
+        self::assertSame($fourLevelUri, $flaggedViolations[0]->offendingSurface);
 
         // Assert - three levels after prefix exclusion is clean
-        static::assertEmpty($cleanViolations);
+        self::assertEmpty($cleanViolations);
     }
 
     /**
@@ -156,7 +159,8 @@ class NestingDepthRuleTest extends TestCase
      */
     public function testFourLiteralsWithFewerParamsIsFlagged(): void
     {
-        // Arrange - four literal segments (users, posts, comments, tags) and two params
+        // Arrange - four literal segments (users, posts, comments, tags)
+        // and two params
         $uri   = 'users/{user}/posts/comments/tags';
         $route = new NormalisedRoute(
             uri: $uri,
@@ -170,10 +174,10 @@ class NestingDepthRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - four literal segments exceeds the threshold of three
-        static::assertCount(1, $violations);
-        static::assertSame('R11', $violations[0]->ruleId);
-        static::assertSame(Severity::WARNING, $violations[0]->severity);
-        static::assertSame($uri, $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('R11', $violations[0]->ruleId);
+        self::assertSame(Severity::WARNING, $violations[0]->severity);
+        self::assertSame($uri, $violations[0]->offendingSurface);
     }
 
     /**
@@ -188,7 +192,8 @@ class NestingDepthRuleTest extends TestCase
      */
     public function testParameterSegmentsAreNotCountedTowardDepth(): void
     {
-        // Arrange - three literal segments (users, posts, comments) and four params
+        // Arrange - three literal segments (users, posts, comments) and four
+        // params
         $route = new NormalisedRoute(
             uri: '{a}/{b}/users/{c}/posts/comments/{d}',
             methods: ['GET'],
@@ -201,7 +206,7 @@ class NestingDepthRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - only three literal segments; must not trigger R11
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -232,9 +237,9 @@ class NestingDepthRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - all four segments are literal, depth = 4 > 3
-        static::assertCount(1, $violations);
-        static::assertSame('R11', $violations[0]->ruleId);
-        static::assertSame($uri, $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame('R11', $violations[0]->ruleId);
+        self::assertSame($uri, $violations[0]->offendingSurface);
     }
 
     /**
@@ -250,8 +255,9 @@ class NestingDepthRuleTest extends TestCase
      */
     public function testVersionPrefixWithSuffixIsCountedAsLiteral(): void
     {
-        // Arrange - 'v2extra' starts with a version-like token but is not a pure version;
-        // four literals including 'v2extra' must all be counted to trigger R11
+        // Arrange - 'v2extra' starts with a version-like token but is
+        // not a pure version; four literals including 'v2extra' must all
+        // be counted to trigger R11
         $uri   = 'users/posts/comments/v2extra';
         $route = new NormalisedRoute(
             uri: $uri,
@@ -265,8 +271,8 @@ class NestingDepthRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - depth = 4 > 3; 'v2extra' must not be excluded
-        static::assertCount(1, $violations);
-        static::assertSame($uri, $violations[0]->offendingSurface);
+        self::assertCount(1, $violations);
+        self::assertSame($uri, $violations[0]->offendingSurface);
     }
 
     /**
@@ -283,7 +289,8 @@ class NestingDepthRuleTest extends TestCase
     public function testUppercaseVersionTokenIsExcludedFromDepth(): void
     {
         // Arrange - three literal resource segments plus uppercase 'V2' prefix;
-        // 'V2' must be excluded so depth = 3, which is exactly the threshold (no violation)
+        // 'V2' must be excluded so depth = 3, which is exactly the
+        // threshold (no violation)
         $route = new NormalisedRoute(
             uri: 'V2/users/posts/comments',
             methods: ['GET'],
@@ -296,7 +303,7 @@ class NestingDepthRuleTest extends TestCase
         $violations = $this->rule->inspect($route, $this->config);
 
         // Assert - 'V2' excluded; depth = 3; must not produce a violation
-        static::assertEmpty($violations);
+        self::assertEmpty($violations);
     }
 
     /**
@@ -304,8 +311,8 @@ class NestingDepthRuleTest extends TestCase
      * than a hardcoded constant.
      *
      * A two-collection-level route is clean at the default depth of 3, but a
-     * config that lowers the limit to 1 must flag it, and a permissive limit of
-     * 5 must leave it clean.
+     * config that lowers the limit to 1 must flag it, and a permissive
+     * limit of 5 must leave it clean.
      *
      * @return void
      */
@@ -320,10 +327,10 @@ class NestingDepthRuleTest extends TestCase
         );
 
         $strict = new RuleConfig([], [], [], [], nestingMaxDepth: 1);
-        static::assertCount(1, $this->rule->inspect($route, $strict), 'Depth 2 must be flagged when the configured max depth is 1.');
+        self::assertCount(1, $this->rule->inspect($route, $strict), 'Depth 2 must be flagged when the configured max depth is 1.');
 
         $lenient = new RuleConfig([], [], [], [], nestingMaxDepth: 5);
-        static::assertCount(0, $this->rule->inspect($route, $lenient), 'Depth 2 must be clean when the configured max depth is 5.');
+        self::assertCount(0, $this->rule->inspect($route, $lenient), 'Depth 2 must be clean when the configured max depth is 5.');
     }
 
     /**
@@ -334,7 +341,7 @@ class NestingDepthRuleTest extends TestCase
      */
     public function testRuleMetadata(): void
     {
-        static::assertSame('R11', $this->rule->id());
-        static::assertSame(Severity::WARNING, $this->rule->severity());
+        self::assertSame('R11', $this->rule->id());
+        self::assertSame(Severity::WARNING, $this->rule->severity());
     }
 }

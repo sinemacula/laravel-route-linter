@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Configuration;
 
 use Illuminate\Support\Facades\Config;
@@ -13,12 +15,12 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
  *
  * Reads the `route-linter.*` config section and assembles the strictly-separate
  * surfaces - verb denylist, remediation hints, exemption allowlist, inflector
- * uncountables, nesting depth, and required middleware - into a {@see RuleConfig}
- * DTO. The adapter is the single place that validates the config schema: a
- * non-array value for an array-typed key, an exemption entry missing its match
- * or written reason, or a malformed required-middleware entry, raises an
- * {@see InvalidConfigurationException} immediately rather than being silently
- * coerced to a value that would weaken the lint verdict.
+ * uncountables, nesting depth, and required middleware - into a
+ * {@see RuleConfig} DTO. The adapter is the single place that validates the
+ * config schema: a non-array value for an array-typed key, an exemption entry
+ * missing its match or written reason, or a malformed required-middleware
+ * entry, raises an {@see InvalidConfigurationException} immediately rather than
+ * being silently coerced to a value that would weaken the lint verdict.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

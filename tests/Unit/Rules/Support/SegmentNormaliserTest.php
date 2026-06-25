@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Rules\Support;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -16,7 +18,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(SegmentNormaliser::class)]
-class SegmentNormaliserTest extends TestCase
+final class SegmentNormaliserTest extends TestCase
 {
     /** @var \SineMacula\RouteLinter\Contracts\Inflector */
     private Inflector $inflector;
@@ -29,16 +31,19 @@ class SegmentNormaliserTest extends TestCase
      *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Stub inflector: singularises by stripping a trailing 's', otherwise returns the word as-is
+        // Stub inflector: singularises by stripping a trailing 's',
+        // otherwise returns the word as-is
         $this->inflector = new class implements Inflector {
             /**
              * @param  string  $value
              * @return string
              */
+            #[\Override]
             public function singular(string $value): string
             {
                 return str_ends_with($value, 's') ? substr($value, 0, -1) : $value;
@@ -48,6 +53,7 @@ class SegmentNormaliserTest extends TestCase
              * @param  string  $value
              * @return bool
              */
+            #[\Override]
             public function isPlural(string $value): bool
             {
                 return str_ends_with($value, 's');
@@ -71,8 +77,9 @@ class SegmentNormaliserTest extends TestCase
         // Act
         $words = $this->normaliser->normalise($uri, []);
 
-        // Assert - 'api', 'v1', '{user}' are dropped; 'getUsers' decomposes to 'get' + 'users' -> 'get' + 'user'
-        static::assertSame(['get', 'user'], $words);
+        // Assert - api, v1, and {user} dropped; getUsers decomposes to
+        // get then user
+        self::assertSame(['get', 'user'], $words);
     }
 
     /**
@@ -93,10 +100,11 @@ class SegmentNormaliserTest extends TestCase
         $kebabWords = $this->normaliser->normalise($kebab, []);
         $snakeWords = $this->normaliser->normalise($snake, []);
 
-        // Assert - each decomposes into its constituent words (singularised by the stub)
-        static::assertSame(['get', 'user'], $camelWords);
-        static::assertSame(['user', 'profile'], $kebabWords);
-        static::assertSame(['get', 'user'], $snakeWords);
+        // Assert - each decomposes into its constituent words
+        // (singularised by the stub)
+        self::assertSame(['get', 'user'], $camelWords);
+        self::assertSame(['user', 'profile'], $kebabWords);
+        self::assertSame(['get', 'user'], $snakeWords);
     }
 
     /**
@@ -113,8 +121,9 @@ class SegmentNormaliserTest extends TestCase
         // Act
         $words = $this->normaliser->normalise($uri, []);
 
-        // Assert - 'getUsers' -> decomposed ['get', 'Users'] -> lowercased ['get', 'users'] -> singularised ['get', 'user']
-        static::assertSame(['get', 'user'], $words);
+        // Assert - 'getUsers' is decomposed, lowercased, and singularised
+        // to ['get', 'user']
+        self::assertSame(['get', 'user'], $words);
     }
 
     /**
@@ -132,7 +141,7 @@ class SegmentNormaliserTest extends TestCase
         $words = $this->normaliser->normalise($uri, []);
 
         // Assert
-        static::assertSame([], $words);
+        self::assertSame([], $words);
     }
 
     /**
@@ -146,7 +155,7 @@ class SegmentNormaliserTest extends TestCase
         $words = $this->normaliser->normalise('', []);
 
         // Assert
-        static::assertSame([], $words);
+        self::assertSame([], $words);
     }
 
     /**
@@ -163,8 +172,9 @@ class SegmentNormaliserTest extends TestCase
         // Act
         $words = $this->normaliser->normalise($uri, []);
 
-        // Assert - decomposed to 'get', 'user', 'Profiles' -> lowercased -> singularised
-        static::assertSame(['get', 'user', 'profile'], $words);
+        // Assert - decomposed to 'get', 'user', 'Profiles' -> lowercased ->
+        // singularised
+        self::assertSame(['get', 'user', 'profile'], $words);
     }
 
     /**
@@ -174,16 +184,17 @@ class SegmentNormaliserTest extends TestCase
      */
     public function testUncountableWordsBypassSingularisation(): void
     {
-        // Arrange - 'media' ends in 's' so the stub would singularise it to 'medi',
-        // but declaring it uncountable must prevent that
+        // Arrange - 'media' ends in 's' so the stub would singularise
+        // it to 'medi', but declaring it uncountable must prevent that
         $uri          = 'medias';
         $uncountables = ['medias'];
 
         // Act
         $words = $this->normaliser->normalise($uri, $uncountables);
 
-        // Assert - 'medias' is returned as-is, not stripped to 'media' by the stub
-        static::assertSame(['medias'], $words);
+        // Assert - 'medias' is returned as-is, not stripped to 'media'
+        // by the stub
+        self::assertSame(['medias'], $words);
     }
 
     /**
@@ -200,7 +211,7 @@ class SegmentNormaliserTest extends TestCase
         $words = $this->normaliser->normalise($uri, []);
 
         // Assert - '{user?}' is a route parameter and must be discarded
-        static::assertSame(['user', 'post'], $words);
+        self::assertSame(['user', 'post'], $words);
     }
 
     /**
@@ -215,18 +226,20 @@ class SegmentNormaliserTest extends TestCase
      */
     public function testSegmentWithBraceSuffixIsNotDroppedAsParameter(): void
     {
-        // Arrange - '{id}extra' starts with '{' and contains '}' but is not a pure
-        // route parameter; step 2 must keep it; `posts` is a normal resource segment
+        // Arrange - '{id}extra' starts with '{' and contains '}' but
+        // is not a pure route parameter; step 2 must keep it; `posts`
+        // is a normal resource segment
         $uri = '{id}extra/posts';
 
         // Act
         $words = $this->normaliser->normalise($uri, []);
 
         // Assert - '{id}extra' survives step 2 and passes through as a word;
-        // step 4 treats it as a single segment (no camelCase/kebab/snake boundary),
-        // step 5 lowercases it, step 6 singularises it (no trailing 's' so unchanged);
+        // step 4 treats it as a single segment (no camelCase/kebab/snake
+        // boundary), step 5 lowercases it, step 6 singularises it
+        // (no trailing 's' so unchanged);
         // 'posts' → 'post' via stub singulariser
-        static::assertSame(['{id}extra', 'post'], $words);
+        self::assertSame(['{id}extra', 'post'], $words);
     }
 
     /**
@@ -249,7 +262,7 @@ class SegmentNormaliserTest extends TestCase
         $words = $this->normaliser->normalise($uri, []);
 
         // Assert - 'av2' is kept; 'users' singularises to 'user'
-        static::assertSame(['av2', 'user'], $words);
+        self::assertSame(['av2', 'user'], $words);
     }
 
     /**
@@ -265,15 +278,15 @@ class SegmentNormaliserTest extends TestCase
      */
     public function testSegmentStartingWithVersionPatternButHasSuffixIsKept(): void
     {
-        // Arrange - 'v1more' starts with 'v1' but has extra text, so it is not a
-        // pure version segment and must survive step 3
+        // Arrange - 'v1more' starts with 'v1' but has extra text, so it
+        // is not a pure version segment and must survive step 3
         $uri = 'v1more/users';
 
         // Act
         $words = $this->normaliser->normalise($uri, []);
 
         // Assert - 'v1more' is kept; 'users' singularises to 'user'
-        static::assertSame(['v1more', 'user'], $words);
+        self::assertSame(['v1more', 'user'], $words);
     }
 
     /**
@@ -295,7 +308,7 @@ class SegmentNormaliserTest extends TestCase
         $words = $this->normaliser->normalise($uri, []);
 
         // Assert - 'V1' is dropped; only 'users' → 'user' survives
-        static::assertSame(['user'], $words);
+        self::assertSame(['user'], $words);
     }
 
     /**
@@ -309,13 +322,14 @@ class SegmentNormaliserTest extends TestCase
      */
     public function testUppercaseApiPrefixIsDropped(): void
     {
-        // Arrange - 'API' in uppercase must be treated as the API prefix and dropped
+        // Arrange - 'API' in uppercase must be treated as the API prefix
+        // and dropped
         $uri = 'API/users';
 
         // Act
         $words = $this->normaliser->normalise($uri, []);
 
-        // Assert - 'API' is dropped case-insensitively; only 'users' → 'user' survives
-        static::assertSame(['user'], $words);
+        // Assert - 'API' dropped case-insensitively; 'users' becomes 'user'
+        self::assertSame(['user'], $words);
     }
 }

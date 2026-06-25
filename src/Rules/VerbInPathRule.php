@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace SineMacula\RouteLinter\Rules;
 
 use SineMacula\RouteLinter\Contracts\Rule;
 use SineMacula\RouteLinter\Dto\RuleConfig;
+use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\Support\SegmentNormaliser;
 use SineMacula\RouteLinter\Rules\Support\VerbDenylist;
-use SineMacula\RouteLinter\Severity;
 use SineMacula\RouteLinter\Violation;
 
 /**
@@ -39,7 +41,6 @@ final class VerbInPathRule implements Rule
 
         /** Membership oracle and hint lookup for denylisted verbs */
         private readonly VerbDenylist $denylist,
-
     ) {}
 
     /**
@@ -56,7 +57,7 @@ final class VerbInPathRule implements Rule
     /**
      * Return the severity tier for this rule.
      *
-     * @return \SineMacula\RouteLinter\Severity
+     * @return \SineMacula\RouteLinter\Enums\Severity
      */
     #[\Override]
     public function severity(): Severity

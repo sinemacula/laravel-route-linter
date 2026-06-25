@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Unit\Dto;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,7 +17,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(RouteDescriptor::class)]
-class RouteDescriptorTest extends TestCase
+final class RouteDescriptorTest extends TestCase
 {
     /**
      * Test that all four properties round-trip correctly, including isVendor
@@ -34,10 +36,10 @@ class RouteDescriptorTest extends TestCase
         );
 
         // Assert
-        static::assertSame('users/{user}', $named->uri);
-        static::assertSame(['GET', 'HEAD'], $named->methods);
-        static::assertSame('users.show', $named->name);
-        static::assertFalse($named->isVendor);
+        self::assertSame('users/{user}', $named->uri);
+        self::assertSame(['GET', 'HEAD'], $named->methods);
+        self::assertSame('users.show', $named->name);
+        self::assertFalse($named->isVendor);
 
         // Arrange & Act - unnamed vendor route
         $vendor = new RouteDescriptor(
@@ -48,9 +50,9 @@ class RouteDescriptorTest extends TestCase
         );
 
         // Assert
-        static::assertSame('vendor/package/resource', $vendor->uri);
-        static::assertSame(['POST'], $vendor->methods);
-        static::assertNull($vendor->name);
-        static::assertTrue($vendor->isVendor);
+        self::assertSame('vendor/package/resource', $vendor->uri);
+        self::assertSame(['POST'], $vendor->methods);
+        self::assertNull($vendor->name);
+        self::assertTrue($vendor->isVendor);
     }
 }

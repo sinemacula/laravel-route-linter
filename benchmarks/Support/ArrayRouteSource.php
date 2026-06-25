@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Benchmarks\Support;
 
 use SineMacula\RouteLinter\Contracts\RouteSource;
@@ -22,7 +24,11 @@ final readonly class ArrayRouteSource implements RouteSource
      *
      * @param  array<int, \SineMacula\RouteLinter\Dto\RouteDescriptor>  $descriptors
      */
-    public function __construct(private array $descriptors) {}
+    public function __construct(
+
+        /** The fixed list of app-owned route descriptors */
+        private array $descriptors,
+    ) {}
 
     /**
      * Return the fixed list of app-owned route descriptors.

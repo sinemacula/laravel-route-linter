@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 use SineMacula\RouteLinter\Rules\ApiResourceAlignmentRule;
 use SineMacula\RouteLinter\Rules\DuplicateRouteNameRule;
 use SineMacula\RouteLinter\Rules\KebabCaseRule;
@@ -13,7 +15,8 @@ use SineMacula\RouteLinter\Rules\SlashSanityRule;
 use SineMacula\RouteLinter\Rules\StandardMethodsRule;
 use SineMacula\RouteLinter\Rules\VerbInPathRule;
 
-// Canonical fix shared by every state-transition verb: PATCH the resource and set a field.
+// Canonical fix shared by every state-transition verb: PATCH the resource and
+// set a field.
 $patchStatus = 'PATCH /{resources}/{resource} (set a status field)';
 
 return [
@@ -23,13 +26,15 @@ return [
     | Rules
     |---------------------------------------------------------------------------
     |
-    | The ordered rule set the engine runs over the route table. Each entry is a
-    | class implementing the SineMacula\RouteLinter\Contracts\Rule (per-route) or
-    | AggregateRule (cross-route, e.g. duplicate detection) contract, resolved
-    | from the container so rules may declare constructor dependencies. Remove a
-    | built-in rule by deleting its line; add your own by appending its class.
-    | Rule IDs (R1-R12) must be unique - the engine asserts this at boot - and are
-    | stable across releases, so a waiver keeps its meaning when you upgrade.
+    | The ordered rule set the engine runs over the route table. Each entry is
+    | a class implementing the SineMacula\RouteLinter\Contracts\Rule
+    | (per-route) or AggregateRule (cross-route, e.g. duplicate detection)
+    | contract, resolved from the container so rules may declare constructor
+    | dependencies. Remove a built-in rule by deleting its line; add your own
+    | by appending its class.
+    | Rule IDs (R1-R12) must be unique - the engine asserts this at boot - and
+    | are stable across releases, so a waiver keeps its meaning when you
+    | upgrade.
     |
     */
 
@@ -175,12 +180,14 @@ return [
     | per-rule `rules` key scopes the waiver to specific rule ids; omit it to
     | waive every rule on the matched route.
     |
-    |   ['match' => 'photos.edit', 'rules' => ['R9'], 'reason' => 'BL-123 frozen contract'],
-    |   ['match' => 'legacy.*',                       'reason' => 'BL-200 legacy surface'],
+    |   ['match' => 'photos.edit', 'rules' => ['R9'],
+    |    'reason' => 'BL-1 frozen contract'],
+    |   ['match' => 'legacy.*', 'reason' => 'BL-2 legacy surface'],
     |
     | Routes can also be waived inline at registration via the route macro:
     |
-    |   Route::patch('photos/{photo}/edit', ...)->ignoreRouteLint(['R9'], 'reason');
+    |   Route::patch('photos/{photo}/edit', ...)
+    |       ->ignoreRouteLint(['R9'], 'reason');
     |
     */
 

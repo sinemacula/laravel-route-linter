@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Tests\Integration;
 
 use Illuminate\Routing\Router;
@@ -41,7 +43,7 @@ use Tests\TestCase;
  * @internal
  */
 #[CoversClass(LintRoutes::class)]
-class LintRoutesTest extends TestCase
+final class LintRoutesTest extends TestCase
 {
     /** @var array<int, string> Default verb denylist that covers the fixture offenders used by most tests. */
     private const array VERB_DENYLIST = [
@@ -75,17 +77,17 @@ class LintRoutesTest extends TestCase
 
         $offendingIdentities = $this->collectOffendingIdentities($report);
 
-        static::assertNotEmpty($report->errors(), 'Expected at least one error-severity violation.');
+        self::assertNotEmpty($report->errors(), 'Expected at least one error-severity violation.');
 
         // Each offending route must have at least one finding
-        static::assertTrue($this->hasViolationForUri($report, 'getUsers'), '/getUsers should be flagged');
-        static::assertTrue($this->hasViolationForUri($report, 'users/create'), '/users/create should be flagged');
-        static::assertTrue($this->hasViolationForUri($report, 'order/{id}/cancel'), '/order/{id}/cancel should be flagged');
-        static::assertTrue($this->hasViolationForUri($report, 'login'), '/login should be flagged');
-        static::assertTrue($this->hasViolationForUri($report, 'userProfiles'), '/userProfiles should be flagged');
+        self::assertTrue($this->hasViolationForUri($report, 'getUsers'), '/getUsers should be flagged');
+        self::assertTrue($this->hasViolationForUri($report, 'users/create'), '/users/create should be flagged');
+        self::assertTrue($this->hasViolationForUri($report, 'order/{id}/cancel'), '/order/{id}/cancel should be flagged');
+        self::assertTrue($this->hasViolationForUri($report, 'login'), '/login should be flagged');
+        self::assertTrue($this->hasViolationForUri($report, 'userProfiles'), '/userProfiles should be flagged');
 
         // The control route must be clean
-        static::assertNotContains('GET,HEAD users users.index', $offendingIdentities, '/users should be clean');
+        self::assertNotContains('GET,HEAD users users.index', $offendingIdentities, '/users should be clean');
     }
 
     /**
@@ -108,11 +110,12 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCase($router)->lint();
 
-        // The /login route is violating but covered by an allowlist entry - no errors expected
-        static::assertSame([], $report->errors(), 'Violation for exempted route should be suppressed.');
+        // The /login route is violating but covered by an allowlist entry - no
+        // errors expected
+        self::assertSame([], $report->errors(), 'Violation for exempted route should be suppressed.');
 
         // The allowlist entry matched a live route - no stale waivers
-        static::assertSame([], $report->staleWaivers(), 'Matched entry must not appear as stale.');
+        self::assertSame([], $report->staleWaivers(), 'Matched entry must not appear as stale.');
     }
 
     /**
@@ -135,7 +138,7 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCase($router)->lint();
 
-        static::assertContains('no-such-route', $report->staleWaivers(), 'Unmatched entry must be reported as stale.');
+        self::assertContains('no-such-route', $report->staleWaivers(), 'Unmatched entry must be reported as stale.');
     }
 
     /**
@@ -162,13 +165,15 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCase($router)->lint();
 
-        // No R1 violation for /transfers because 'transfer' was removed from the denylist
+        // No R1 violation for /transfers because 'transfer' was removed from
+        // the denylist
         $r1Violations = array_filter($report->errors(), fn ($v) => $v->ruleId === 'R1');
 
-        static::assertSame([], array_values($r1Violations), 'No R1 violation expected after homograph removal.');
+        self::assertSame([], array_values($r1Violations), 'No R1 violation expected after homograph removal.');
 
-        // No exemption entry was created - allowlist stays empty, no stale waivers
-        static::assertSame([], $report->staleWaivers(), 'No exemption entry should be stale when using denylist tuning.');
+        // No exemption entry was created - allowlist stays empty, no stale
+        // waivers
+        self::assertSame([], $report->staleWaivers(), 'No exemption entry should be stale when using denylist tuning.');
     }
 
     /**
@@ -195,14 +200,15 @@ class LintRoutesTest extends TestCase
 
         // R1 is suppressed inline; it must not appear in the report
         $r1Violations = array_values(array_filter($report->errors(), fn ($v) => $v->ruleId === 'R1'));
-        static::assertSame([], $r1Violations, 'R1 must be suppressed by the inline suppression.');
+        self::assertSame([], $r1Violations, 'R1 must be suppressed by the inline suppression.');
 
-        // R2 (camelCase) is NOT covered by the inline suppression and must still be reported
+        // R2 (camelCase) is NOT covered by the inline suppression and must
+        // still be reported
         $r2Violations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => $v->ruleId === 'R2',
         ));
-        static::assertNotEmpty($r2Violations, 'R2 must still be reported on the same route.');
+        self::assertNotEmpty($r2Violations, 'R2 must still be reported on the same route.');
     }
 
     /**
@@ -228,14 +234,14 @@ class LintRoutesTest extends TestCase
 
         // R1 is waived by the config entry; it must not appear in errors
         $r1Violations = array_values(array_filter($report->errors(), fn ($v) => $v->ruleId === 'R1'));
-        static::assertSame([], $r1Violations, 'R1 must be suppressed by the config exemption.');
+        self::assertSame([], $r1Violations, 'R1 must be suppressed by the config exemption.');
 
         // Other rules on /login are NOT waived and must still appear
         $otherViolations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => $v->ruleId !== 'R1',
         ));
-        static::assertNotEmpty($otherViolations, 'Non-R1 violations on /login must still be reported.');
+        self::assertNotEmpty($otherViolations, 'Non-R1 violations on /login must still be reported.');
     }
 
     /**
@@ -258,13 +264,14 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCase($router)->lint();
 
-        // The route is clean (no R1 violation), so the inline suppression is stale
+        // The route is clean (no R1 violation), so the inline suppression is
+        // stale
         $staleWaivers = $report->staleWaivers();
-        static::assertNotEmpty($staleWaivers, 'An unused inline suppression must appear as a stale entry.');
+        self::assertNotEmpty($staleWaivers, 'An unused inline suppression must appear as a stale entry.');
 
         $staleString = implode(' ', $staleWaivers);
-        static::assertStringContainsString('suppressed nothing', $staleString);
-        static::assertStringContainsString('Pre-emptive suppression that turns out to be unnecessary.', $staleString);
+        self::assertStringContainsString('suppressed nothing', $staleString);
+        self::assertStringContainsString('Pre-emptive suppression that turns out to be unnecessary.', $staleString);
     }
 
     /**
@@ -287,15 +294,17 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCase($router)->lint();
 
-        // All violations on /login are suppressed; no errors or warnings expected for that route
+        // All violations on /login are suppressed; no errors or warnings
+        // expected for that route
         $loginViolations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => str_contains($v->routeIdentity, 'login'),
         ));
-        static::assertSame([], $loginViolations, 'All violations on an all-rules-waived route must be suppressed.');
+        self::assertSame([], $loginViolations, 'All violations on an all-rules-waived route must be suppressed.');
 
-        // The allowlist entry matched a live route and suppressed violations - not stale
-        static::assertSame([], $report->staleWaivers(), 'A used config entry must not appear as stale.');
+        // The allowlist entry matched a live route and suppressed violations -
+        // not stale
+        self::assertSame([], $report->staleWaivers(), 'A used config entry must not appear as stale.');
     }
 
     /**
@@ -318,7 +327,7 @@ class LintRoutesTest extends TestCase
         $firstReport  = $useCase->lint();
         $secondReport = $useCase->lint();
 
-        static::assertSame(
+        self::assertSame(
             $this->serialiseReport($firstReport),
             $this->serialiseReport($secondReport),
             'Two runs over the same inputs must produce identical verdicts (NFR-01).',
@@ -343,8 +352,10 @@ class LintRoutesTest extends TestCase
      */
     public function testMatchedButUnusedConfigEntryIsReportedAsStaleUnused(): void
     {
-        // The /users route is clean (no violations); the exemption for 'users.index'
-        // matches it via route name but suppresses nothing, because no violation fires.
+        // The /users route is clean (no violations); the exemption for
+        // 'users.index'
+        // matches it via route name but suppresses nothing, because no
+        // violation fires.
         $this->seedDefaultConfig([
             [
                 'match'  => 'users.index',
@@ -358,16 +369,17 @@ class LintRoutesTest extends TestCase
         $report = $this->buildUseCase($router)->lint();
 
         // No route violations - the route is clean
-        static::assertSame([], $report->errors(), 'Clean route must produce no errors.');
+        self::assertSame([], $report->errors(), 'Clean route must produce no errors.');
 
-        // The exemption matched a live route but suppressed nothing - must appear as a stale unused entry
+        // The exemption matched a live route but suppressed nothing - must
+        // appear as a stale unused entry
         $staleWaivers = $report->staleWaivers();
-        static::assertNotEmpty($staleWaivers, 'A matched-but-unused config entry must appear as stale.');
+        self::assertNotEmpty($staleWaivers, 'A matched-but-unused config entry must appear as stale.');
 
         $staleString = implode("\n", $staleWaivers);
-        static::assertStringContainsString('users.index', $staleString, 'Stale entry must name the exemption match key.');
-        static::assertStringContainsString('suppressed nothing', $staleString, 'Stale entry must indicate nothing was suppressed.');
-        static::assertStringContainsString('Pre-emptive waiver that turns out to serve no purpose.', $staleString);
+        self::assertStringContainsString('users.index', $staleString, 'Stale entry must name the exemption match key.');
+        self::assertStringContainsString('suppressed nothing', $staleString, 'Stale entry must indicate nothing was suppressed.');
+        self::assertStringContainsString('Pre-emptive waiver that turns out to serve no purpose.', $staleString);
     }
 
     /**
@@ -398,12 +410,12 @@ class LintRoutesTest extends TestCase
 
         // The inline suppression fired on nothing (route is clean) → stale
         $staleWaivers = $report->staleWaivers();
-        static::assertNotEmpty($staleWaivers, 'Unused all-rules suppression must be stale.');
+        self::assertNotEmpty($staleWaivers, 'Unused all-rules suppression must be stale.');
 
         $staleString = implode("\n", $staleWaivers);
         // The label must say "all rules", not an empty string
-        static::assertStringContainsString('rules: all rules', $staleString, 'All-rules suppression must report "rules: all rules".');
-        static::assertStringContainsString('Blanket suppression on a clean route.', $staleString);
+        self::assertStringContainsString('rules: all rules', $staleString, 'All-rules suppression must report "rules: all rules".');
+        self::assertStringContainsString('Blanket suppression on a clean route.', $staleString);
     }
 
     /**
@@ -428,12 +440,12 @@ class LintRoutesTest extends TestCase
         $report = $this->buildUseCase($router)->lint();
 
         $staleWaivers = $report->staleWaivers();
-        static::assertNotEmpty($staleWaivers, 'Unused specific-rules suppression must be stale.');
+        self::assertNotEmpty($staleWaivers, 'Unused specific-rules suppression must be stale.');
 
         $staleString = implode("\n", $staleWaivers);
         // The label must enumerate the actual rule IDs, not "all rules"
-        static::assertStringContainsString('rules: R1, R2', $staleString, 'Specific-rules suppression must list rule IDs.');
-        static::assertStringContainsString('Specific-rules suppression on a clean route.', $staleString);
+        self::assertStringContainsString('rules: R1, R2', $staleString, 'Specific-rules suppression must list rule IDs.');
+        self::assertStringContainsString('Specific-rules suppression on a clean route.', $staleString);
     }
 
     /**
@@ -455,7 +467,8 @@ class LintRoutesTest extends TestCase
         $this->seedDefaultConfig();
 
         $router = $this->getRouter();
-        // /getUsers triggers R1; inline suppression covers R1 - so suppression IS used
+        // /getUsers triggers R1; inline suppression covers R1 - so suppression
+        // IS used
         $router->get('getUsers', fn () => [])
             ->name('get-users')
             // @phpstan-ignore method.notFound
@@ -465,11 +478,11 @@ class LintRoutesTest extends TestCase
 
         // R1 must be suppressed
         $r1Violations = array_values(array_filter($report->errors(), fn ($v) => $v->ruleId === 'R1'));
-        static::assertSame([], $r1Violations, 'R1 must be suppressed by the inline suppression.');
+        self::assertSame([], $r1Violations, 'R1 must be suppressed by the inline suppression.');
 
         // The suppression fired on a real violation - must NOT be stale
         $staleString = implode("\n", $report->staleWaivers());
-        static::assertStringNotContainsString('Suppression that actually fires on R1.', $staleString, 'A used suppression must not appear as stale.');
+        self::assertStringNotContainsString('Suppression that actually fires on R1.', $staleString, 'A used suppression must not appear as stale.');
     }
 
     /**
@@ -502,7 +515,8 @@ class LintRoutesTest extends TestCase
 
         $router = $this->getRouter();
         // /getUsers triggers R1.
-        // Two suppressions both covering R1: the first fires, the second covers the
+        // Two suppressions both covering R1: the first fires, the second covers
+        // the
         // same rule but never gets a chance to fire (break stops iteration).
         $router->get('getUsers', fn () => [])
             ->name('get-users')
@@ -515,17 +529,18 @@ class LintRoutesTest extends TestCase
 
         // R1 must be suppressed
         $r1Violations = array_values(array_filter($report->errors(), fn ($v) => $v->ruleId === 'R1'));
-        static::assertSame([], $r1Violations, 'R1 must be suppressed.');
+        self::assertSame([], $r1Violations, 'R1 must be suppressed.');
 
-        // The first suppression fired → not stale; the second did not fire → stale
+        // The first suppression fired → not stale; the second did not fire →
+        // stale
         $staleWaivers = $report->staleWaivers();
         $staleString  = implode("\n", $staleWaivers);
-        static::assertStringContainsString(
+        self::assertStringContainsString(
             'Second suppression - never fires because break exits after first.',
             $staleString,
             'Second suppression must be stale because break prevents it firing.',
         );
-        static::assertStringNotContainsString(
+        self::assertStringNotContainsString(
             'First suppression - fires on R1.',
             $staleString,
             'First suppression must not be stale because it fired.',
@@ -565,18 +580,18 @@ class LintRoutesTest extends TestCase
 
         // R1 and R2 must both be suppressed
         $r1Violations = array_values(array_filter($report->errors(), fn ($v) => $v->ruleId === 'R1'));
-        static::assertSame([], $r1Violations, 'R1 must be suppressed by the first inline suppression.');
+        self::assertSame([], $r1Violations, 'R1 must be suppressed by the first inline suppression.');
 
         $r2Violations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => $v->ruleId === 'R2',
         ));
-        static::assertSame([], $r2Violations, 'R2 must be suppressed by the second inline suppression.');
+        self::assertSame([], $r2Violations, 'R2 must be suppressed by the second inline suppression.');
 
         // Neither suppression should be stale - both fired
         $staleString = implode("\n", $report->staleWaivers());
-        static::assertStringNotContainsString('Suppresses verb-in-path violation.', $staleString, 'First suppression must not be stale.');
-        static::assertStringNotContainsString('Suppresses kebab-case violation.', $staleString, 'Second suppression must not be stale.');
+        self::assertStringNotContainsString('Suppresses verb-in-path violation.', $staleString, 'First suppression must not be stale.');
+        self::assertStringNotContainsString('Suppresses kebab-case violation.', $staleString, 'Second suppression must not be stale.');
     }
 
     /**
@@ -603,8 +618,9 @@ class LintRoutesTest extends TestCase
 
         $report2 = $this->buildUseCase($router2)->lint();
 
-        // Both runs must produce byte-identical reports regardless of registration order (NFR-01)
-        static::assertSame(
+        // Both runs must produce byte-identical reports regardless of
+        // registration order (NFR-01)
+        self::assertSame(
             $this->serialiseReport($report1),
             $this->serialiseReport($report2),
             'RouteLintReport must return a stable total order independent of route registration order (NFR-01).',
@@ -628,31 +644,36 @@ class LintRoutesTest extends TestCase
 
         $router = $this->getRouter();
         // Route with two parameters: {organisation} and {user}
-        // The final literal segment is "create" - should trigger R9 (apiResource warning)
-        // If {organisation} and {user} are not correctly identified as parameters
-        // (e.g. trim not applied so they stay as "{organisation}") then the segment
+        // The final literal segment is "create" - should trigger R9
+        // (apiResource warning)
+        // If {organisation} and {user} are not correctly identified as
+        // parameters
+        // (e.g. trim not applied so they stay as "{organisation}") then the
+        // segment
         // logic in other rules would be distorted.
         $router->get('organisations/{organisation}/users/{user}/create', fn () => [])
             ->name('organisations.users.create');
 
         $report = $this->buildUseCase($router)->lint();
 
-        // R9 fires on the "create" segment - confirms lastLiteralSegment correctly skips parameters
+        // R9 fires on the "create" segment - confirms lastLiteralSegment
+        // correctly skips parameters
         $r9Violations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => $v->ruleId === 'R9',
         ));
-        static::assertNotEmpty($r9Violations, 'R9 must fire: "create" is an HTML-only segment.');
-        static::assertSame('create', $r9Violations[0]->offendingSurface, 'Offending surface must be the literal "create" segment, not a parameter.');
+        self::assertNotEmpty($r9Violations, 'R9 must fire: "create" is an HTML-only segment.');
+        self::assertSame('create', $r9Violations[0]->offendingSurface, 'Offending surface must be the literal "create" segment, not a parameter.');
 
         // The plural-collections rule must NOT flag {organisation} or {user} as
         // non-plural (they are parameters, not collection segments).
-        // This confirms parameter segments are correctly identified and skipped.
+        // This confirms parameter segments are correctly identified and
+        // skipped.
         $r4Violations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => $v->ruleId === 'R4' && str_contains($v->offendingSurface, '{'),
         ));
-        static::assertSame([], $r4Violations, 'Parameter segments wrapped in braces must never be flagged by R4.');
+        self::assertSame([], $r4Violations, 'Parameter segments wrapped in braces must never be flagged by R4.');
     }
 
     /**
@@ -672,30 +693,33 @@ class LintRoutesTest extends TestCase
         $router = $this->getRouter();
         // Two distinct parameters: {order} and {item}
         // Both must be extracted (kills #36) and without braces (kills #35).
-        // An AlignmentRule check via a "create" suffix confirms parameters are seen.
+        // An AlignmentRule check via a "create" suffix confirms parameters are
+        // seen.
         $router->get('orders/{order}/items/{item}/create', fn () => [])
             ->name('orders.items.create');
 
         $report = $this->buildUseCase($router)->lint();
 
-        // R9 must fire on "create" - the rule correctly skips parameter segments
+        // R9 must fire on "create" - the rule correctly skips parameter
+        // segments
         $r9Violations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => $v->ruleId === 'R9',
         ));
-        static::assertNotEmpty($r9Violations, 'R9 must fire on the "create" segment.');
+        self::assertNotEmpty($r9Violations, 'R9 must fire on the "create" segment.');
 
         // Surface must be exactly "create", not a brace-wrapped param
-        static::assertSame('create', $r9Violations[0]->offendingSurface);
+        self::assertSame('create', $r9Violations[0]->offendingSurface);
 
         // No R4 violation must reference a brace-wrapped parameter segment.
         // (R4 may fire on "create" as a singular segment, which is acceptable -
-        // what must not happen is {order} or {item} appearing as offending surfaces.)
+        // what must not happen is {order} or {item} appearing as offending
+        // surfaces.)
         $r4ParamViolations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => $v->ruleId === 'R4' && str_contains($v->offendingSurface, '{'),
         ));
-        static::assertSame([], $r4ParamViolations, 'Parameter segments wrapped in braces must never be flagged by R4.');
+        self::assertSame([], $r4ParamViolations, 'Parameter segments wrapped in braces must never be flagged by R4.');
     }
 
     /**
@@ -725,7 +749,7 @@ class LintRoutesTest extends TestCase
 
         $surfaces = array_map(static fn ($violation) => $violation->offendingSurface, $report->warnings());
 
-        static::assertContains('team,member', $surfaces, 'Rules must receive brace-stripped parameter names extracted by the use case.');
+        self::assertContains('team,member', $surfaces, 'Rules must receive brace-stripped parameter names extracted by the use case.');
     }
 
     /**
@@ -746,14 +770,15 @@ class LintRoutesTest extends TestCase
 
         $errors = $report->errors();
 
-        static::assertCount(1, $errors);
-        static::assertSame('R6', $errors[0]->ruleId);
-        static::assertSame('GET,HEAD teams shared.index', $errors[0]->routeIdentity);
-        static::assertSame('shared.index', $errors[0]->offendingSurface);
+        self::assertCount(1, $errors);
+        self::assertSame('R6', $errors[0]->ruleId);
+        self::assertSame('GET,HEAD teams shared.index', $errors[0]->routeIdentity);
+        self::assertSame('shared.index', $errors[0]->offendingSurface);
     }
 
     /**
-     * Test that an inline waiver on the duplicate route suppresses its aggregate
+     * Test that an inline waiver on the duplicate route suppresses its
+     * aggregate
      * R6 violation and is not reported as stale (aggregate suppression path).
      *
      * @return void
@@ -770,8 +795,8 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCaseWithRules($router, new DuplicateRouteNameRule)->lint();
 
-        static::assertSame([], $report->errors(), 'Aggregate violation should be suppressed by the inline waiver.');
-        static::assertSame([], $report->staleWaivers(), 'A waiver that suppressed an aggregate violation is not stale.');
+        self::assertSame([], $report->errors(), 'Aggregate violation should be suppressed by the inline waiver.');
+        self::assertSame([], $report->staleWaivers(), 'A waiver that suppressed an aggregate violation is not stale.');
     }
 
     /**
@@ -791,20 +816,23 @@ class LintRoutesTest extends TestCase
 
         $warnings = $report->warnings();
 
-        // Both unattributed findings must be reported; neither can be suppressed
-        static::assertCount(2, $warnings);
-        static::assertSame('GLOBAL', $warnings[0]->ruleId);
-        static::assertSame('route-table', $warnings[0]->routeIdentity);
-        static::assertSame('global-finding-1', $warnings[0]->offendingSurface);
-        static::assertSame('global-finding-2', $warnings[1]->offendingSurface);
+        // Both unattributed findings must be reported; neither can be
+        // suppressed
+        self::assertCount(2, $warnings);
+        self::assertSame('GLOBAL', $warnings[0]->ruleId);
+        self::assertSame('route-table', $warnings[0]->routeIdentity);
+        self::assertSame('global-finding-1', $warnings[0]->offendingSurface);
+        self::assertSame('global-finding-2', $warnings[1]->offendingSurface);
     }
 
     /**
      * Test that inline waivers firing on per-route violations across several
      * routes are all tracked as used, so none is wrongly reported as stale.
      *
-     * Kills the mutant turning the per-route `$inlineUsed +=` accumulation into a
-     * plain assignment, which would drop every route's used-waiver record but the
+     * Kills the mutant turning the per-route `$inlineUsed +=` accumulation into
+     * a
+     * plain assignment, which would drop every route's used-waiver record but
+     * the
      * last.
      *
      * @return void
@@ -829,8 +857,8 @@ class LintRoutesTest extends TestCase
             )),
         )->lint();
 
-        static::assertSame([], $report->errors(), 'Both R1 violations should be suppressed inline.');
-        static::assertSame([], $report->staleWaivers(), 'Both inline waivers fired and must not be stale.');
+        self::assertSame([], $report->errors(), 'Both R1 violations should be suppressed inline.');
+        self::assertSame([], $report->staleWaivers(), 'Both inline waivers fired and must not be stale.');
     }
 
     /**
@@ -858,8 +886,8 @@ class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCaseWithRules($router, new DuplicateRouteNameRule)->lint();
 
-        static::assertSame([], $report->errors(), 'Both duplicate R6 violations should be suppressed.');
-        static::assertSame([], $report->staleWaivers(), 'Both aggregate waivers fired and must not be stale.');
+        self::assertSame([], $report->errors(), 'Both duplicate R6 violations should be suppressed.');
+        self::assertSame([], $report->staleWaivers(), 'Both aggregate waivers fired and must not be stale.');
     }
 
     /**
