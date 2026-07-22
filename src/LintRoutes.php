@@ -256,9 +256,8 @@ final class LintRoutes
      * Normalise a RouteDescriptor into a NormalisedRoute.
      *
      * Splits the URI on `/` (preserving empty segments for slash-sanity
-     * detection)
-     * and extracts parameter names by stripping the `{` and `}` braces from any
-     * segment that starts with `{`.
+     * detection) and extracts parameter names by stripping the `{` and `}`
+     * braces from any segment that starts with `{`.
      *
      * @param  \SineMacula\RouteLinter\Dto\RouteDescriptor  $descriptor
      * @return \SineMacula\RouteLinter\NormalisedRoute

@@ -449,8 +449,8 @@ final class RouteLintEngineTest extends TestCase
         $perRoute  = $engine->inspect($this->route, $this->config);
         $aggregate = $engine->inspectAll([$this->route], $this->config);
 
-        // Assert - inspect() sees only the per-route rule; inspectAll()
-        // only the aggregate
+        // Assert - inspect() sees only the per-route rule; inspectAll() only
+        // the aggregate
         self::assertCount(1, $perRoute);
         self::assertSame('TEST-PARAMS', $perRoute[0]->ruleId);
         self::assertCount(1, $aggregate);

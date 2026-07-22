@@ -57,8 +57,8 @@ final readonly class SegmentNormaliser
         // prefix
         $segments = array_values(array_filter($segments, fn (string $s): bool => !preg_match('/^v\d+$/i', $s) && strtolower($s) !== 'api'));
 
-        // Step 4 - decompose compound segments across camelCase, kebab,
-        // snake, and dot boundaries
+        // Step 4 - decompose compound segments across camelCase, kebab, snake,
+        // and dot boundaries
         $words = [];
 
         foreach ($segments as $segment) {
@@ -66,8 +66,8 @@ final readonly class SegmentNormaliser
             // lowercase letter (camelCase boundary)
             $spaced = preg_replace('/([a-z])([A-Z])/', '$1 $2', $segment) ?? $segment;
 
-            // Split on whitespace, hyphen, underscore, and dot; guard
-            // against preg_split returning false
+            // Split on whitespace, hyphen, underscore, and dot; guard against
+            // preg_split returning false
             $parts = preg_split('/[\s\-_.]+/', $spaced) ?: [];
 
             foreach ($parts as $part) {

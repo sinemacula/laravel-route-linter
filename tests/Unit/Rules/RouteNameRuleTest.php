@@ -239,8 +239,8 @@ final class RouteNameRuleTest extends TestCase
      */
     public function testDisallowedActionOnShortResourceIsFlagged(): void
     {
-        // Arrange - a.list has resource a of one char and action list, which
-        // is not allowed
+        // Arrange - a.list has resource a of one char and action list, which is
+        // not allowed
         $route = new NormalisedRoute(
             uri: 'a',
             methods: ['GET'],

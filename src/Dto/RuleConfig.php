@@ -43,16 +43,10 @@ final readonly class RuleConfig
         /** Inflector uncountables honoured by the plural and verb rules */
         public array $uncountables,
 
-        /**
-         * Maximum collection nesting levels before the
-         * nesting-depth rule (R11) warns.
-         */
+        /** Maximum collection nesting levels before the nesting-depth rule (R11) warns */
         public int $nestingMaxDepth = 3,
 
-        /**
-         * Required middleware keyed by URI pattern, honoured
-         * by the required-middleware rule (R10).
-         */
+        /** Required middleware keyed by URI pattern, honoured by the required-middleware rule (R10) */
         public array $requiredMiddleware = [],
     ) {}
 }

@@ -16,8 +16,8 @@ use SineMacula\RouteLinter\Violation;
  * Flags any named route whose name does not follow the `{resource}.{action}`
  * convention, where the action (the substring after the last `.`) must be one
  * of the seven canonical RESTful actions: index, show, store, update, destroy,
- * create, edit. Unnamed routes are silently skipped. A name whose resource
- * part (before the last `.`) is empty (e.g. `.index`) is also flagged.
+ * create, edit. Unnamed routes are silently skipped. A name whose resource part
+ * (before the last `.`) is empty (e.g. `.index`) is also flagged.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

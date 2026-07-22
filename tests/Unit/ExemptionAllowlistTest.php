@@ -152,8 +152,8 @@ final class ExemptionAllowlistTest extends TestCase
             new AllowlistEntry('beta/feature', 'Beta feature.'),
         ]);
 
-        // Act - no observe() calls, so all entries are unmatched
-        // Assert - keys returned in ascending lexicographic order
+        // Act - no observe() calls, so all entries are unmatched Assert - keys
+        // returned in ascending lexicographic order
         self::assertSame(
             ['articles.old', 'beta/feature', 'users/*'],
             $allowlist->unmatched(),
@@ -254,9 +254,8 @@ final class ExemptionAllowlistTest extends TestCase
         ]);
 
         // Act - no observe() / suppresses() calls, so the entry's matched flag
-        // stays unset
-        // Assert - a never-matched entry belongs in unmatched(), never in
-        // unused()
+        // stays unset Assert - a never-matched entry belongs in unmatched(),
+        // never in unused()
         self::assertSame([], $allowlist->unused(), 'A never-matched entry must not appear in unused().');
         self::assertSame(['never.matched'], $allowlist->unmatched());
     }

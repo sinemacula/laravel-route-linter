@@ -30,10 +30,7 @@ final readonly class NormalisedRoute
      */
     public function __construct(
 
-        /**
-         * The route URI as registered, e.g. `users/{user}` (no
-         * leading slash assumed; stored as given).
-         */
+        /** The route URI as registered, e.g. `users/{user}` (no leading slash assumed; stored as given) */
         public string $uri,
 
         /** Uppercase HTTP methods for this route, e.g. `['GET', 'HEAD']` */
@@ -42,30 +39,16 @@ final readonly class NormalisedRoute
         /** The route name, or null when the route is unnamed */
         public ?string $name,
 
-        /**
-         * URI split on `/`, with empty segments preserved so
-         * trailing/duplicate slashes remain detectable.
-         */
+        /** URI split on `/`, with empty segments preserved so trailing/duplicate slashes remain detectable */
         public array $segments,
 
-        /**
-         * Route parameter names with braces stripped, e.g. `['user']`. Provided
-         * as a convenience for custom rules that key off parameter names; the
-         * built-in rules inspect `$segments` directly and do not read this
-         * field.
-         */
+        /** Route parameter names with braces stripped, e.g. `['user']`; a convenience for custom rules, unread by the built-in rules which inspect `$segments` directly */
         public array $parameters,
 
-        /**
-         * The handler as `Class@method` (or `Class` for
-         * invokables), or null for closure routes.
-         */
+        /** The handler as `Class@method` (or `Class` for invokables), or null for closure routes */
         public ?string $handler = null,
 
-        /**
-         * Gathered middleware names, e.g. `['auth:sanctum']`;
-         * closure middleware is excluded.
-         */
+        /** Gathered middleware names, e.g. `['auth:sanctum']`; closure middleware is excluded */
         public array $middleware = [],
     ) {}
 
@@ -74,8 +57,8 @@ final readonly class NormalisedRoute
      *
      * The key is: HTTP methods sorted ascending joined by `,`, then a space,
      * then the URI, then (when the route has a name) a space and the name.
-     * Example: methods `['HEAD','GET']`, uri `users`, name `users.index`
-     * yields `GET,HEAD users users.index`.
+     * Example: methods `['HEAD','GET']`, uri `users`, name `users.index` yields
+     * `GET,HEAD users users.index`.
      *
      * @return string
      */
