@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/sinemacula/laravel-route-linter/compare/v1.1.0...v1.2.0) (2026-07-22)
+
+
+### Features
+
+* support Laravel 13 ([#26](https://github.com/sinemacula/laravel-route-linter/issues/26)) ([28151f9](https://github.com/sinemacula/laravel-route-linter/commit/28151f995a311bcdee3e043f511c21645bb5f12d))
+
 ## [1.1.0](https://github.com/sinemacula/laravel-route-linter/compare/v1.0.0...v1.1.0) (2026-06-18)
 
 
