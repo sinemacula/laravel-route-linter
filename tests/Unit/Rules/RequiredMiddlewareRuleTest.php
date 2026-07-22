@@ -54,8 +54,7 @@ final class RequiredMiddlewareRuleTest extends TestCase
 
     /**
      * Test that a route matching a pattern and declaring the required
-     * middleware
-     * is not flagged.
+     * middleware is not flagged.
      *
      * @return void
      */

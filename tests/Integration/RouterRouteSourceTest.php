@@ -156,8 +156,8 @@ final class RouterRouteSourceTest extends TestCase
         $source      = new RouterRouteSource($router);
         $descriptors = $source->appRoutes();
 
-        // Build a reference count using the same vendor-detection heuristic
-        // as the adapter, so the test does not depend on CLI output format
+        // Build a reference count using the same vendor-detection heuristic as
+        // the adapter, so the test does not depend on CLI output format
         $expectedCount = 0;
 
         foreach ($router->getRoutes()->getRoutes() as $route) {
@@ -272,9 +272,8 @@ final class RouterRouteSourceTest extends TestCase
 
     /**
      * Test that a suppression entry with a non-array `rules` value is skipped
-     * and the valid entry alongside it is still mapped
-     * (kills LogicalAnd mutant #85: `isset($entry['rules']) || is_array(...)`
-     * vs `&&`).
+     * and the valid entry alongside it is still mapped (kills LogicalAnd mutant
+     * #85: `isset($entry['rules']) || is_array(...)` vs `&&`).
      *
      * With `||` instead of `&&`, a missing `rules` key combined with `is_array`
      * being false would still satisfy the condition (because `isset` is true
@@ -489,13 +488,12 @@ final class RouterRouteSourceTest extends TestCase
      * appears in appRoutes() with isVendor === false.
      *
      * Kills the `is_string($uses) && isControllerVendor` → `||` mutant: under
-     * the
-     * mutant a string controller action is evaluated with the short-circuit OR
-     * so the vendor check fires even for non-string uses values, and conversely
-     * a string action that resolves to an app-owned file may be wrongly
-     * excluded. Registering a string controller action whose class file lives
-     * under tests/ (not vendor/) and asserting it is present with isVendor
-     * false proves the AND guard is intact.
+     * the mutant a string controller action is evaluated with the short-circuit
+     * OR so the vendor check fires even for non-string uses values, and
+     * conversely a string action that resolves to an app-owned file may be
+     * wrongly excluded. Registering a string controller action whose class file
+     * lives under tests/ (not vendor/) and asserting it is present with
+     * isVendor false proves the AND guard is intact.
      *
      * @return void
      */
@@ -504,9 +502,9 @@ final class RouterRouteSourceTest extends TestCase
         $router = $this->getRouter();
 
         // Register using the string controller@method notation so `uses` is a
-        // string.
-        // RouteLintController lives under tests/, so ReflectionClass resolves a
-        // non-vendor file - the adapter must return it with isVendor === false.
+        // string. RouteLintController lives under tests/, so ReflectionClass
+        // resolves a non-vendor file - the adapter must return it with isVendor
+        // === false.
         $router->get('widgets', [RouteLintController::class, 'index'])->name('widgets.index');
 
         $source      = new RouterRouteSource($router);
@@ -532,10 +530,9 @@ final class RouterRouteSourceTest extends TestCase
      * `is_string($uses) || $this->isControllerVendor($route)` vs `&&`).
      *
      * With `||`, a non-string `uses` value would still trigger
-     * isControllerVendor
-     * (which could return true and incorrectly mark the route as vendor). The
-     * `&&` guard ensures isControllerVendor is only called for string uses
-     * values.
+     * isControllerVendor (which could return true and incorrectly mark the
+     * route as vendor). The `&&` guard ensures isControllerVendor is only
+     * called for string uses values.
      *
      * @return void
      */
@@ -698,8 +695,7 @@ final class RouterRouteSourceTest extends TestCase
      * list of strings.
      *
      * A duplicate middleware entry makes the router's `array_unique` leave a
-     * gap
-     * in the keys, so the result must be re-indexed.
+     * gap in the keys, so the result must be re-indexed.
      *
      * @return void
      */

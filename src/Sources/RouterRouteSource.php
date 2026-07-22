@@ -234,8 +234,7 @@ final class RouterRouteSource implements RouteSource
         } catch (\ReflectionException) {
             // An unresolvable controller class yields null, which
             // isVendorFile() maps to app-owned - the conservative direction
-            // that
-            // never drops a route.
+            // that never drops a route.
             return null;
         }
     }

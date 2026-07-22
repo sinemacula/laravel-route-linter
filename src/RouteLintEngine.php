@@ -33,11 +33,11 @@ final class RouteLintEngine
     /**
      * Create a new route lint engine.
      *
-     * Rules are partitioned by kind: those implementing AggregateRule
-     * run in the aggregate pass, the rest in the per-route pass. Rule
-     * identifiers must be unique across both kinds: a duplicate id
-     * would make report ordering and per-rule suppression ambiguous,
-     * so the engine rejects it at construction.
+     * Rules are partitioned by kind: those implementing AggregateRule run in
+     * the aggregate pass, the rest in the per-route pass. Rule identifiers must
+     * be unique across both kinds: a duplicate id would make report ordering
+     * and per-rule suppression ambiguous, so the engine rejects it at
+     * construction.
      *
      * @param  \SineMacula\RouteLinter\Contracts\AggregateRule|\SineMacula\RouteLinter\Contracts\Rule  ...$rules
      *

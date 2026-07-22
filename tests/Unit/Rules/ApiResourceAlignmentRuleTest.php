@@ -50,8 +50,8 @@ final class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testEditActionIsFlagged(): void
     {
-        // Arrange - GET /photos/{photo}/edit; 'edit' is the final
-        // literal segment
+        // Arrange - GET /photos/{photo}/edit; 'edit' is the final literal
+        // segment
         $route = new NormalisedRoute(
             uri: 'photos/{photo}/edit',
             methods: ['GET'],
@@ -156,18 +156,18 @@ final class ApiResourceAlignmentRuleTest extends TestCase
      * Test that 'edit' followed by a route parameter is still flagged as the
      * final literal segment.
      *
-     * Kills the continue-to-break mutant (#41): without continue the
-     * loop would stop on the first parameter segment encountered in
-     * reverse order, returning null instead of scanning back to find
-     * 'edit'. The violation must still be produced.
+     * Kills the continue-to-break mutant (#41): without continue the loop would
+     * stop on the first parameter segment encountered in reverse order,
+     * returning null instead of scanning back to find 'edit'. The violation
+     * must still be produced.
      *
      * @return void
      */
     public function testEditBeforeTrailingParamIsFlagged(): void
     {
-        // Arrange - GET /users/edit/{user}; reversed segments are
-        // {user}, edit, then users. The param {user} must be skipped to
-        // reach edit as the last literal segment
+        // Arrange - GET /users/edit/{user}; reversed segments are {user}, edit,
+        // then users. The param {user} must be skipped to reach edit as the
+        // last literal segment
         $route = new NormalisedRoute(
             uri: 'users/edit/{user}',
             methods: ['GET'],
@@ -190,18 +190,17 @@ final class ApiResourceAlignmentRuleTest extends TestCase
      * Test that 'create' followed by a route parameter is still flagged as the
      * final literal segment.
      *
-     * Provides additional coverage for the continue-to-break mutant
-     * (#41) and also kills the LogicalOr-to-LogicalAnd mutant (#40)
-     * on the skip condition:
-     * if the condition were 'empty AND param', the empty segment would not be
-     * skipped and would be returned instead of 'create'.
+     * Provides additional coverage for the continue-to-break mutant (#41) and
+     * also kills the LogicalOr-to-LogicalAnd mutant (#40) on the skip
+     * condition: if the condition were 'empty AND param', the empty segment
+     * would not be skipped and would be returned instead of 'create'.
      *
      * @return void
      */
     public function testCreateBeforeTrailingParamIsFlagged(): void
     {
-        // Arrange - GET /photos/create/{photo}; reversed order is
-        // {photo}, create, then photos
+        // Arrange - GET /photos/create/{photo}; reversed order is {photo},
+        // create, then photos
         $route = new NormalisedRoute(
             uri: 'photos/create/{photo}',
             methods: ['GET'],
@@ -234,8 +233,8 @@ final class ApiResourceAlignmentRuleTest extends TestCase
     public function testTrailingEmptySegmentDoesNotMaskCreateViolation(): void
     {
         // Arrange - trailing slash produces an empty segment after 'create';
-        // reversed: ['', 'create', 'photos'] - empty must be skipped
-        // to reach 'create'
+        // reversed: ['', 'create', 'photos'] - empty must be skipped to reach
+        // 'create'
         $route = new NormalisedRoute(
             uri: 'photos/create/',
             methods: ['GET'],
@@ -262,8 +261,8 @@ final class ApiResourceAlignmentRuleTest extends TestCase
      */
     public function testRouteWithNoLiteralSegmentIsNotFlagged(): void
     {
-        // Arrange - every segment is a route parameter, so there is
-        // no literal to test
+        // Arrange - every segment is a route parameter, so there is no literal
+        // to test
         $route = new NormalisedRoute(
             uri: '{tenant}/{user}',
             methods: ['GET'],
@@ -275,8 +274,8 @@ final class ApiResourceAlignmentRuleTest extends TestCase
         // Act
         $violations = $this->rule->inspect($route, $this->config);
 
-        // Assert - lastLiteralSegment() scans every segment, finds
-        // none, and returns null
+        // Assert - lastLiteralSegment() scans every segment, finds none, and
+        // returns null
         self::assertEmpty($violations);
     }
 

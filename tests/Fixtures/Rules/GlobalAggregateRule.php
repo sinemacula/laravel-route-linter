@@ -15,8 +15,7 @@ use SineMacula\RouteLinter\Violation;
  *
  * Its violation carries a synthetic identity that matches no descriptor, so it
  * exercises the path where an aggregate violation cannot be per-route
- * suppressed
- * and is reported directly.
+ * suppressed and is reported directly.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

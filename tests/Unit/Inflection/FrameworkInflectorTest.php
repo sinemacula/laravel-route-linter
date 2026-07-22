@@ -91,8 +91,8 @@ final class FrameworkInflectorTest extends TestCase
      *
      * Targets ReturnRemoval on the uncountable `return true` in isPlural():
      * without that return, 'data' would fall through to
-     * `Str::singular($word) !== $word`, which evaluates to 'data' !== 'data'
-     * = false, incorrectly reporting 'data' as not plural.
+     * `Str::singular($word) !== $word`, which evaluates to 'data' !== 'data' =
+     * false, incorrectly reporting 'data' as not plural.
      *
      * @return void
      */

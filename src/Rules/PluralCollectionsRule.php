@@ -33,10 +33,7 @@ final class PluralCollectionsRule implements Rule
      */
     public function __construct(
 
-        /**
-         * Inflector port used to test whether a collection
-         * segment is plural.
-         */
+        /** Inflector port used to test whether a collection segment is plural */
         private readonly Inflector $inflector,
     ) {}
 

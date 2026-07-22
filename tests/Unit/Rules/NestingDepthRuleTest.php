@@ -159,8 +159,8 @@ final class NestingDepthRuleTest extends TestCase
      */
     public function testFourLiteralsWithFewerParamsIsFlagged(): void
     {
-        // Arrange - four literal segments (users, posts, comments, tags)
-        // and two params
+        // Arrange - four literal segments (users, posts, comments, tags) and
+        // two params
         $uri   = 'users/{user}/posts/comments/tags';
         $route = new NormalisedRoute(
             uri: $uri,
@@ -255,9 +255,9 @@ final class NestingDepthRuleTest extends TestCase
      */
     public function testVersionPrefixWithSuffixIsCountedAsLiteral(): void
     {
-        // Arrange - 'v2extra' starts with a version-like token but is
-        // not a pure version; four literals including 'v2extra' must all
-        // be counted to trigger R11
+        // Arrange - 'v2extra' starts with a version-like token but is not a
+        // pure version; four literals including 'v2extra' must all be counted
+        // to trigger R11
         $uri   = 'users/posts/comments/v2extra';
         $route = new NormalisedRoute(
             uri: $uri,
@@ -289,8 +289,8 @@ final class NestingDepthRuleTest extends TestCase
     public function testUppercaseVersionTokenIsExcludedFromDepth(): void
     {
         // Arrange - three literal resource segments plus uppercase 'V2' prefix;
-        // 'V2' must be excluded so depth = 3, which is exactly the
-        // threshold (no violation)
+        // 'V2' must be excluded so depth = 3, which is exactly the threshold
+        // (no violation)
         $route = new NormalisedRoute(
             uri: 'V2/users/posts/comments',
             methods: ['GET'],
@@ -311,8 +311,8 @@ final class NestingDepthRuleTest extends TestCase
      * than a hardcoded constant.
      *
      * A two-collection-level route is clean at the default depth of 3, but a
-     * config that lowers the limit to 1 must flag it, and a permissive
-     * limit of 5 must leave it clean.
+     * config that lowers the limit to 1 must flag it, and a permissive limit of
+     * 5 must leave it clean.
      *
      * @return void
      */

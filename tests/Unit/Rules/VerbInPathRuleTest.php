@@ -217,15 +217,11 @@ final class VerbInPathRuleTest extends TestCase
      * exactly one R1 violation.
      *
      * Kills the `$seen[$word] = true` → `false` dedup mutant: under the mutant
-     * the
-     * seen-flag is stored as false so the guard `$seen[$word] ?? false` always
-     * reads
-     * false, allowing the same verb to be emitted once per segment it appears
-     * in.
-     * Asserting `assertCount(1, $violations)` on a route where `get` normalises
-     * from
-     * two distinct segments catches the double-emission introduced by the
-     * mutant.
+     * the seen-flag is stored as false so the guard `$seen[$word] ?? false`
+     * always reads false, allowing the same verb to be emitted once per segment
+     * it appears in. Asserting `assertCount(1, $violations)` on a route where
+     * `get` normalises from two distinct segments catches the double-emission
+     * introduced by the mutant.
      *
      * @return void
      */
@@ -260,8 +256,7 @@ final class VerbInPathRuleTest extends TestCase
     public function testTwoDistinctVerbsProduceTwoViolations(): void
     {
         // Arrange - 'getUsers/deleteItems' normalises to words including 'get'
-        // and 'delete',
-        // both of which are in the denylist
+        // and 'delete', both of which are in the denylist
         $route  = $this->makeRoute('getUsers/deleteItems');
         $config = $this->makeConfig();
 

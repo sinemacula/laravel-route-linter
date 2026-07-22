@@ -97,8 +97,8 @@ final class ConfigRuleConfiguration implements RuleConfiguration
     /**
      * Map raw config exemption entries to AllowlistEntry DTOs.
      *
-     * Rejects any entry where `match` is absent or `reason` is missing,
-     * not a string, or consists only of whitespace.
+     * Rejects any entry where `match` is absent or `reason` is missing, not a
+     * string, or consists only of whitespace.
      *
      * @param  array<int|string, mixed>  $raw
      * @return array<int, \SineMacula\RouteLinter\Dto\AllowlistEntry>
