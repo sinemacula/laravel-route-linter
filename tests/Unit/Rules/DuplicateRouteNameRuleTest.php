@@ -66,8 +66,7 @@ final class DuplicateRouteNameRuleTest extends TestCase
      * Test that unnamed routes are ignored entirely.
      *
      * Kills the mutant removing the null-name guard: two unnamed routes must
-     * not
-     * collide on a null name.
+     * not collide on a null name.
      *
      * @return void
      */

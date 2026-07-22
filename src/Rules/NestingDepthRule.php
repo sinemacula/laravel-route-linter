@@ -14,10 +14,10 @@ use SineMacula\RouteLinter\Violation;
  * Rule R11: Nesting-depth smell warning.
  *
  * Flags routes whose URI nests more than three collection levels. A collection
- * level is each literal (non-parameter, non-empty) segment excluding common
- * API prefix segments (`api` and version tokens matching `v\d+`). Nesting
- * beyond three levels indicates a URI that could be restructured as a top-level
- * or shallower resource, reducing coupling between resource types. A depth of
+ * level is each literal (non-parameter, non-empty) segment excluding common API
+ * prefix segments (`api` and version tokens matching `v\d+`). Nesting beyond
+ * three levels indicates a URI that could be restructured as a top-level or
+ * shallower resource, reducing coupling between resource types. A depth of
  * exactly three is clean; four or more triggers a warning.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>

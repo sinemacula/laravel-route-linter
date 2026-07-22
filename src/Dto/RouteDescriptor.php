@@ -35,10 +35,7 @@ final readonly class RouteDescriptor
         /** The route URI as registered, e.g. `users/{user}` */
         public string $uri,
 
-        /**
-         * The uppercase HTTP methods the route responds to,
-         * e.g. `['GET', 'HEAD']`.
-         */
+        /** The uppercase HTTP methods the route responds to, e.g. `['GET', 'HEAD']` */
         public array $methods,
 
         /** The route name, or null when the route is unnamed */
@@ -47,22 +44,13 @@ final readonly class RouteDescriptor
         /** Whether the route belongs to a vendor package */
         public bool $isVendor,
 
-        /**
-         * The handler as `Class@method` (or `Class` for
-         * invokables), or null for closure routes.
-         */
+        /** The handler as `Class@method` (or `Class` for invokables), or null for closure routes */
         public ?string $handler = null,
 
-        /**
-         * Gathered middleware names, e.g. `['auth:sanctum']`;
-         * closure middleware is excluded.
-         */
+        /** Gathered middleware names, e.g. `['auth:sanctum']`; closure middleware is excluded */
         public array $middleware = [],
 
-        /**
-         * Inline suppressions declared via `ignoreRouteLint`;
-         * empty when none were registered.
-         */
+        /** Inline suppressions declared via `ignoreRouteLint`; empty when none were registered */
         public array $suppressions = [],
     ) {}
 }

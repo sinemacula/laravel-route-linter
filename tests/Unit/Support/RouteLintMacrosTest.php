@@ -31,8 +31,8 @@ final class RouteLintMacrosTest extends TestCase
     public function testMacroIsRegisteredAfterRegisterCall(): void
     {
         // The ApiServiceProvider already calls RouteLintMacros::register()
-        // during
-        // test bootstrap via getPackageProviders(); confirm the macro exists.
+        // during test bootstrap via getPackageProviders(); confirm the macro
+        // exists.
         self::assertTrue(Route::hasMacro('ignoreRouteLint'));
     }
 
@@ -63,8 +63,8 @@ final class RouteLintMacrosTest extends TestCase
      */
     public function testSecondRegisterCallDoesNotReplaceExistingMacro(): void
     {
-        // Macro is already registered by the service provider boot.
-        // Register again and confirm the macro still functions correctly.
+        // Macro is already registered by the service provider boot. Register
+        // again and confirm the macro still functions correctly.
         RouteLintMacros::register();
 
         $router = $this->getRouter();

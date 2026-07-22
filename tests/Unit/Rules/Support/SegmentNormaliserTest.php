@@ -36,8 +36,8 @@ final class SegmentNormaliserTest extends TestCase
     {
         parent::setUp();
 
-        // Stub inflector: singularises by stripping a trailing 's',
-        // otherwise returns the word as-is
+        // Stub inflector: singularises by stripping a trailing 's', otherwise
+        // returns the word as-is
         $this->inflector = new class implements Inflector {
             /**
              * @param  string  $value
@@ -77,8 +77,8 @@ final class SegmentNormaliserTest extends TestCase
         // Act
         $words = $this->normaliser->normalise($uri, []);
 
-        // Assert - api, v1, and {user} dropped; getUsers decomposes to
-        // get then user
+        // Assert - api, v1, and {user} dropped; getUsers decomposes to get then
+        // user
         self::assertSame(['get', 'user'], $words);
     }
 
@@ -100,8 +100,8 @@ final class SegmentNormaliserTest extends TestCase
         $kebabWords = $this->normaliser->normalise($kebab, []);
         $snakeWords = $this->normaliser->normalise($snake, []);
 
-        // Assert - each decomposes into its constituent words
-        // (singularised by the stub)
+        // Assert - each decomposes into its constituent words (singularised by
+        // the stub)
         self::assertSame(['get', 'user'], $camelWords);
         self::assertSame(['user', 'profile'], $kebabWords);
         self::assertSame(['get', 'user'], $snakeWords);
@@ -121,8 +121,8 @@ final class SegmentNormaliserTest extends TestCase
         // Act
         $words = $this->normaliser->normalise($uri, []);
 
-        // Assert - 'getUsers' is decomposed, lowercased, and singularised
-        // to ['get', 'user']
+        // Assert - 'getUsers' is decomposed, lowercased, and singularised to
+        // ['get', 'user']
         self::assertSame(['get', 'user'], $words);
     }
 
@@ -184,16 +184,16 @@ final class SegmentNormaliserTest extends TestCase
      */
     public function testUncountableWordsBypassSingularisation(): void
     {
-        // Arrange - 'media' ends in 's' so the stub would singularise
-        // it to 'medi', but declaring it uncountable must prevent that
+        // Arrange - 'media' ends in 's' so the stub would singularise it to
+        // 'medi', but declaring it uncountable must prevent that
         $uri          = 'medias';
         $uncountables = ['medias'];
 
         // Act
         $words = $this->normaliser->normalise($uri, $uncountables);
 
-        // Assert - 'medias' is returned as-is, not stripped to 'media'
-        // by the stub
+        // Assert - 'medias' is returned as-is, not stripped to 'media' by the
+        // stub
         self::assertSame(['medias'], $words);
     }
 
@@ -254,8 +254,8 @@ final class SegmentNormaliserTest extends TestCase
      */
     public function testSegmentContainingVersionPatternMidstringIsKept(): void
     {
-        // Arrange - 'av2' contains 'v2' but does not start with 'v', so it is
-        // a real resource segment and must survive step 3
+        // Arrange - 'av2' contains 'v2' but does not start with 'v', so it is a
+        // real resource segment and must survive step 3
         $uri = 'av2/users';
 
         // Act
@@ -278,8 +278,8 @@ final class SegmentNormaliserTest extends TestCase
      */
     public function testSegmentStartingWithVersionPatternButHasSuffixIsKept(): void
     {
-        // Arrange - 'v1more' starts with 'v1' but has extra text, so it
-        // is not a pure version segment and must survive step 3
+        // Arrange - 'v1more' starts with 'v1' but has extra text, so it is not
+        // a pure version segment and must survive step 3
         $uri = 'v1more/users';
 
         // Act
@@ -322,8 +322,8 @@ final class SegmentNormaliserTest extends TestCase
      */
     public function testUppercaseApiPrefixIsDropped(): void
     {
-        // Arrange - 'API' in uppercase must be treated as the API prefix
-        // and dropped
+        // Arrange - 'API' in uppercase must be treated as the API prefix and
+        // dropped
         $uri = 'API/users';
 
         // Act

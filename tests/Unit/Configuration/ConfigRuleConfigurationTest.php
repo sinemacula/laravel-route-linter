@@ -235,8 +235,8 @@ final class ConfigRuleConfigurationTest extends TestCase
 
     /**
      * Test that load() throws InvalidConfigurationException when an exemption
-     * entry is a
-     * non-array scalar (kills LogicalOr mutant #1: `!is_array($item) && ...`).
+     * entry is a non-array scalar (kills LogicalOr mutant #1:
+     * `!is_array($item) && ...`).
      *
      * The original guard `!is_array($item) || !isset($item['match']) || ...`
      * must throw when the item is a plain string - a non-array value can never
@@ -288,8 +288,7 @@ final class ConfigRuleConfigurationTest extends TestCase
      * mutant).
      *
      * `array_filter($rawRules, 'is_string')` must remove the integer; without
-     * the
-     * filter the mutant returns the integer entry inside
+     * the filter the mutant returns the integer entry inside
      * `AllowlistEntry::$rules`.
      *
      * @return void
@@ -327,8 +326,7 @@ final class ConfigRuleConfigurationTest extends TestCase
     public function testFilteredRulesListIsReIndexed(): void
     {
         // Place a non-string at index 0 so after filtering index 1 would remain
-        // 1
-        // without array_values - with array_values it becomes index 0.
+        // 1 without array_values - with array_values it becomes index 0.
         config()->set('route-linter.exemptions', [
             ['match' => 'users.index', 'reason' => 'Reindex test.', 'rules' => [0 => 99, 1 => 'R1', 2 => 'R3']],
         ]);
@@ -349,8 +347,7 @@ final class ConfigRuleConfigurationTest extends TestCase
      * mutant).
      *
      * The ArrayOneItem mutant returns `array_slice($entries, 0, 1)` when count
-     * > 1,
-     * truncating to the first entry only.
+     * > 1, truncating to the first entry only.
      *
      * @return void
      */

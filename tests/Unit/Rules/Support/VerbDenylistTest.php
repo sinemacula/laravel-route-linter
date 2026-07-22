@@ -139,8 +139,8 @@ final class VerbDenylistTest extends TestCase
     }
 
     /**
-     * Test that hint() is case-insensitive - the lookup applies
-     * strtolower() so that 'LOGIN' resolves to the same hint as 'login'.
+     * Test that hint() is case-insensitive - the lookup applies strtolower() so
+     * that 'LOGIN' resolves to the same hint as 'login'.
      *
      * Targets UnwrapStrToLower on hint(): without lowercasing, 'LOGIN' would
      * not match the 'login' key in the hints array and would return null

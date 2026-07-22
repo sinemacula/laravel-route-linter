@@ -353,9 +353,8 @@ final class LintRoutesTest extends TestCase
     public function testMatchedButUnusedConfigEntryIsReportedAsStaleUnused(): void
     {
         // The /users route is clean (no violations); the exemption for
-        // 'users.index'
-        // matches it via route name but suppresses nothing, because no
-        // violation fires.
+        // 'users.index' matches it via route name but suppresses nothing,
+        // because no violation fires.
         $this->seedDefaultConfig([
             [
                 'match'  => 'users.index',
@@ -514,10 +513,9 @@ final class LintRoutesTest extends TestCase
         $this->seedDefaultConfig();
 
         $router = $this->getRouter();
-        // /getUsers triggers R1.
-        // Two suppressions both covering R1: the first fires, the second covers
-        // the
-        // same rule but never gets a chance to fire (break stops iteration).
+        // /getUsers triggers R1. Two suppressions both covering R1: the first
+        // fires, the second covers the same rule but never gets a chance to
+        // fire (break stops iteration).
         $router->get('getUsers', fn () => [])
             ->name('get-users')
             // @phpstan-ignore method.notFound
@@ -567,8 +565,8 @@ final class LintRoutesTest extends TestCase
         $this->seedDefaultConfig();
 
         $router = $this->getRouter();
-        // /getUsers triggers R1 (verb in path) AND R2 (kebab-case).
-        // Two suppressions: first covers R1, second covers R2. Both fire.
+        // /getUsers triggers R1 (verb in path) AND R2 (kebab-case). Two
+        // suppressions: first covers R1, second covers R2. Both fire.
         $router->get('getUsers', fn () => [])
             ->name('get-users')
             // @phpstan-ignore method.notFound
@@ -643,14 +641,11 @@ final class LintRoutesTest extends TestCase
         $this->seedDefaultConfig();
 
         $router = $this->getRouter();
-        // Route with two parameters: {organisation} and {user}
-        // The final literal segment is "create" - should trigger R9
-        // (apiResource warning)
+        // Route with two parameters: {organisation} and {user} The final
+        // literal segment is "create" - should trigger R9 (apiResource warning)
         // If {organisation} and {user} are not correctly identified as
-        // parameters
-        // (e.g. trim not applied so they stay as "{organisation}") then the
-        // segment
-        // logic in other rules would be distorted.
+        // parameters (e.g. trim not applied so they stay as "{organisation}")
+        // then the segment logic in other rules would be distorted.
         $router->get('organisations/{organisation}/users/{user}/create', fn () => [])
             ->name('organisations.users.create');
 
@@ -666,9 +661,8 @@ final class LintRoutesTest extends TestCase
         self::assertSame('create', $r9Violations[0]->offendingSurface, 'Offending surface must be the literal "create" segment, not a parameter.');
 
         // The plural-collections rule must NOT flag {organisation} or {user} as
-        // non-plural (they are parameters, not collection segments).
-        // This confirms parameter segments are correctly identified and
-        // skipped.
+        // non-plural (they are parameters, not collection segments). This
+        // confirms parameter segments are correctly identified and skipped.
         $r4Violations = array_values(array_filter(
             array_merge($report->errors(), $report->warnings()),
             fn ($v) => $v->ruleId === 'R4' && str_contains($v->offendingSurface, '{'),
@@ -691,10 +685,9 @@ final class LintRoutesTest extends TestCase
         $this->seedDefaultConfig();
 
         $router = $this->getRouter();
-        // Two distinct parameters: {order} and {item}
-        // Both must be extracted (kills #36) and without braces (kills #35).
-        // An AlignmentRule check via a "create" suffix confirms parameters are
-        // seen.
+        // Two distinct parameters: {order} and {item} Both must be extracted
+        // (kills #36) and without braces (kills #35). An AlignmentRule check
+        // via a "create" suffix confirms parameters are seen.
         $router->get('orders/{order}/items/{item}/create', fn () => [])
             ->name('orders.items.create');
 
@@ -711,8 +704,8 @@ final class LintRoutesTest extends TestCase
         // Surface must be exactly "create", not a brace-wrapped param
         self::assertSame('create', $r9Violations[0]->offendingSurface);
 
-        // No R4 violation must reference a brace-wrapped parameter segment.
-        // (R4 may fire on "create" as a singular segment, which is acceptable -
+        // No R4 violation must reference a brace-wrapped parameter segment. (R4
+        // may fire on "create" as a singular segment, which is acceptable -
         // what must not happen is {order} or {item} appearing as offending
         // surfaces.)
         $r4ParamViolations = array_values(array_filter(
@@ -778,8 +771,8 @@ final class LintRoutesTest extends TestCase
 
     /**
      * Test that an inline waiver on the duplicate route suppresses its
-     * aggregate
-     * R6 violation and is not reported as stale (aggregate suppression path).
+     * aggregate R6 violation and is not reported as stale (aggregate
+     * suppression path).
      *
      * @return void
      */
@@ -830,10 +823,8 @@ final class LintRoutesTest extends TestCase
      * routes are all tracked as used, so none is wrongly reported as stale.
      *
      * Kills the mutant turning the per-route `$inlineUsed +=` accumulation into
-     * a
-     * plain assignment, which would drop every route's used-waiver record but
-     * the
-     * last.
+     * a plain assignment, which would drop every route's used-waiver record but
+     * the last.
      *
      * @return void
      */
