@@ -22,7 +22,7 @@ use SineMacula\RouteLinter\Dto\RouteSuppression;
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
-final class RouterRouteSource implements RouteSource
+final readonly class RouterRouteSource implements RouteSource
 {
     /** @var string The path segment used to identify vendor-owned files. */
     private const string VENDOR_SEGMENT = DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR;
@@ -35,7 +35,7 @@ final class RouterRouteSource implements RouteSource
     public function __construct(
 
         /** Laravel router whose live route table is enumerated */
-        private readonly Router $router,
+        private Router $router,
     ) {}
 
     /**

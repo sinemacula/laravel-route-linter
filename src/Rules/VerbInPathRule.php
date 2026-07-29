@@ -26,7 +26,7 @@ use SineMacula\RouteLinter\Violation;
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
-final class VerbInPathRule implements Rule
+final readonly class VerbInPathRule implements Rule
 {
     /**
      * Create a new verb-in-path rule.
@@ -37,10 +37,10 @@ final class VerbInPathRule implements Rule
     public function __construct(
 
         /** Pipeline that reduces a URI to candidate verb-test words */
-        private readonly SegmentNormaliser $normaliser,
+        private SegmentNormaliser $normaliser,
 
         /** Membership oracle and hint lookup for denylisted verbs */
-        private readonly VerbDenylist $denylist,
+        private VerbDenylist $denylist,
     ) {}
 
     /**
