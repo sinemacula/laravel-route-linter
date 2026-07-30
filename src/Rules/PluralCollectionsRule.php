@@ -24,7 +24,7 @@ use SineMacula\RouteLinter\Violation;
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
-final class PluralCollectionsRule implements Rule
+final readonly class PluralCollectionsRule implements Rule
 {
     /**
      * Create a new plural collections rule.
@@ -34,7 +34,7 @@ final class PluralCollectionsRule implements Rule
     public function __construct(
 
         /** Inflector port used to test whether a collection segment is plural */
-        private readonly Inflector $inflector,
+        private Inflector $inflector,
     ) {}
 
     /**

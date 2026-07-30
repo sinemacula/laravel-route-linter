@@ -22,13 +22,13 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
-final class RouteLintEngine
+final readonly class RouteLintEngine
 {
     /** @var array<int, \SineMacula\RouteLinter\Contracts\Rule> */
-    private readonly array $rules;
+    private array $rules;
 
     /** @var array<int, \SineMacula\RouteLinter\Contracts\AggregateRule> */
-    private readonly array $aggregateRules;
+    private array $aggregateRules;
 
     /**
      * Create a new route lint engine.

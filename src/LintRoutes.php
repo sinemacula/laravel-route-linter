@@ -29,7 +29,7 @@ use SineMacula\RouteLinter\Dto\RouteSuppression;
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
-final class LintRoutes
+final readonly class LintRoutes
 {
     /**
      * Create a new lint-routes use case.
@@ -41,13 +41,13 @@ final class LintRoutes
     public function __construct(
 
         /** Port that yields the app-owned route descriptors to lint */
-        private readonly RouteSource $routeSource,
+        private RouteSource $routeSource,
 
         /** Port that loads the active rule-configuration bundle */
-        private readonly RuleConfiguration $configuration,
+        private RuleConfiguration $configuration,
 
         /** Engine that runs the ordered rule set over each route */
-        private readonly RouteLintEngine $engine,
+        private RouteLintEngine $engine,
     ) {}
 
     /**

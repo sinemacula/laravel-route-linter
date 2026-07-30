@@ -18,7 +18,7 @@ use SineMacula\RouteLinter\Contracts\Inflector;
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
-final class FrameworkInflector implements Inflector
+final readonly class FrameworkInflector implements Inflector
 {
     /**
      * Create a new framework inflector.
@@ -28,7 +28,7 @@ final class FrameworkInflector implements Inflector
     public function __construct(
 
         /** Words treated as already-plural, bypassing singularisation */
-        private readonly array $uncountables = [],
+        private array $uncountables = [],
     ) {}
 
     /**
