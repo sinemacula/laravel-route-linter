@@ -1,4 +1,6 @@
-# Laravel Route Linter
+<h1 align="center">Laravel Route Linter</h1>
+
+<div align="center">
 
 [![Latest Stable Version](https://img.shields.io/packagist/v/sinemacula/laravel-route-linter.svg)](https://packagist.org/packages/sinemacula/laravel-route-linter)
 [![Build Status](https://github.com/sinemacula/laravel-route-linter/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/sinemacula/laravel-route-linter/actions/workflows/tests.yml)
@@ -6,6 +8,8 @@
 [![Maintainability](https://qlty.sh/gh/sinemacula/projects/laravel-route-linter/maintainability.svg)](https://qlty.sh/gh/sinemacula/projects/laravel-route-linter)
 [![Code Coverage](https://qlty.sh/gh/sinemacula/projects/laravel-route-linter/coverage.svg)](https://qlty.sh/gh/sinemacula/projects/laravel-route-linter)
 [![Total Downloads](https://img.shields.io/packagist/dt/sinemacula/laravel-route-linter.svg)](https://packagist.org/packages/sinemacula/laravel-route-linter)
+
+</div>
 
 A deterministic, opt-in Artisan command that lints a Laravel application's route table against a fixed catalogue of
 RESTful URL conventions and route-integrity checks, and exits non-zero on error-severity violations so CI can gate on
