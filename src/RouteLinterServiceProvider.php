@@ -118,7 +118,7 @@ final class RouteLinterServiceProvider extends ServiceProvider
         }
 
         return array_map(
-            function (mixed $class) use ($app): Rule|AggregateRule {
+            function (mixed $class) use ($app): AggregateRule|Rule {
 
                 if (!is_string($class) || (!is_subclass_of($class, Rule::class) && !is_subclass_of($class, AggregateRule::class))) {
                     $got = is_string($class) ? $class : get_debug_type($class);

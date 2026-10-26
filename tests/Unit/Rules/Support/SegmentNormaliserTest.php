@@ -332,4 +332,25 @@ final class SegmentNormaliserTest extends TestCase
         // Assert - 'API' dropped case-insensitively; 'users' becomes 'user'
         self::assertSame(['user'], $words);
     }
+
+    /**
+     * Test that leading and trailing delimiters do not yield empty words.
+     *
+     * Targets UnwrapArrayFilter on the step-4 empty-part filter: preg_split()
+     * returns an empty string either side of a boundary delimiter, which must
+     * be discarded rather than passed through as a word.
+     *
+     * @return void
+     */
+    public function testBoundaryDelimitersDoNotYieldEmptyWords(): void
+    {
+        // Arrange - '_users-' splits into '', 'users', '' on its delimiters
+        $uri = '_users-';
+
+        // Act
+        $words = $this->normaliser->normalise($uri, []);
+
+        // Assert - only the real word survives, singularised to 'user'
+        self::assertSame(['user'], $words);
+    }
 }
