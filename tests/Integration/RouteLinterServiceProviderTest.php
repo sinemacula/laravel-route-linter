@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Tests\Integration;
 
 use Illuminate\Console\OutputStyle;
+use Illuminate\Foundation\Application;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Artisan;
@@ -297,5 +298,25 @@ final class RouteLinterServiceProviderTest extends TestCase
 
         self::assertInstanceOf(RouterRouteSource::class, $this->app->make(RouteSource::class));
         self::assertTrue(Route::hasMacro('ignoreRouteLint'));
+    }
+
+    /**
+     * Test that boot skips the console-only registrations outside the console.
+     *
+     * The config publish path is resolved only on the console branch, so an
+     * application that never has `configPath()` called proves boot returned
+     * early before registering the publishable config and the Artisan command.
+     *
+     * @return void
+     */
+    public function testBootSkipsConsoleRegistrationsOutsideConsole(): void
+    {
+        $app = $this->createMock(Application::class);
+        $app->method('runningInConsole')->willReturn(false);
+        $app->expects(self::never())->method('configPath');
+
+        (new RouteLinterServiceProvider($app))->boot();
+
+        self::assertTrue(Route::hasMacro('ignoreRouteLint'), 'The macro must still be registered outside the console.');
     }
 }
