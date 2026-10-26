@@ -59,25 +59,7 @@ final readonly class SegmentNormaliser
 
         // Step 4 - decompose compound segments across camelCase, kebab, snake,
         // and dot boundaries
-        $words = [];
-
-        foreach ($segments as $segment) {
-            // Insert a space before each uppercase letter preceded by a
-            // lowercase letter (camelCase boundary)
-            $spaced = preg_replace('/([a-z])([A-Z])/', '$1 $2', $segment) ?? $segment;
-
-            // Split on whitespace, hyphen, underscore, and dot; guard against
-            // preg_split returning false
-            $parts = preg_split('/[\s\-_.]+/', $spaced) ?: [];
-
-            foreach ($parts as $part) {
-                if ($part === '') {
-                    continue;
-                }
-
-                $words[] = $part;
-            }
-        }
+        $words = array_merge(...array_map($this->decompose(...), $segments));
 
         // Step 5 - lowercase every decomposed word
         $words = array_map('strtolower', $words);
@@ -90,5 +72,25 @@ final readonly class SegmentNormaliser
                 : $this->inflector->singular($word),
             $words,
         );
+    }
+
+    /**
+     * Decompose a single segment into its words across camelCase, kebab, snake,
+     * and dot boundaries.
+     *
+     * @param  string  $segment
+     * @return array<int, string>
+     */
+    private function decompose(string $segment): array
+    {
+        // Insert a space before each uppercase letter preceded by a lowercase
+        // letter (camelCase boundary)
+        $spaced = preg_replace('/([a-z])([A-Z])/', '$1 $2', $segment) ?? $segment;
+
+        // Split on whitespace, hyphen, underscore, and dot; guard against
+        // preg_split returning false
+        $parts = preg_split('/[\s\-_.]+/', $spaced) ?: [];
+
+        return array_filter($parts, fn (string $part): bool => $part !== '');
     }
 }
