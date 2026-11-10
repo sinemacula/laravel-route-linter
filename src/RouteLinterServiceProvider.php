@@ -51,23 +51,12 @@ final class RouteLinterServiceProvider extends ServiceProvider
 
         $this->app->singleton(RuleConfiguration::class, ConfigRuleConfiguration::class);
 
-        $this->app->singleton(Inflector::class, function (): FrameworkInflector {
+        $this->app->singleton(Inflector::class, fn (): FrameworkInflector => new FrameworkInflector($this->stringList(Config::get('route-linter.uncountables'))));
 
-            $uncountables = Config::get('route-linter.uncountables');
-
-            return new FrameworkInflector(is_array($uncountables) ? $uncountables : []);
-        });
-
-        $this->app->bind(VerbDenylist::class, function (): VerbDenylist {
-
-            $denylist = Config::get('route-linter.verb_denylist');
-            $hints    = Config::get('route-linter.remediation_hints');
-
-            return new VerbDenylist(
-                is_array($denylist) ? $denylist : [],
-                is_array($hints) ? $hints : [],
-            );
-        });
+        $this->app->bind(VerbDenylist::class, fn (): VerbDenylist => new VerbDenylist(
+            $this->stringList(Config::get('route-linter.verb_denylist')),
+            $this->stringMap(Config::get('route-linter.remediation_hints')),
+        ));
 
         $this->app->bind(LintReporter::class, fn ($app, array $parameters): ConsoleLintReporter => new ConsoleLintReporter($parameters['output']));
 
@@ -92,6 +81,60 @@ final class RouteLinterServiceProvider extends ServiceProvider
         ], 'route-linter-config');
 
         $this->commands([LintRoutesCommand::class]);
+    }
+
+    /**
+     * Keep the string entries of a list-typed config value.
+     *
+     * The RuleConfiguration port rejects a malformed value when the lint runs,
+     * so these bindings only take the well-formed part rather than failing
+     * while the container builds the engine.
+     *
+     * @param  mixed  $value
+     * @return array<int, string>
+     */
+    private function stringList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $list = [];
+
+        foreach ($value as $entry) {
+            if (!is_string($entry)) {
+                continue;
+            }
+
+            $list[] = $entry;
+        }
+
+        return $list;
+    }
+
+    /**
+     * Keep the string-to-string pairs of a map-typed config value.
+     *
+     * @param  mixed  $value
+     * @return array<string, string>
+     */
+    private function stringMap(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $map = [];
+
+        foreach ($value as $key => $entry) {
+            if (!is_string($key) || !is_string($entry)) {
+                continue;
+            }
+
+            $map[$key] = $entry;
+        }
+
+        return $map;
     }
 
     /**
