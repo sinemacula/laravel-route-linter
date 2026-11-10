@@ -288,7 +288,7 @@ final class RouterRouteSourceTest extends TestCase
 
         // Manually inject an action entry where 'rules' is absent
         $route = $router->get('billing', fn () => [])->name('billing.index');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'route-linter::lint-ignore' => [
                 ['reason' => 'No rules key present.'],
             ],
@@ -329,7 +329,7 @@ final class RouterRouteSourceTest extends TestCase
         $router = $this->getRouter();
 
         $route = $router->get('analytics', fn () => [])->name('analytics.index');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'route-linter::lint-ignore' => [
                 ['rules' => 'not-an-array', 'reason' => 'Non-array rules value.'],
             ],
@@ -371,7 +371,7 @@ final class RouterRouteSourceTest extends TestCase
         $router = $this->getRouter();
 
         $route = $router->get('reports', fn () => [])->name('reports.index');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'route-linter::lint-ignore' => [
                 ['rules' => ['foo' => 'R1', 'bar' => 'R3'], 'reason' => 'Re-index test.'],
             ],
@@ -399,6 +399,47 @@ final class RouterRouteSourceTest extends TestCase
     }
 
     /**
+     * Test that a suppression entry naming a non-string rule ID is skipped
+     * whole rather than narrowed to its string IDs, and the valid entry
+     * alongside it is still mapped.
+     *
+     * @return void
+     */
+    public function testSuppressionWithNonStringRuleIdIsSkipped(): void
+    {
+        $router = $this->getRouter();
+
+        $route = $router->get('invoices', fn () => [])->name('invoices.index');
+        $route->setAction(array_merge($route->action, [
+            'route-linter::lint-ignore' => [
+                ['rules' => [1], 'reason' => 'Corrupt rule ID.'],
+                ['rules' => ['R1'], 'reason' => 'Valid entry beside a corrupt one.'],
+            ],
+        ]));
+
+        $source      = new RouterRouteSource($router);
+        $descriptors = $source->appRoutes();
+
+        $byName = [];
+
+        foreach ($descriptors as $descriptor) {
+            if ($descriptor->name === null) {
+                continue;
+            }
+
+            $byName[$descriptor->name] = $descriptor;
+        }
+
+        self::assertArrayHasKey('invoices.index', $byName);
+
+        $suppressions = $byName['invoices.index']->suppressions;
+
+        self::assertCount(1, $suppressions);
+        self::assertSame(['R1'], $suppressions[0]->rules);
+        self::assertSame('Valid entry beside a corrupt one.', $suppressions[0]->reason);
+    }
+
+    /**
      * Test that a suppression entry where `reason` is not a string defaults to
      * an empty string (kills LogicalAnd mutant #87:
      * `isset($entry['reason']) || is_string(...)` vs `&&`).
@@ -414,7 +455,7 @@ final class RouterRouteSourceTest extends TestCase
         $router = $this->getRouter();
 
         $route = $router->get('exports', fn () => [])->name('exports.index');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'route-linter::lint-ignore' => [
                 ['rules' => ['R1'], 'reason' => 12345],
             ],
@@ -575,7 +616,7 @@ final class RouterRouteSourceTest extends TestCase
         $router = $this->getRouter();
 
         $route = $router->get('subscriptions', fn () => [])->name('subscriptions.index');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'route-linter::lint-ignore' => [
                 'not-an-array',
                 ['rules' => ['R1'], 'reason' => 'Valid entry beside a malformed one.'],
@@ -648,7 +689,7 @@ final class RouterRouteSourceTest extends TestCase
         // Simulate a route:cache'd closure: the `uses` action becomes a
         // serialized-closure string that the framework recognises as such.
         $route = $router->get('cached-closure', fn () => [])->name('cached.closure');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'uses' => 'O:47:"Laravel\SerializableClosure\SerializableClosure":1:{s:12:"serializable";N;}',
         ]));
 
@@ -778,11 +819,11 @@ final class RouterRouteSourceTest extends TestCase
             return false;
         }
 
-        try {
-            $file = (new \ReflectionClass($controllerClass))->getFileName();
-        } catch (\ReflectionException) {
+        if (!class_exists($controllerClass)) {
             return false;
         }
+
+        $file = (new \ReflectionClass($controllerClass))->getFileName();
 
         return is_string($file) && str_contains($file, self::VENDOR_SEGMENT);
     }

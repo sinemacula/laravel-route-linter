@@ -44,8 +44,9 @@ A few principles hold across the surface:
 - **Every waiver is justified and per-rule.** Waivers require a written reason and target specific rules. Unused
   waivers - and allowlist entries matching no live route - are surfaced as stale entries so they cannot rot (reported,
   but they do not gate).
-- **Misconfiguration fails loud.** A malformed config value (a non-array where an array is expected, an exemption
-  missing its reason) raises an `InvalidConfigurationException` rather than silently weakening the verdict.
+- **Misconfiguration fails loud.** A malformed config value (a non-array where an array is expected, a non-string verb,
+  uncountable or hint, an exemption missing its reason) raises an `InvalidConfigurationException` rather than silently
+  weakening the verdict.
 
 ## Rules
 

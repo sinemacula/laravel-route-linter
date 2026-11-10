@@ -17,10 +17,11 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
  * surfaces - verb denylist, remediation hints, exemption allowlist, inflector
  * uncountables, nesting depth, and required middleware - into a
  * {@see RuleConfig} DTO. The adapter is the single place that validates the
- * config schema: a non-array value for an array-typed key, an exemption entry
- * missing its match or written reason, or a malformed required-middleware
- * entry, raises an {@see InvalidConfigurationException} immediately rather than
- * being silently coerced to a value that would weaken the lint verdict.
+ * config schema: a non-array value for an array-typed key, a non-string entry
+ * in a word list or hint map, an exemption entry missing its match or written
+ * reason, or a malformed required-middleware entry, raises an
+ * {@see InvalidConfigurationException} immediately rather than being silently
+ * coerced to a value that would weaken the lint verdict.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -38,10 +39,10 @@ final class ConfigRuleConfiguration implements RuleConfiguration
     public function load(): RuleConfig
     {
         return new RuleConfig(
-            verbDenylist: $this->arrayConfig('route-linter.verb_denylist'),
-            remediationHints: $this->arrayConfig('route-linter.remediation_hints'),
+            verbDenylist: $this->stringListConfig('route-linter.verb_denylist'),
+            remediationHints: $this->stringMapConfig('route-linter.remediation_hints'),
             exemptions: $this->buildExemptions($this->arrayConfig('route-linter.exemptions')),
-            uncountables: $this->arrayConfig('route-linter.uncountables'),
+            uncountables: $this->stringListConfig('route-linter.uncountables'),
             nestingMaxDepth: $this->intConfig('route-linter.nesting_max_depth', 3),
             requiredMiddleware: $this->buildRequiredMiddleware($this->arrayConfig('route-linter.required_middleware')),
         );
@@ -72,6 +73,53 @@ final class ConfigRuleConfiguration implements RuleConfiguration
         }
 
         return $value;
+    }
+
+    /**
+     * Read a list-of-strings config key, failing loud on a non-string entry.
+     *
+     * @param  string  $key
+     * @return array<int, string>
+     *
+     * @throws \SineMacula\RouteLinter\Exceptions\InvalidConfigurationException
+     */
+    private function stringListConfig(string $key): array
+    {
+        $list = [];
+
+        foreach ($this->arrayConfig($key) as $entry) {
+            if (!is_string($entry)) {
+                throw new InvalidConfigurationException(sprintf('Config "%s" must be a list of strings; got %s.', $key, get_debug_type($entry)));
+            }
+
+            $list[] = $entry;
+        }
+
+        return $list;
+    }
+
+    /**
+     * Read a string-keyed map of strings, failing loud on a non-string key or
+     * value.
+     *
+     * @param  string  $key
+     * @return array<string, string>
+     *
+     * @throws \SineMacula\RouteLinter\Exceptions\InvalidConfigurationException
+     */
+    private function stringMapConfig(string $key): array
+    {
+        $map = [];
+
+        foreach ($this->arrayConfig($key) as $name => $value) {
+            if (!is_string($name) || !is_string($value)) {
+                throw new InvalidConfigurationException(sprintf('Config "%s" must map strings to strings; got %s => %s.', $key, get_debug_type($name), get_debug_type($value)));
+            }
+
+            $map[$name] = $value;
+        }
+
+        return $map;
     }
 
     /**
