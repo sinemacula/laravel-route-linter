@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/sinemacula/laravel-route-linter/compare/v1.2.0...v1.2.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* clear the qlty findings and drop configuration the shared source provides ([#75](https://github.com/sinemacula/laravel-route-linter/issues/75)) ([a1d83f1](https://github.com/sinemacula/laravel-route-linter/commit/a1d83f1504937ca68ae7aaef3a8e918e83d8530e))
+
 ## [1.2.0](https://github.com/sinemacula/laravel-route-linter/compare/v1.1.0...v1.2.0) (2026-07-22)
 
 
