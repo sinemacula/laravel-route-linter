@@ -23,6 +23,7 @@ use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Output\ConsoleLintReporter;
 use SineMacula\RouteLinter\RouteLintEngine;
 use SineMacula\RouteLinter\RouteLinterServiceProvider;
+use SineMacula\RouteLinter\Rules\Support\VerbDenylist;
 use SineMacula\RouteLinter\Sources\RouterRouteSource;
 use SineMacula\RouteLinter\Violation;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -277,6 +278,57 @@ final class RouteLinterServiceProviderTest extends TestCase
         config()->set('route-linter.rules', 'not-an-array');
 
         self::assertInstanceOf(RouteLintEngine::class, $this->app->make(RouteLintEngine::class));
+    }
+
+    /**
+     * Test that the resolved verb denylist takes only the well-formed entries
+     * of the denylist and hint config, leaving the rejection to the
+     * configuration port.
+     *
+     * @return void
+     */
+    public function testResolvedVerbDenylistSkipsMalformedConfigEntries(): void
+    {
+        assert($this->app !== null);
+
+        config()->set('route-linter.verb_denylist', ['get', ['fetch'], 7, 'create']);
+        config()->set('route-linter.remediation_hints', [
+            'fetch' => ['Not a hint.'],
+            'A hint without a verb.',
+            'get'    => 'Use a noun resource instead.',
+            'create' => 'POST to the collection instead.',
+        ]);
+
+        $denylist = $this->app->make(VerbDenylist::class);
+
+        self::assertTrue($denylist->contains('get'));
+        self::assertTrue($denylist->contains('create'));
+        self::assertFalse($denylist->contains('7'));
+        self::assertSame('Use a noun resource instead.', $denylist->hint('get'));
+        self::assertSame('POST to the collection instead.', $denylist->hint('create'));
+        self::assertNull($denylist->hint('fetch'));
+        self::assertNull($denylist->hint('0'));
+    }
+
+    /**
+     * Test that non-array word-list and hint config values leave the resolved
+     * denylist and inflector empty rather than raising.
+     *
+     * @return void
+     */
+    public function testNonArrayWordConfigYieldsEmptyDenylistAndInflector(): void
+    {
+        assert($this->app !== null);
+
+        config()->set('route-linter.verb_denylist', 'get');
+        config()->set('route-linter.remediation_hints', 'Use a noun resource instead.');
+        config()->set('route-linter.uncountables', 'media');
+
+        $denylist = $this->app->make(VerbDenylist::class);
+
+        self::assertFalse($denylist->contains('get'));
+        self::assertNull($denylist->hint('get'));
+        self::assertSame('medium', $this->app->make(Inflector::class)->singular('media'));
     }
 
     /**

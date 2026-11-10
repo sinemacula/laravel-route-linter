@@ -842,10 +842,7 @@ final class LintRoutesTest extends TestCase
 
         $report = $this->buildUseCaseWithRules(
             $router,
-            new VerbInPathRule(new SegmentNormaliser(new FrameworkInflector), new VerbDenylist(
-                config('route-linter.verb_denylist', []),
-                config('route-linter.remediation_hints', []),
-            )),
+            new VerbInPathRule(new SegmentNormaliser(new FrameworkInflector), $this->buildVerbDenylist()),
         )->lint();
 
         self::assertSame([], $report->errors(), 'Both R1 violations should be suppressed inline.');
@@ -914,10 +911,7 @@ final class LintRoutesTest extends TestCase
         $inflector = new FrameworkInflector;
 
         $engine = new RouteLintEngine(
-            new VerbInPathRule(new SegmentNormaliser($inflector), new VerbDenylist(
-                config('route-linter.verb_denylist', []),
-                config('route-linter.remediation_hints', []),
-            )),
+            new VerbInPathRule(new SegmentNormaliser($inflector), $this->buildVerbDenylist()),
             new KebabCaseRule,
             new LowercaseRule,
             new PluralCollectionsRule($inflector),
@@ -936,9 +930,21 @@ final class LintRoutesTest extends TestCase
     }
 
     /**
+     * Build the verb denylist from the seeded denylist and hint config.
+     *
+     * @return \SineMacula\RouteLinter\Rules\Support\VerbDenylist
+     */
+    private function buildVerbDenylist(): VerbDenylist
+    {
+        $config = (new ConfigRuleConfiguration)->load();
+
+        return new VerbDenylist($config->verbDenylist, $config->remediationHints);
+    }
+
+    /**
      * Seed the route-linter config section used by ConfigRuleConfiguration.
      *
-     * @param  array<int, array<string, string>>  $exemptions
+     * @param  array<int, array<string, list<string>|string>>  $exemptions
      * @param  array<int, string>|null  $verbDenylist
      * @return void
      */

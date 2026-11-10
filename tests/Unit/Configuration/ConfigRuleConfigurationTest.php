@@ -43,7 +43,10 @@ final class ConfigRuleConfigurationTest extends TestCase
     public function testReadsThreeSeparateSurfaces(): void
     {
         config()->set('route-linter.verb_denylist', ['get', 'fetch']);
-        config()->set('route-linter.remediation_hints', ['get' => 'Use a noun resource instead.']);
+        config()->set('route-linter.remediation_hints', [
+            'get'   => 'Use a noun resource instead.',
+            'fetch' => 'GET the collection instead.',
+        ]);
         config()->set('route-linter.exemptions', [
             ['match' => 'users.store', 'reason' => 'Legacy endpoint kept for backward compatibility.'],
         ]);
@@ -53,7 +56,10 @@ final class ConfigRuleConfigurationTest extends TestCase
         $result  = $adapter->load();
 
         self::assertSame(['get', 'fetch'], $result->verbDenylist);
-        self::assertSame(['get' => 'Use a noun resource instead.'], $result->remediationHints);
+        self::assertSame([
+            'get'   => 'Use a noun resource instead.',
+            'fetch' => 'GET the collection instead.',
+        ], $result->remediationHints);
         self::assertCount(1, $result->exemptions);
         self::assertSame('users.store', $result->exemptions[0]->match);
         self::assertSame('Legacy endpoint kept for backward compatibility.', $result->exemptions[0]->reason);
@@ -74,6 +80,54 @@ final class ConfigRuleConfigurationTest extends TestCase
 
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage('Config "route-linter.verb_denylist" must be an array');
+
+        (new ConfigRuleConfiguration)->load();
+    }
+
+    /**
+     * Test that load() fails loud when a word-list config key holds a
+     * non-string entry.
+     *
+     * @return void
+     */
+    public function testNonStringWordListEntryIsRejected(): void
+    {
+        config()->set('route-linter.uncountables', ['media', 42]);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Config "route-linter.uncountables" must be a list of strings; got int.');
+
+        (new ConfigRuleConfiguration)->load();
+    }
+
+    /**
+     * Test that load() fails loud when the remediation-hint map holds a
+     * non-string hint.
+     *
+     * @return void
+     */
+    public function testNonStringRemediationHintIsRejected(): void
+    {
+        config()->set('route-linter.remediation_hints', ['get' => ['Use a noun resource instead.']]);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Config "route-linter.remediation_hints" must map strings to strings; got string => array.');
+
+        (new ConfigRuleConfiguration)->load();
+    }
+
+    /**
+     * Test that load() fails loud when the remediation-hint map is keyed by
+     * something other than the denylisted verb.
+     *
+     * @return void
+     */
+    public function testNonStringRemediationHintKeyIsRejected(): void
+    {
+        config()->set('route-linter.remediation_hints', ['Use a noun resource instead.']);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Config "route-linter.remediation_hints" must map strings to strings; got int => string.');
 
         (new ConfigRuleConfiguration)->load();
     }
