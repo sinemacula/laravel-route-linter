@@ -288,7 +288,7 @@ final class RouterRouteSourceTest extends TestCase
 
         // Manually inject an action entry where 'rules' is absent
         $route = $router->get('billing', fn () => [])->name('billing.index');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'route-linter::lint-ignore' => [
                 ['reason' => 'No rules key present.'],
             ],
@@ -329,7 +329,7 @@ final class RouterRouteSourceTest extends TestCase
         $router = $this->getRouter();
 
         $route = $router->get('analytics', fn () => [])->name('analytics.index');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'route-linter::lint-ignore' => [
                 ['rules' => 'not-an-array', 'reason' => 'Non-array rules value.'],
             ],
@@ -371,7 +371,7 @@ final class RouterRouteSourceTest extends TestCase
         $router = $this->getRouter();
 
         $route = $router->get('reports', fn () => [])->name('reports.index');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'route-linter::lint-ignore' => [
                 ['rules' => ['foo' => 'R1', 'bar' => 'R3'], 'reason' => 'Re-index test.'],
             ],
@@ -455,7 +455,7 @@ final class RouterRouteSourceTest extends TestCase
         $router = $this->getRouter();
 
         $route = $router->get('exports', fn () => [])->name('exports.index');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'route-linter::lint-ignore' => [
                 ['rules' => ['R1'], 'reason' => 12345],
             ],
@@ -616,7 +616,7 @@ final class RouterRouteSourceTest extends TestCase
         $router = $this->getRouter();
 
         $route = $router->get('subscriptions', fn () => [])->name('subscriptions.index');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'route-linter::lint-ignore' => [
                 'not-an-array',
                 ['rules' => ['R1'], 'reason' => 'Valid entry beside a malformed one.'],
@@ -689,7 +689,7 @@ final class RouterRouteSourceTest extends TestCase
         // Simulate a route:cache'd closure: the `uses` action becomes a
         // serialized-closure string that the framework recognises as such.
         $route = $router->get('cached-closure', fn () => [])->name('cached.closure');
-        $route->setAction(array_merge($route->getAction(), [
+        $route->setAction(array_merge($route->action, [
             'uses' => 'O:47:"Laravel\SerializableClosure\SerializableClosure":1:{s:12:"serializable";N;}',
         ]));
 
@@ -819,11 +819,11 @@ final class RouterRouteSourceTest extends TestCase
             return false;
         }
 
-        try {
-            $file = (new \ReflectionClass($controllerClass))->getFileName();
-        } catch (\ReflectionException) {
+        if (!class_exists($controllerClass)) {
             return false;
         }
+
+        $file = (new \ReflectionClass($controllerClass))->getFileName();
 
         return is_string($file) && str_contains($file, self::VENDOR_SEGMENT);
     }
