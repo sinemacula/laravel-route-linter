@@ -261,13 +261,13 @@ final readonly class RouterRouteSource implements RouteSource
      */
     private function classFile(string $class): ?string
     {
-        try {
-            return (new \ReflectionClass($class))->getFileName() ?: null;
-        } catch (\ReflectionException) {
-            // An unresolvable controller class yields null, which
-            // isVendorFile() maps to app-owned - the conservative direction
-            // that never drops a route.
+        // An unresolvable controller class yields null, which isVendorFile()
+        // maps to app-owned - the conservative direction that never drops a
+        // route.
+        if (!class_exists($class)) {
             return null;
         }
+
+        return (new \ReflectionClass($class))->getFileName() ?: null;
     }
 }
