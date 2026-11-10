@@ -399,6 +399,47 @@ final class RouterRouteSourceTest extends TestCase
     }
 
     /**
+     * Test that a suppression entry naming a non-string rule ID is skipped
+     * whole rather than narrowed to its string IDs, and the valid entry
+     * alongside it is still mapped.
+     *
+     * @return void
+     */
+    public function testSuppressionWithNonStringRuleIdIsSkipped(): void
+    {
+        $router = $this->getRouter();
+
+        $route = $router->get('invoices', fn () => [])->name('invoices.index');
+        $route->setAction(array_merge($route->action, [
+            'route-linter::lint-ignore' => [
+                ['rules' => [1], 'reason' => 'Corrupt rule ID.'],
+                ['rules' => ['R1'], 'reason' => 'Valid entry beside a corrupt one.'],
+            ],
+        ]));
+
+        $source      = new RouterRouteSource($router);
+        $descriptors = $source->appRoutes();
+
+        $byName = [];
+
+        foreach ($descriptors as $descriptor) {
+            if ($descriptor->name === null) {
+                continue;
+            }
+
+            $byName[$descriptor->name] = $descriptor;
+        }
+
+        self::assertArrayHasKey('invoices.index', $byName);
+
+        $suppressions = $byName['invoices.index']->suppressions;
+
+        self::assertCount(1, $suppressions);
+        self::assertSame(['R1'], $suppressions[0]->rules);
+        self::assertSame('Valid entry beside a corrupt one.', $suppressions[0]->reason);
+    }
+
+    /**
      * Test that a suppression entry where `reason` is not a string defaults to
      * an empty string (kills LogicalAnd mutant #87:
      * `isset($entry['reason']) || is_string(...)` vs `&&`).

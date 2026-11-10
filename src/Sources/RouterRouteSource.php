@@ -115,8 +115,9 @@ final readonly class RouterRouteSource implements RouteSource
      *
      * Reads the `route-linter::lint-ignore` key written by the
      * `ignoreRouteLint` macro. Each entry must be an array with a `rules` array
-     * and a `reason` string; entries that do not conform to this shape are
-     * silently skipped so a corrupt route cache never crashes the linter.
+     * of rule IDs and a `reason` string; entries that do not conform to this
+     * shape are silently skipped so a corrupt route cache never crashes the
+     * linter.
      *
      * @param  \Illuminate\Routing\Route  $route
      * @return list<\SineMacula\RouteLinter\Dto\RouteSuppression>
@@ -132,17 +133,48 @@ final readonly class RouterRouteSource implements RouteSource
         $suppressions = [];
 
         foreach ($raw as $entry) {
-            if (!is_array($entry)) {
+            $rules = is_array($entry) ? $this->suppressedRules($entry) : null;
+
+            if ($rules === null) {
                 continue;
             }
 
-            $rules  = isset($entry['rules'])  && is_array($entry['rules']) ? array_values($entry['rules']) : [];
             $reason = isset($entry['reason']) && is_string($entry['reason']) ? $entry['reason'] : '';
 
             $suppressions[] = new RouteSuppression($rules, $reason);
         }
 
         return $suppressions;
+    }
+
+    /**
+     * Read the rule IDs an inline suppression entry covers.
+     *
+     * An absent or non-array `rules` value yields the empty list, which covers
+     * every rule. A non-string rule ID marks the whole entry malformed (null):
+     * dropping just that ID could leave an empty list and so widen the
+     * suppression to every rule.
+     *
+     * @param  array<mixed>  $entry
+     * @return list<string>|null
+     */
+    private function suppressedRules(array $entry): ?array
+    {
+        if (!isset($entry['rules']) || !is_array($entry['rules'])) {
+            return [];
+        }
+
+        $rules = [];
+
+        foreach ($entry['rules'] as $rule) {
+            if (!is_string($rule)) {
+                return null;
+            }
+
+            $rules[] = $rule;
+        }
+
+        return $rules;
     }
 
     /**
