@@ -114,7 +114,7 @@ final readonly class UncachedLintProcess
      * relative, so it resolves under the base path on every platform, and sits
      * beneath the artisan script, a file, so it can never exist.
      *
-     * @return array<string, false|int|string>
+     * @return array<string, false|string>
      */
     private function environment(): array
     {
@@ -127,7 +127,7 @@ final readonly class UncachedLintProcess
         return [
             ...$environment,
             'APP_ROUTES_CACHE' => 'artisan' . DIRECTORY_SEPARATOR . 'routes.php',
-            'COLUMNS'          => $this->terminal->getWidth(),
+            'COLUMNS'          => (string) $this->terminal->getWidth(),
             self::MARKER       => '1',
         ];
     }
