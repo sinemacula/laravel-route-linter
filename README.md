@@ -119,9 +119,11 @@ Stored in the route action (survives `route:cache`).
 
 ## Tuning
 
-Removing a word from `verb_denylist` is **rule tuning**, not a per-route waiver - use it for legitimate domain-noun
-homographs (e.g. a real `transfer` resource). This is global and needs no reason. The maximum nesting depth enforced by
-R11 is set with `nesting_max_depth` (default `3`).
+Listing a word in `verb_allowlist` removes it from the verb denylist without redefining the curated list. It is **rule
+tuning**, not a per-route waiver - use it for legitimate domain-noun homographs (e.g. a `password-resets` or `transfers`
+resource). This is global and needs no reason. A published `verb_denylist` replaces the shipped list wholesale, so leave
+it out of your published config to keep receiving the package's additions. The maximum nesting depth enforced by R11 is
+set with `nesting_max_depth` (default `3`).
 
 R10 (required middleware) is opt-in and ships empty. Map an `fnmatch` URI pattern to the middleware a matching route
 must declare; matching is an exact token comparison, so write parameterised middleware in full:
@@ -194,7 +196,11 @@ reporter.
 ## Determinism
 
 The same route table plus the same config yields a byte-identical verdict on every run, independent of route-cache
-state. It enforces the mechanically-checkable convention subset only - it is not a proof of true RESTfulness.
+state. A cached table has lost what the rules depend on - closures are serialised and unnamed routes carry random
+generated names - so while the routes are cached, `route:lint` re-runs itself in a child process with the route cache
+bypassed and lints the current route definitions. The child boots as a fresh `php artisan` would, from the same process
+environment and any `--env` you pass; the cache file is never read or modified. The linter enforces the
+mechanically-checkable convention subset only - it is not a proof of true RESTfulness.
 
 ## Requirements
 

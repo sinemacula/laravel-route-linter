@@ -56,6 +56,7 @@ final class RouteLinterServiceProvider extends ServiceProvider
         $this->app->bind(VerbDenylist::class, fn (): VerbDenylist => new VerbDenylist(
             $this->stringList(Config::get('route-linter.verb_denylist')),
             $this->stringMap(Config::get('route-linter.remediation_hints')),
+            $this->stringList(Config::get('route-linter.verb_allowlist')),
         ));
 
         $this->app->bind(LintReporter::class, fn ($app, array $parameters): ConsoleLintReporter => new ConsoleLintReporter($parameters['output']));

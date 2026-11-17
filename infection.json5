@@ -59,6 +59,13 @@
                 "SineMacula\\RouteLinter\\RouteLinterServiceProvider::resolveRules",
             ],
         },
+        CastString: {
+            ignore: [
+                // The child process stringifies every environment value, so
+                // the width reaches it the same with or without the cast.
+                "SineMacula\\RouteLinter\\Console\\UncachedLintProcess::environment",
+            ],
+        },
         TrueValue: {
             ignore: [
                 "SineMacula\\RouteLinter\\RouteLintEngine::__construct",
