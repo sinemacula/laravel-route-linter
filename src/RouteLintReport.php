@@ -7,13 +7,7 @@ namespace SineMacula\RouteLinter;
 use SineMacula\RouteLinter\Enums\Severity;
 
 /**
- * Mutable verdict aggregate for a route-linting run.
- *
- * Collects violations and stale-waiver entries as they are discovered, then
- * exposes them in a deterministic total order so two runs over the same inputs
- * produce byte-identical output. The error gate (`hasErrors()`) is driven
- * solely by ERROR-severity violations; WARNING-severity findings and stale
- * waivers are surfaced but do not raise the gate.
+ * The findings of a lint run, returned in a stable order.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -38,7 +32,7 @@ final class RouteLintReport
     }
 
     /**
-     * Record an allowlist entry that matched no live route.
+     * Record a waiver that matched no route or suppressed nothing.
      *
      * @param  string  $entry
      * @return void
@@ -49,9 +43,7 @@ final class RouteLintReport
     }
 
     /**
-     * Return ERROR-severity violations in a deterministic total order.
-     *
-     * Sorted by: routeIdentity ASC, then ruleId ASC, then offendingSurface ASC.
+     * Return the error violations in stable order.
      *
      * @return array<int, \SineMacula\RouteLinter\Violation>
      */
@@ -61,9 +53,7 @@ final class RouteLintReport
     }
 
     /**
-     * Return WARNING-severity violations in a deterministic total order.
-     *
-     * Sorted by: routeIdentity ASC, then ruleId ASC, then offendingSurface ASC.
+     * Return the warning violations in stable order.
      *
      * @return array<int, \SineMacula\RouteLinter\Violation>
      */
@@ -73,7 +63,7 @@ final class RouteLintReport
     }
 
     /**
-     * Return stale allowlist entries sorted ascending.
+     * Return the stale waivers, sorted.
      *
      * @return array<int, string>
      */
@@ -86,7 +76,7 @@ final class RouteLintReport
     }
 
     /**
-     * Determine whether the report contains any ERROR-severity violations.
+     * Determine whether the report contains any error violation.
      *
      * @return bool
      */
@@ -96,13 +86,7 @@ final class RouteLintReport
     }
 
     /**
-     * Filter violations by severity and sort them by the deterministic
-     * composite key.
-     *
-     * The composite key is: routeIdentity ASC, then ruleId ASC, then
-     * offendingSurface ASC. This total order guarantees that two runs over the
-     * same inputs produce byte-identical arrays regardless of insertion order
-     * (NFR-01).
+     * Return the violations of a severity, sorted by route, rule and surface.
      *
      * @param  \SineMacula\RouteLinter\Enums\Severity  $severity
      * @return array<int, \SineMacula\RouteLinter\Violation>

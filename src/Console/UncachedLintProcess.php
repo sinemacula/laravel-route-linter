@@ -13,23 +13,18 @@ use Symfony\Component\Process\Process;
 /**
  * Runs `route:lint` in a child process that bypasses the route cache.
  *
- * A cached route table has lost what the rules depend on: closures are
- * serialised, so their defining file no longer marks them as vendor routes, and
- * unnamed routes carry random generated names. The child boots as a fresh
- * artisan command would, with the route cache pointed at a file that does not
- * exist, so it lints the current route definitions. Running it in its own
- * process keeps the fresh application's global state out of the caller. The
- * child's output is streamed through as rendered and its exit code returned.
+ * A cached table serialises closures and names unnamed routes randomly, and a
+ * second in-process boot would leak global state into the caller.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
 final readonly class UncachedLintProcess
 {
-    /** @var string Environment variable marking the child, so a cache it cannot bypass fails rather than recursing. */
+    /** @var string Environment variable marking the child process. */
     public const string MARKER = 'ROUTE_LINTER_UNCACHED';
 
-    /** @var array<int, string> The child's verbosity flag for each output verbosity. */
+    /** @var array<int, string> The child's flag for each output verbosity. */
     private const array VERBOSITY_FLAGS = [
         OutputInterface::VERBOSITY_SILENT       => '--silent',
         OutputInterface::VERBOSITY_QUIET        => '--quiet',
@@ -50,7 +45,7 @@ final readonly class UncachedLintProcess
         /** The application base path, holding the artisan script the child runs */
         private string $basePath,
 
-        /** The environment file the caller loaded, or null when its configuration is cached and none was loaded */
+        /** The environment file the caller loaded, or null when config is cached */
         private ?string $environmentFile,
 
         /** The caller's terminal, whose width the child renders at */
@@ -58,8 +53,7 @@ final readonly class UncachedLintProcess
     ) {}
 
     /**
-     * Run the child to completion, streaming its output, and return its exit
-     * code.
+     * Run the child, streaming its output, and return its exit code.
      *
      * @param  \Symfony\Component\Console\Output\OutputInterface  $output
      * @param  string|null  $environment
@@ -79,8 +73,7 @@ final readonly class UncachedLintProcess
     }
 
     /**
-     * Build the child's command line, carrying over the caller's output
-     * decoration, verbosity, and any explicitly selected environment.
+     * Build the child's command line from the caller's output and environment.
      *
      * @param  \Symfony\Component\Console\Output\OutputInterface  $output
      * @param  string|null  $environment
@@ -102,17 +95,11 @@ final readonly class UncachedLintProcess
     }
 
     /**
-     * Build the child's environment.
+     * Build the child's environment from the caller's.
      *
-     * The child inherits the caller's environment, which already holds the
-     * values the caller loaded from its environment file. An inherited
-     * `APP_ENV` would also make the child load that environment's own file,
-     * which the caller did not, so it is withheld whenever such a file exists
-     * beside the one the caller loaded; the child then reads the same value
-     * from the caller's file. A caller with cached configuration loaded no
-     * file, so its `APP_ENV` is always passed on. The route cache path is
-     * relative, so it resolves under the base path on every platform, and sits
-     * beneath the artisan script, a file, so it can never exist.
+     * An inherited APP_ENV would make the child also load `.env.{APP_ENV}`, so
+     * it is withheld when that file exists. The cache path lies beneath the
+     * artisan file, so it cannot exist.
      *
      * @return array<string, false|string>
      */
@@ -133,8 +120,7 @@ final readonly class UncachedLintProcess
     }
 
     /**
-     * Write a chunk of the child's output as rendered, to the error output for
-     * the child's error stream when the caller has one.
+     * Write a chunk of the child's output as rendered.
      *
      * @param  \Symfony\Component\Console\Output\OutputInterface  $output
      * @param  string  $type
@@ -145,13 +131,12 @@ final readonly class UncachedLintProcess
     {
         $target = $type === Process::ERR ? $this->errorOutput($output) : $output;
 
-        // The child already applied its verbosity, so the chunk is written at
-        // every level but silent.
+        // The child already applied the verbosity
         $target->write($chunk, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
     }
 
     /**
-     * Resolve the caller's error output, falling back to its standard output.
+     * Return the caller's error output, or its output when it has none.
      *
      * @param  \Symfony\Component\Console\Output\OutputInterface  $output
      * @return \Symfony\Component\Console\Output\OutputInterface

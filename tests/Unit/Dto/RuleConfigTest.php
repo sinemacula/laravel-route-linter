@@ -21,20 +21,17 @@ use Tests\TestCase;
 final class RuleConfigTest extends TestCase
 {
     /**
-     * Test that all four surfaces are stored independently and round-trip
-     * correctly, including the AllowlistEntry objects within exemptions.
+     * Test that each config surface round-trips as given.
      *
      * @return void
      */
-    public function testHoldsThreeSeparateSurfacesAndHints(): void
+    public function testHoldsEachSurfaceSeparately(): void
     {
-        // Arrange
         $denylist     = ['get', 'list', 'create'];
         $hints        = ['get' => 'Use GET /resources', 'list' => 'Use GET /resources'];
         $exemption    = new AllowlistEntry(match: 'users.legacy', reason: 'Pre-REST route kept for backward compat');
         $uncountables = ['data', 'media'];
 
-        // Act
         $config = new RuleConfig(
             verbDenylist: $denylist,
             remediationHints: $hints,
@@ -42,97 +39,47 @@ final class RuleConfigTest extends TestCase
             uncountables: $uncountables,
         );
 
-        // Assert - each surface is exactly the value passed in
         self::assertSame($denylist, $config->verbDenylist);
         self::assertSame($hints, $config->remediationHints);
-        self::assertCount(1, $config->exemptions);
-        self::assertSame($exemption, $config->exemptions[0]);
+        self::assertSame([$exemption], $config->exemptions);
         self::assertSame($uncountables, $config->uncountables);
-
-        // Assert AllowlistEntry properties round-trip through exemptions
-        self::assertSame('users.legacy', $config->exemptions[0]->match);
-        self::assertSame('Pre-REST route kept for backward compat', $config->exemptions[0]->reason);
     }
 
     /**
-     * Test that a RuleConfig with an empty exemptions array is valid and
-     * exemptions returns an empty array.
+     * Test that an empty exemption list is representable.
      *
      * @return void
      */
-    public function testExemptionsDefaultEmptyIsRepresentable(): void
+    public function testExemptionsMayBeEmpty(): void
     {
-        // Arrange & Act
-        $config = new RuleConfig(
-            verbDenylist: ['get'],
-            remediationHints: [],
-            exemptions: [],
-            uncountables: [],
-        );
-
-        // Assert
-        self::assertSame([], $config->exemptions);
+        self::assertSame([], (new RuleConfig(['get'], [], [], []))->exemptions);
     }
 
     /**
-     * Test that nestingMaxDepth defaults to 3 when omitted and round-trips a
-     * custom value when provided.
+     * Test that nestingMaxDepth defaults to 3 and round-trips a custom value.
      *
      * @return void
      */
     public function testNestingMaxDepthDefaultsToThreeAndRoundTrips(): void
     {
-        $default = new RuleConfig(
-            verbDenylist: [],
-            remediationHints: [],
-            exemptions: [],
-            uncountables: [],
-        );
-
-        self::assertSame(3, $default->nestingMaxDepth);
-
-        $custom = new RuleConfig(
-            verbDenylist: [],
-            remediationHints: [],
-            exemptions: [],
-            uncountables: [],
-            nestingMaxDepth: 5,
-        );
-
-        self::assertSame(5, $custom->nestingMaxDepth);
+        self::assertSame(3, (new RuleConfig([], [], [], []))->nestingMaxDepth);
+        self::assertSame(5, (new RuleConfig([], [], [], [], nestingMaxDepth: 5))->nestingMaxDepth);
     }
 
     /**
-     * Test that verbAllowlist defaults to empty when omitted and round-trips a
-     * custom value when provided.
+     * Test that verbAllowlist defaults to empty and round-trips a custom value.
      *
      * @return void
      */
     public function testVerbAllowlistDefaultsToEmptyAndRoundTrips(): void
     {
-        $default = new RuleConfig(
-            verbDenylist: [],
-            remediationHints: [],
-            exemptions: [],
-            uncountables: [],
-        );
-
-        self::assertSame([], $default->verbAllowlist);
-
-        $custom = new RuleConfig(
-            verbDenylist: [],
-            remediationHints: [],
-            exemptions: [],
-            uncountables: [],
-            verbAllowlist: ['reset'],
-        );
-
-        self::assertSame(['reset'], $custom->verbAllowlist);
+        self::assertSame([], (new RuleConfig([], [], [], []))->verbAllowlist);
+        self::assertSame(['reset'], (new RuleConfig([], [], [], [], verbAllowlist: ['reset']))->verbAllowlist);
     }
 
     /**
-     * Test that singletonResources defaults to empty when omitted and
-     * round-trips a custom value when provided.
+     * Test that singletonResources defaults to empty and round-trips a custom
+     * value.
      *
      * @return void
      */

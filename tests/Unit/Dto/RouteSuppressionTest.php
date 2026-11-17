@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Tests\Unit\Dto;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Dto\RouteSuppression;
 use Tests\TestCase;
 
@@ -20,51 +21,38 @@ use Tests\TestCase;
 final class RouteSuppressionTest extends TestCase
 {
     /**
-     * Test that covers() returns true for any rule ID when the rules list is
-     * empty, i.e. the suppression targets all rules.
+     * Provide suppressed rule lists with a rule ID and whether it is covered.
      *
-     * @return void
+     * @return iterable<string, array{list<string>, string, bool}>
      */
-    public function testCoversReturnsTrueForAnyRuleWhenRulesListIsEmpty(): void
+    public static function provideCoverage(): iterable
     {
-        $suppression = new RouteSuppression([], 'Suppresses all rules.');
-
-        self::assertTrue($suppression->covers('R1'));
-        self::assertTrue($suppression->covers('R9'));
-        self::assertTrue($suppression->covers('PLURAL_COLLECTIONS'));
+        yield 'empty list covers R1' => [[], 'R1', true];
+        yield 'empty list covers R9' => [[], 'R9', true];
+        yield 'empty list covers any ID' => [[], 'PLURAL_COLLECTIONS', true];
+        yield 'listed first rule' => [['R9', 'R3'], 'R9', true];
+        yield 'listed second rule' => [['R9', 'R3'], 'R3', true];
+        yield 'unlisted rule' => [['R9'], 'R1', false];
+        yield 'unlisted ID' => [['R9'], 'PLURAL_COLLECTIONS', false];
     }
 
     /**
-     * Test that covers() returns true when the given rule ID is explicitly
-     * present in the suppression's rules list.
+     * Test that an empty rule list covers every rule and a non-empty one only
+     * its listed rules.
      *
+     * @param  list<string>  $rules
+     * @param  string  $ruleId
+     * @param  bool  $expected
      * @return void
      */
-    public function testCoversReturnsTrueForExplicitlyListedRule(): void
+    #[DataProvider('provideCoverage')]
+    public function testCoversListedRulesOrAllWhenEmpty(array $rules, string $ruleId, bool $expected): void
     {
-        $suppression = new RouteSuppression(['R9', 'R3'], 'Specific rules suppressed.');
-
-        self::assertTrue($suppression->covers('R9'));
-        self::assertTrue($suppression->covers('R3'));
+        self::assertSame($expected, (new RouteSuppression($rules, 'Reason.'))->covers($ruleId));
     }
 
     /**
-     * Test that covers() returns false when the given rule ID is not in the
-     * suppression's non-empty rules list.
-     *
-     * @return void
-     */
-    public function testCoversReturnsFalseForRuleNotInList(): void
-    {
-        $suppression = new RouteSuppression(['R9'], 'Only R9 suppressed.');
-
-        self::assertFalse($suppression->covers('R1'));
-        self::assertFalse($suppression->covers('PLURAL_COLLECTIONS'));
-    }
-
-    /**
-     * Test that the constructor correctly exposes rules and reason as public
-     * properties.
+     * Test that the rules and reason are exposed as given.
      *
      * @return void
      */

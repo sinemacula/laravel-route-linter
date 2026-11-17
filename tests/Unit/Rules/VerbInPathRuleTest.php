@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Contracts\Inflector;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\Enums\Severity;
@@ -26,29 +27,71 @@ use Tests\TestCase;
 #[CoversClass(VerbInPathRule::class)]
 final class VerbInPathRuleTest extends TestCase
 {
-    /** @var \SineMacula\RouteLinter\Rules\Support\SegmentNormaliser */
-    private SegmentNormaliser $normaliser;
-
-    /** @var \SineMacula\RouteLinter\Rules\Support\VerbDenylist */
-    private VerbDenylist $denylist;
-
-    /** @var \SineMacula\RouteLinter\Rules\VerbInPathRule */
-    private VerbInPathRule $rule;
+    /**
+     * Provide URIs with the verbs and hints R1 flags on them.
+     *
+     * @return iterable<string, array{string, list<array{string, string}>}>
+     */
+    public static function provideRoutes(): iterable
+    {
+        yield 'compound segment' => ['getUsers', [['get', 'Use GET /resources instead.']]];
+        yield 'trailing verb' => ['users/create', [['create', 'Use POST /resources instead.']]];
+        yield 'verb after a parameter' => ['order/{id}/cancel', [['cancel', 'Use DELETE /resources/{id} instead.']]];
+        yield 'verb alone' => ['login', [['login', 'Use POST /auth instead.']]];
+        yield 'plural collection' => ['users', []];
+        yield 'parameter' => ['{user}', []];
+        yield 'same verb in two camelCase segments' => ['getItems/getDetails', [['get', 'Use GET /resources instead.']]];
+        yield 'same verb in two kebab-case segments' => ['get-users/get-items', [['get', 'Use GET /resources instead.']]];
+        yield 'two verbs' => ['getUsers/deleteItems', [['get', 'Use GET /resources instead.'], ['delete', 'Use DELETE /resources/{id} instead.']]];
+    }
 
     /**
-     * Set up a stub inflector, normaliser, denylist, and rule before each test.
+     * Test that each distinct denylisted verb in the path is flagged once, in
+     * path order, with its remediation hint.
+     *
+     * @param  string  $uri
+     * @param  list<array{string, string}>  $verbs
+     * @return void
+     */
+    #[DataProvider('provideRoutes')]
+    public function testFlagsEachDistinctVerb(string $uri, array $verbs): void
+    {
+        $violations = $this->rule()->inspect(new NormalisedRoute($uri, ['GET'], null, explode('/', $uri), []), new RuleConfig([], [], [], []));
+
+        self::assertSame(
+            array_map(static fn (array $verb): array => ['R1', Severity::ERROR, 'GET ' . $uri, $verb[0], $verb[1]], $verbs),
+            array_map(
+                static fn (Violation $v): array => [$v->ruleId, $v->severity, $v->routeIdentity, $v->offendingSurface, $v->remediationHint],
+                $violations,
+            ),
+        );
+    }
+
+    /**
+     * Test that the rule reports as R1 at error severity.
      *
      * @return void
      */
-    #[\Override]
-    protected function setUp(): void
+    public function testRuleMetadata(): void
     {
-        parent::setUp();
+        $rule = $this->rule();
 
-        // Stub inflector: strips a trailing 's' to singularise, returns word
-        // unchanged otherwise
+        self::assertSame('R1', $rule->id());
+        self::assertSame(Severity::ERROR, $rule->severity());
+    }
+
+    /**
+     * Build the rule over a small denylist, with an inflector that strips a
+     * trailing `s` to singularise.
+     *
+     * @return \SineMacula\RouteLinter\Rules\VerbInPathRule
+     */
+    private function rule(): VerbInPathRule
+    {
         $inflector = new class implements Inflector {
             /**
+             * Return the singular form of a word.
+             *
              * @param  string  $word
              * @return string
              */
@@ -59,6 +102,8 @@ final class VerbInPathRuleTest extends TestCase
             }
 
             /**
+             * Determine whether the word is plural.
+             *
              * @param  string  $word
              * @return bool
              */
@@ -69,9 +114,7 @@ final class VerbInPathRuleTest extends TestCase
             }
         };
 
-        $this->normaliser = new SegmentNormaliser($inflector);
-
-        $this->denylist = new VerbDenylist(
+        $denylist = new VerbDenylist(
             ['get', 'create', 'cancel', 'login', 'logout', 'delete', 'fetch'],
             [
                 'get'    => 'Use GET /resources instead.',
@@ -84,267 +127,6 @@ final class VerbInPathRuleTest extends TestCase
             ],
         );
 
-        $this->rule = new VerbInPathRule($this->normaliser, $this->denylist);
-    }
-
-    /**
-     * Test that id() returns 'R1' and severity() returns Severity::ERROR.
-     *
-     * @return void
-     */
-    public function testIdAndSeverity(): void
-    {
-        self::assertSame('R1', $this->rule->id());
-        self::assertSame(Severity::ERROR, $this->rule->severity());
-    }
-
-    /**
-     * Test that /getUsers produces one R1 error violation naming 'get' with a
-     * non-null remediation hint.
-     *
-     * @return void
-     */
-    public function testFlagsGetUsersWithRemediationHint(): void
-    {
-        // Arrange
-        $route  = $this->makeRoute('getUsers');
-        $config = $this->makeConfig();
-
-        // Act
-        $violations = $this->rule->inspect($route, $config);
-
-        // Assert - one violation for the verb 'get'; 'user' is not a verb
-        self::assertCount(1, $violations);
-
-        $violation = $violations[0];
-
-        self::assertInstanceOf(Violation::class, $violation);
-        self::assertSame('R1', $violation->ruleId);
-        self::assertSame(Severity::ERROR, $violation->severity);
-        self::assertSame('get', $violation->offendingSurface);
-        self::assertNotNull($violation->remediationHint);
-    }
-
-    /**
-     * Test that /users/create, /order/{id}/cancel, and /login each produce an
-     * R1 violation naming the offending verb.
-     *
-     * @return void
-     */
-    public function testFlagsCreateCancelAndLogin(): void
-    {
-        // Arrange
-        $config = $this->makeConfig();
-
-        // Act & Assert - /users/create
-        $createViolations = $this->rule->inspect($this->makeRoute('users/create'), $config);
-        self::assertCount(1, $createViolations);
-        self::assertSame('create', $createViolations[0]->offendingSurface);
-        self::assertSame('R1', $createViolations[0]->ruleId);
-
-        // Act & Assert - /order/{id}/cancel
-        $cancelViolations = $this->rule->inspect($this->makeRoute('order/{id}/cancel'), $config);
-        self::assertCount(1, $cancelViolations);
-        self::assertSame('cancel', $cancelViolations[0]->offendingSurface);
-
-        // Act & Assert - /login
-        $loginViolations = $this->rule->inspect($this->makeRoute('login'), $config);
-        self::assertCount(1, $loginViolations);
-        self::assertSame('login', $loginViolations[0]->offendingSurface);
-    }
-
-    /**
-     * Test that a clean plural collection /users produces no R1 violation.
-     *
-     * @return void
-     */
-    public function testCleanPluralCollectionNotFlagged(): void
-    {
-        // Arrange - /users normalises to 'user', which is not a verb
-        $route  = $this->makeRoute('users');
-        $config = $this->makeConfig();
-
-        // Act
-        $violations = $this->rule->inspect($route, $config);
-
-        // Assert
-        self::assertSame([], $violations);
-    }
-
-    /**
-     * Test that the emitted violation's remediationHint is non-null for a
-     * denylisted verb with a configured hint.
-     *
-     * @return void
-     */
-    public function testRemediationHintIsPresentForDenylistedVerb(): void
-    {
-        // Arrange
-        $route  = $this->makeRoute('login');
-        $config = $this->makeConfig();
-
-        // Act
-        $violations = $this->rule->inspect($route, $config);
-
-        // Assert
-        self::assertCount(1, $violations);
-        self::assertNotNull($violations[0]->remediationHint);
-        self::assertSame('Use POST /auth instead.', $violations[0]->remediationHint);
-    }
-
-    /**
-     * Test that a route with the same verb appearing in two segments emits a
-     * single R1 violation for it.
-     *
-     * @return void
-     */
-    public function testDuplicateVerbEmittedOncePerRoute(): void
-    {
-        // Arrange - 'getItems/getDetails' would normalise 'get' twice
-        $route  = $this->makeRoute('getItems/getDetails');
-        $config = $this->makeConfig();
-
-        // Act
-        $violations = $this->rule->inspect($route, $config);
-
-        // Assert - 'get' appears in both segments but must be emitted once only
-        $offendingSurfaces = array_map(fn (Violation $v): string => $v->offendingSurface, $violations);
-        self::assertCount(1, array_filter($offendingSurfaces, fn (string $s): bool => $s === 'get'));
-    }
-
-    /**
-     * Test that a denylisted verb appearing in two separate segments produces
-     * exactly one R1 violation.
-     *
-     * Kills the `$seen[$word] = true` → `false` dedup mutant: under the mutant
-     * the seen-flag is stored as false so the guard `$seen[$word] ?? false`
-     * always reads false, allowing the same verb to be emitted once per segment
-     * it appears in. Asserting `assertCount(1, $violations)` on a route where
-     * `get` normalises from two distinct segments catches the double-emission
-     * introduced by the mutant.
-     *
-     * @return void
-     */
-    public function testSameVerbInTwoSegmentsProducesExactlyOneViolation(): void
-    {
-        // Arrange - 'get-users/get-items' decomposes to words [get, user, get,
-        // item];
-        // 'get' appears twice but must produce exactly one R1 violation
-        $route  = $this->makeRoute('get-users/get-items');
-        $config = $this->makeConfig();
-
-        // Act
-        $violations = $this->rule->inspect($route, $config);
-
-        // Assert - total violation count must be exactly 1 (deduplicated)
-        self::assertCount(1, $violations);
-        self::assertSame('get', $violations[0]->offendingSurface);
-        self::assertSame('R1', $violations[0]->ruleId);
-    }
-
-    /**
-     * Test that two distinct denylisted verbs in the same route each produce
-     * their own R1 violation.
-     *
-     * Kills the ArrayOneItem mutant (#84): when a route produces two or more
-     * violations, the mutant returns only the first element. Asserting both
-     * violations by count and by their exact offendingSurface values forces the
-     * full array to be present.
-     *
-     * @return void
-     */
-    public function testTwoDistinctVerbsProduceTwoViolations(): void
-    {
-        // Arrange - 'getUsers/deleteItems' normalises to words including 'get'
-        // and 'delete', both of which are in the denylist
-        $route  = $this->makeRoute('getUsers/deleteItems');
-        $config = $this->makeConfig();
-
-        // Act
-        $violations = $this->rule->inspect($route, $config);
-
-        // Assert - exactly two violations, one per distinct verb
-        self::assertCount(2, $violations);
-
-        $surfaces = array_map(fn (Violation $v): string => $v->offendingSurface, $violations);
-        self::assertContains('get', $surfaces);
-        self::assertContains('delete', $surfaces);
-
-        // Both must carry R1 ERROR severity
-        foreach ($violations as $violation) {
-            self::assertSame('R1', $violation->ruleId);
-            self::assertSame(Severity::ERROR, $violation->severity);
-        }
-    }
-
-    /**
-     * Test that a route consisting only of parameters normalises to empty and
-     * produces no violations.
-     *
-     * @return void
-     */
-    public function testParameterOnlyRouteProducesNoViolations(): void
-    {
-        // Arrange
-        $route  = $this->makeRoute('{user}');
-        $config = $this->makeConfig();
-
-        // Act
-        $violations = $this->rule->inspect($route, $config);
-
-        // Assert
-        self::assertSame([], $violations);
-    }
-
-    /**
-     * Test that the routeIdentity on the emitted violation matches the route's
-     * identity() value.
-     *
-     * @return void
-     */
-    public function testViolationCarriesCorrectRouteIdentity(): void
-    {
-        // Arrange
-        $route  = $this->makeRoute('login');
-        $config = $this->makeConfig();
-
-        // Act
-        $violations = $this->rule->inspect($route, $config);
-
-        // Assert
-        self::assertCount(1, $violations);
-        self::assertSame('GET login', $violations[0]->routeIdentity);
-    }
-
-    /**
-     * Build a minimal NormalisedRoute for the given URI.
-     *
-     * @param  string  $uri
-     * @return \SineMacula\RouteLinter\NormalisedRoute
-     */
-    private function makeRoute(string $uri): NormalisedRoute
-    {
-        return new NormalisedRoute(
-            uri: $uri,
-            methods: ['GET'],
-            name: null,
-            segments: explode('/', $uri),
-            parameters: [],
-        );
-    }
-
-    /**
-     * Build a minimal RuleConfig with empty uncountables.
-     *
-     * @return \SineMacula\RouteLinter\Dto\RuleConfig
-     */
-    private function makeConfig(): RuleConfig
-    {
-        return new RuleConfig(
-            verbDenylist: [],
-            remediationHints: [],
-            exemptions: [],
-            uncountables: [],
-        );
+        return new VerbInPathRule(new SegmentNormaliser($inflector), $denylist);
     }
 }

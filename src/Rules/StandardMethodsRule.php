@@ -11,19 +11,14 @@ use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R7: Standard HTTP methods only.
- *
- * Flags any route that carries at least one HTTP method outside the standard
- * set (GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS). This catches routes
- * registered with Route::any() or a custom/non-standard verb such as PURGE. An
- * empty methods array produces no violation (defensive guard).
+ * Rule R7: routes use standard HTTP methods only.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
 final class StandardMethodsRule implements Rule
 {
-    /** @var array<int, string> The RFC-standard HTTP methods that the linter accepts without complaint. */
+    /** @var array<int, string> The standard HTTP methods. */
     private const array ALLOWED_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
 
     /**

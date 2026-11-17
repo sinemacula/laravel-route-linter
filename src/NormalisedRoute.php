@@ -5,12 +5,7 @@ declare(strict_types = 1);
 namespace SineMacula\RouteLinter;
 
 /**
- * Pure value object representing a route under inspection.
- *
- * Carries the normalised properties extracted from a raw route descriptor and
- * exposes a stable identity key used for deterministic ordering and reporting.
- * All properties are derived from the route as registered; no framework types
- * cross the domain boundary.
+ * A route as the rules inspect it.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -30,7 +25,7 @@ final readonly class NormalisedRoute
      */
     public function __construct(
 
-        /** The route URI as registered, e.g. `users/{user}` (no leading slash assumed; stored as given) */
+        /** The route URI as registered, e.g. `users/{user}` */
         public string $uri,
 
         /** Uppercase HTTP methods for this route, e.g. `['GET', 'HEAD']` */
@@ -39,10 +34,10 @@ final readonly class NormalisedRoute
         /** The route name, or null when the route is unnamed */
         public ?string $name,
 
-        /** URI split on `/`, with empty segments preserved so trailing/duplicate slashes remain detectable */
+        /** The URI split on `/`, keeping empty segments so stray slashes stay visible */
         public array $segments,
 
-        /** Route parameter names with braces stripped, e.g. `['user']`; a convenience for custom rules, unread by the built-in rules which inspect `$segments` directly */
+        /** Route parameter names without braces, e.g. `['user']`, for custom rules */
         public array $parameters,
 
         /** The handler as `Class@method` (or `Class` for invokables), or null for closure routes */
@@ -53,12 +48,7 @@ final readonly class NormalisedRoute
     ) {}
 
     /**
-     * Return a stable identity key for deterministic ordering and reporting.
-     *
-     * The key is: HTTP methods sorted ascending joined by `,`, then a space,
-     * then the URI, then (when the route has a name) a space and the name.
-     * Example: methods `['HEAD','GET']`, uri `users`, name `users.index` yields
-     * `GET,HEAD users users.index`.
+     * Return the route's identity, e.g. `GET,HEAD users users.index`.
      *
      * @return string
      */

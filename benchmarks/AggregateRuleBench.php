@@ -10,11 +10,7 @@ use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\Rules\DuplicateRouteNameRule;
 
 /**
- * Benchmarks for the cross-route (aggregate) pass.
- *
- * Measures the duplicate-route-name rule over a realistically-sized route table
- * to confirm detection scales linearly - a single hashed pass over the set, not
- * a quadratic pairwise comparison - as the table grows.
+ * Benchmarks for the duplicate-route-name aggregate rule.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -57,8 +53,8 @@ final class AggregateRuleBench
     }
 
     /**
-     * Build a route table of the given size, reusing one name every 25 routes
-     * so the rule has real duplicates to emit without dominating the scan cost.
+     * Build a route table of the given size, with a duplicate name every 25
+     * routes.
      *
      * @param  int  $count
      * @return array<int, \SineMacula\RouteLinter\NormalisedRoute>

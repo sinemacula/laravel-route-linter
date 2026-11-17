@@ -9,12 +9,7 @@ use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 
 /**
- * Domain contract for a single route-linting rule.
- *
- * Each rule carries a stable identifier, a fixed severity tier, and an
- * inspection method that maps one normalised route plus the active rule
- * configuration to zero or more violation value objects. Rules are pure: they
- * read their inputs and return findings without side effects.
+ * A rule that inspects one route at a time.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -22,26 +17,21 @@ use SineMacula\RouteLinter\NormalisedRoute;
 interface Rule
 {
     /**
-     * Stable rule identifier, e.g. 'R1', used for ordering and reporting.
+     * Return the stable rule identifier, e.g. 'R1'.
      *
      * @return string
      */
     public function id(): string;
 
     /**
-     * The severity this rule emits (error gates CI; warning is reported only).
+     * Return the severity this rule emits.
      *
      * @return \SineMacula\RouteLinter\Enums\Severity
      */
     public function severity(): Severity;
 
     /**
-     * Inspect one normalised route and return zero or more violations.
-     *
-     * Rules are pure and side-effect free. Any exception a rule raises
-     * propagates uncaught to the caller (fail-loud): a misbehaving rule
-     * surfaces as an error rather than silently passing a route through the
-     * gate.
+     * Inspect one route and return its violations.
      *
      * @param  \SineMacula\RouteLinter\NormalisedRoute  $route
      * @param  \SineMacula\RouteLinter\Dto\RuleConfig  $config

@@ -10,6 +10,7 @@ use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Artisan;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Configuration\ConfigRuleConfiguration;
 use SineMacula\RouteLinter\Console\LintRoutesCommand;
 use SineMacula\RouteLinter\Contracts\Inflector;
@@ -34,12 +35,6 @@ use Tests\TestCase;
 /**
  * Integration tests for the package service provider.
  *
- * Drives the composition root against the booted Testbench application: every
- * port must resolve to its default adapter, the engine must assemble, the
- * Artisan command must be registered, the route macro must be bound, and the
- * package config must be merged. Resolving each binding here also exercises the
- * lazy singleton factories the provider registers.
- *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  *
@@ -49,48 +44,34 @@ use Tests\TestCase;
 final class RouteLinterServiceProviderTest extends TestCase
 {
     /**
-     * Test that the route-source port resolves to the router-backed adapter.
+     * Provide each port with its default adapter.
      *
-     * @return void
+     * @return iterable<string, array{class-string, class-string}>
      */
-    public function testResolvesRouteSourcePortToRouterAdapter(): void
+    public static function providePortAdapters(): iterable
     {
-        assert($this->app !== null);
-
-        self::assertInstanceOf(RouterRouteSource::class, $this->app->make(RouteSource::class));
+        yield 'route source' => [RouteSource::class, RouterRouteSource::class];
+        yield 'rule configuration' => [RuleConfiguration::class, ConfigRuleConfiguration::class];
+        yield 'inflector' => [Inflector::class, FrameworkInflector::class];
     }
 
     /**
-     * Test that the rule-configuration port resolves to the config-backed
-     * adapter.
+     * Test that each port resolves to its default adapter.
      *
+     * @param  class-string  $port
+     * @param  class-string  $adapter
      * @return void
      */
-    public function testResolvesRuleConfigurationPortToConfigAdapter(): void
+    #[DataProvider('providePortAdapters')]
+    public function testResolvesPortToDefaultAdapter(string $port, string $adapter): void
     {
         assert($this->app !== null);
 
-        self::assertInstanceOf(ConfigRuleConfiguration::class, $this->app->make(RuleConfiguration::class));
+        self::assertInstanceOf($adapter, $this->app->make($port));
     }
 
     /**
-     * Test that the inflector port resolves to the framework inflector adapter.
-     *
-     * @return void
-     */
-    public function testResolvesInflectorPortToFrameworkInflector(): void
-    {
-        assert($this->app !== null);
-
-        $inflector = $this->app->make(Inflector::class);
-
-        self::assertInstanceOf(Inflector::class, $inflector);
-        self::assertInstanceOf(FrameworkInflector::class, $inflector);
-    }
-
-    /**
-     * Test that the rule engine resolves as a singleton with the full rule set
-     * assembled.
+     * Test that the rule engine resolves as a singleton.
      *
      * @return void
      */
@@ -119,11 +100,6 @@ final class RouteLinterServiceProviderTest extends TestCase
     /**
      * Test that the resolved inflector is primed with the shipped uncountables.
      *
-     * `media` is a shipped uncountable: the framework inflector would otherwise
-     * singularise it to `medium`, so an unchanged result proves the provider
-     * passed the configured uncountables into the inflector rather than an
-     * empty list.
-     *
      * @return void
      */
     public function testResolvedInflectorHonoursConfiguredUncountables(): void
@@ -136,13 +112,7 @@ final class RouteLinterServiceProviderTest extends TestCase
     }
 
     /**
-     * Test that the resolved engine is primed with the shipped verb denylist
-     * and remediation hints.
-     *
-     * Linting `getUsers` must raise an R1 verb-in-path violation whose surface
-     * is the denylisted verb `get` and whose remediation hint is populated -
-     * proving the provider fed the configured denylist and hints into the
-     * engine rather than empty lists.
+     * Test that the resolved engine uses the shipped verb denylist and hints.
      *
      * @return void
      */
@@ -166,12 +136,8 @@ final class RouteLinterServiceProviderTest extends TestCase
     }
 
     /**
-     * Test that an allowlist-only override clears a homograph from the shipped
-     * verb denylist without replacing it.
-     *
-     * `password-resets` is a noun resource whose singular `reset` is a shipped
-     * denylisted verb. Allowing `reset` must clear R1 for it while the rest of
-     * the shipped list - `cancel` here - still flags.
+     * Test that the verb allowlist clears a homograph from the shipped denylist
+     * while the rest of the list still applies.
      *
      * @return void
      */
@@ -197,8 +163,7 @@ final class RouteLinterServiceProviderTest extends TestCase
     }
 
     /**
-     * Test that the package config is registered for publishing under its tag,
-     * sourced from the real config file.
+     * Test that the package config is publishable under its tag.
      *
      * @return void
      */
@@ -230,8 +195,7 @@ final class RouteLinterServiceProviderTest extends TestCase
     }
 
     /**
-     * Test that the LintReporter port resolves to the console reporter, passing
-     * the runtime output through the contextual binding.
+     * Test that the reporter port resolves to the console reporter.
      *
      * @return void
      */
@@ -245,28 +209,20 @@ final class RouteLinterServiceProviderTest extends TestCase
     }
 
     /**
-     * Test that a custom rule listed in `route-linter.rules` is resolved from
-     * the container and run by the engine, and that it observes the route's
-     * brace-stripped parameter names via NormalisedRoute::$parameters.
-     *
-     * Proves rule-set extensibility (a consumer adds a rule by class name) and
-     * that the parameter-extraction pipeline feeds custom rule authors.
+     * Test that a custom rule listed in config is resolved and run.
      *
      * @return void
      */
     public function testRegistersAndRunsCustomRuleFromConfig(): void
     {
         assert($this->app !== null);
-        $app = $this->app;
 
         config()->set('route-linter.rules', [ParameterEchoRule::class]);
         config()->set('route-linter.exemptions', []);
 
-        /** @var \Illuminate\Routing\Router $router */
-        $router = $app->make(Router::class);
-        $router->get('teams/{team}/members/{member}', fn () => [])->name('teams.members.index');
+        $this->app->make(Router::class)->get('teams/{team}/members/{member}', fn () => [])->name('teams.members.index');
 
-        $report = $app->make(LintRoutes::class)->lint();
+        $report = $this->app->make(LintRoutes::class)->lint();
 
         $surfaces = array_map(
             static fn (Violation $violation): string => $violation->offendingSurface,
@@ -277,28 +233,24 @@ final class RouteLinterServiceProviderTest extends TestCase
     }
 
     /**
-     * Test that a configured rule class which does not implement Rule is
-     * rejected with a clear configuration error rather than a raw type error.
+     * Test that a configured class that is not a rule is rejected.
      *
      * @return void
      */
     public function testThrowsWhenConfiguredRuleClassIsNotARule(): void
     {
-        assert($this->app !== null);
-        $app = $this->app;
-
         config()->set('route-linter.rules', [\stdClass::class]);
 
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage(\stdClass::class);
 
-        $app->make(RouteLintEngine::class);
+        assert($this->app !== null);
+
+        $this->app->make(RouteLintEngine::class);
     }
 
     /**
-     * Test that a non-array `route-linter.rules` value yields a rule-less
-     * engine rather than raising - the lenient resolution mirrors the other
-     * surfaces.
+     * Test that a non-array rules config yields an engine with no rules.
      *
      * @return void
      */
@@ -312,9 +264,7 @@ final class RouteLinterServiceProviderTest extends TestCase
     }
 
     /**
-     * Test that the resolved verb denylist takes only the well-formed entries
-     * of the denylist and hint config, leaving the rejection to the
-     * configuration port.
+     * Test that the resolved verb denylist skips malformed config entries.
      *
      * @return void
      */
@@ -342,8 +292,7 @@ final class RouteLinterServiceProviderTest extends TestCase
     }
 
     /**
-     * Test that non-array word-list and hint config values leave the resolved
-     * denylist and inflector empty rather than raising.
+     * Test that non-array word lists leave the denylist and inflector empty.
      *
      * @return void
      */
@@ -363,11 +312,7 @@ final class RouteLinterServiceProviderTest extends TestCase
     }
 
     /**
-     * Test that register and boot run idempotently when invoked directly.
-     *
-     * Re-running the provider lifecycle against the booted application must not
-     * raise - the singleton bindings simply rebind and the macro registration
-     * short-circuits on its idempotency guard.
+     * Test that register and boot can run again on a booted application.
      *
      * @return void
      */
@@ -385,10 +330,6 @@ final class RouteLinterServiceProviderTest extends TestCase
 
     /**
      * Test that boot skips the console-only registrations outside the console.
-     *
-     * The config publish path is resolved only on the console branch, so an
-     * application that never has `configPath()` called proves boot returned
-     * early before registering the publishable config and the Artisan command.
      *
      * @return void
      */

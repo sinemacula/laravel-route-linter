@@ -5,20 +5,14 @@ declare(strict_types = 1);
 namespace SineMacula\RouteLinter\Rules\Support;
 
 /**
- * Membership oracle and remediation-hint lookup for the verb denylist.
- *
- * Answers two questions: is a given normalised candidate word a denylisted
- * action verb, and what RESTful rewrite hint is associated with it? Allowed
- * words are subtracted from the denylist at construction, so a domain noun that
- * shares a spelling with a verb can be cleared globally without redefining the
- * curated list or adding per-route exemptions.
+ * The denylisted verbs, less the allowed words, and their remediation hints.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
 final class VerbDenylist
 {
-    /** @var array<string, true> Lowercase-indexed set of denylisted verbs, keyed by verb for O(1) lookup. */
+    /** @var array<string, true> The denylisted verbs, lowercase, as keys. */
     private array $verbIndex;
 
     /**
@@ -30,13 +24,13 @@ final class VerbDenylist
      */
     public function __construct(
 
-        // The raw verbs to index for O(1) case-insensitive membership lookup
+        // Indexed lowercase rather than stored as given
         array $verbs,
 
-        /** Per-verb RESTful-rewrite hints, keyed by the denylisted verb */
+        /** Remediation hints, keyed by verb */
         private readonly array $hints,
 
-        // Words removed from the denylist, matched case-insensitively
+        // Subtracted from the index rather than stored
         array $allowed = [],
     ) {
         $this->verbIndex = array_diff_key(
@@ -46,8 +40,7 @@ final class VerbDenylist
     }
 
     /**
-     * Determine whether the given normalised candidate word is a denylisted
-     * action verb.
+     * Determine whether a word is a denylisted verb.
      *
      * @param  string  $word
      * @return bool
@@ -58,8 +51,7 @@ final class VerbDenylist
     }
 
     /**
-     * Return the remediation hint for a denylisted verb, or null when none is
-     * configured.
+     * Return the remediation hint for a verb, if one is configured.
      *
      * @param  string  $word
      * @return string|null

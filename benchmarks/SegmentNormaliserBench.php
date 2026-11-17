@@ -9,15 +9,7 @@ use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\Rules\Support\SegmentNormaliser;
 
 /**
- * Benchmarks for the SegmentNormaliser six-step reduction pipeline.
- *
- * The normaliser is the regex-heavy hot path under the verb-in-path rule: per
- * surviving segment it runs a camelCase split, a multi-delimiter split, a
- * lowercase map, and an inflector singularisation. It is measured along two
- * URIs - a short plain collection path, and a deep path packed with version and
- * API prefixes, route parameters, and compound camelCase/kebab/snake/dot
- * segments - to bound both the cheap common case and the decomposition-heavy
- * worst case.
+ * Benchmarks for the segment normaliser.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

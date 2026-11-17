@@ -15,8 +15,6 @@ use SineMacula\RouteLinter\Rules\SlashSanityRule;
 use SineMacula\RouteLinter\Rules\StandardMethodsRule;
 use SineMacula\RouteLinter\Rules\VerbInPathRule;
 
-// Canonical fix shared by every state-transition verb: PATCH the resource and
-// set a field.
 $patchStatus = 'PATCH /{resources}/{resource} (set a status field)';
 
 return [
@@ -26,15 +24,10 @@ return [
     | Rules
     |---------------------------------------------------------------------------
     |
-    | The ordered rule set the engine runs over the route table. Each entry is
-    | a class implementing the SineMacula\RouteLinter\Contracts\Rule
-    | (per-route) or AggregateRule (cross-route, e.g. duplicate detection)
-    | contract, resolved from the container so rules may declare constructor
-    | dependencies. Remove a built-in rule by deleting its line; add your own
-    | by appending its class.
-    | Rule IDs (R1-R12) must be unique - the engine asserts this at boot - and
-    | are stable across releases, so a waiver keeps its meaning when you
-    | upgrade.
+    | The rules the linter runs, each a class implementing the Rule or
+    | AggregateRule contract and resolved from the container. Delete a line to
+    | drop a built-in rule, or append your own class. Rule IDs must be unique
+    | and are stable across releases, so waivers survive upgrades.
     |
     */
 
@@ -58,11 +51,9 @@ return [
     | Nesting Depth
     |---------------------------------------------------------------------------
     |
-    | The maximum number of collection levels a URI may nest before the
-    | nesting-depth rule (R11) raises a warning. Only segments that name a
-    | collection count: namespace segments (a literal followed by another
-    | literal, such as `auth` in `auth/sessions`), singleton resources, `api`,
-    | and version prefixes (v1, v2, …) are not levels.
+    | The maximum number of collection levels a URI may nest before R11 warns.
+    | Namespace segments (such as `auth` in `auth/sessions`), singleton
+    | resources, `api` and version prefixes (v1, v2, ...) are not levels.
     |
     */
 
@@ -73,11 +64,9 @@ return [
     | Required Middleware
     |---------------------------------------------------------------------------
     |
-    | Per-pattern middleware policy enforced by the required-middleware rule
-    | (R10). Each key is an `fnmatch` URI pattern; each value lists the
-    | middleware a matching route MUST declare. Matching is an exact token
-    | comparison, so parameterised middleware must be written in full. Ships
-    | empty - the rule is a no-op until you add a pattern.
+    | Middleware that R10 requires on every route matching an `fnmatch` URI
+    | pattern. Names are compared exactly, so write parameterised middleware in
+    | full.
     |
     |   'admin/*' => ['auth', 'can:access-admin'],
     |   'api/*'   => ['auth:sanctum'],
@@ -91,11 +80,10 @@ return [
     | Verb Denylist
     |---------------------------------------------------------------------------
     |
-    | Action verbs that flag a path segment, grouped by their canonical fix. The
-    | list is curated and tunable: add words here, and clear domain-noun
-    | homographs through the verb allowlist below. A published copy of this key
-    | replaces the package's list, so delete it from your published config to
-    | keep receiving the package's additions.
+    | Action verbs that R1 flags in a path, grouped by their RESTful fix. A
+    | published copy of this key replaces the package list, so leave it out of
+    | your config to keep receiving additions, and clear homographs with the
+    | verb allowlist below.
     |
     */
 
@@ -136,12 +124,10 @@ return [
     | Verb Allowlist
     |---------------------------------------------------------------------------
     |
-    | Words removed from the verb denylist without redefining it, for domain
-    | nouns that share a spelling with a verb (e.g. a "password-resets"
-    | resource, a stock "share", a chess "move"). Each word is matched against
-    | the singular form of every path word. This is rule tuning, NOT a per-route
-    | exemption - it applies to every route; waive a single route through the
-    | exemption allowlist instead.
+    | Words removed from the verb denylist, for nouns spelled like a verb (a
+    | `password-resets` resource, a stock `share`). Each is matched against the
+    | singular form of every path word and applies to every route; waive a
+    | single route with an exemption instead.
     |
     |   'verb_allowlist' => ['reset', 'transfer'],
     |
@@ -154,7 +140,7 @@ return [
     | Remediation Hints
     |---------------------------------------------------------------------------
     |
-    | Per-verb RESTful-rewrite hints surfaced on each verb violation.
+    | The RESTful rewrite suggested for each verb R1 flags.
     |
     */
 
@@ -196,19 +182,17 @@ return [
     | Exemption Allowlist
     |---------------------------------------------------------------------------
     |
-    | Ships EMPTY. Each entry waives one route and MUST carry a written reason.
-    | Keyed by route name or URI pattern (fnmatch wildcards). An optional
-    | per-rule `rules` key scopes the waiver to specific rule ids; omit it to
-    | waive every rule on the matched route.
+    | Waivers for individual routes, matched by exact route name or `fnmatch`
+    | URI pattern. Each needs a written reason; `rules` limits it to the given
+    | rule IDs, and without it every rule is waived.
     |
-    |   ['match' => 'photos.edit', 'rules' => ['R9'],
-    |    'reason' => 'BL-1 frozen contract'],
-    |   ['match' => 'legacy.*', 'reason' => 'BL-2 legacy surface'],
+    |   ['match' => 'photos.edit', 'rules' => ['R9'], 'reason' => 'Frozen API'],
+    |   ['match' => 'legacy/*', 'reason' => 'Legacy surface'],
     |
-    | Routes can also be waived inline at registration via the route macro:
+    | Routes can also be waived where they are registered:
     |
     |   Route::patch('photos/{photo}/edit', ...)
-    |       ->ignoreRouteLint(['R9'], 'reason');
+    |       ->ignoreRouteLint(['R9'], 'Frozen API');
     |
     */
 
@@ -219,8 +203,8 @@ return [
     | Inflector Uncountables
     |---------------------------------------------------------------------------
     |
-    | Words the plural-collections rule treats as already-plural (so they are
-    | not flagged as singular collections).
+    | Words that are their own plural: R4 accepts them as collections and R1
+    | does not singularise them.
     |
     */
 
@@ -231,15 +215,12 @@ return [
     | Singleton Resources
     |---------------------------------------------------------------------------
     |
-    | Resources that exist once in their context (a user's `profile`, a
-    | connection's `callback`), so their segment is singular by design and is
-    | neither checked by the plural-collections rule (R4) nor counted as a
-    | nesting level (R11). Routes registered by `Route::singleton()` or
-    | `Route::apiSingleton()` are recognised from their `show`, `update`, and
-    | `destroy` routes; list a resource here to cover the rest, such as a
-    | creatable singleton's `store` route or singleton routes renamed with
-    | `names()`. Each path identifies its last segment wherever a route's path
-    | up to that segment ends with it; parameters match any parameter.
+    | Resources that exist once in their context, such as a user's `profile`,
+    | which R4 and R11 skip. The `show`, `update` and `destroy` routes of
+    | `Route::singleton()` are recognised automatically; list the resource here
+    | for the rest, such as a creatable singleton's `store` route. A path marks
+    | its last segment wherever a route's path up to that point ends with it;
+    | any parameter matches any parameter.
     |
     |   'singleton_resources' => ['profile', 'teams/{team}/settings'],
     |

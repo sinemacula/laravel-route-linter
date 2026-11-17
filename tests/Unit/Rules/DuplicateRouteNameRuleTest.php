@@ -5,10 +5,12 @@ declare(strict_types = 1);
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\DuplicateRouteNameRule;
+use SineMacula\RouteLinter\Violation;
 use Tests\TestCase;
 
 /**
@@ -22,170 +24,57 @@ use Tests\TestCase;
 #[CoversClass(DuplicateRouteNameRule::class)]
 final class DuplicateRouteNameRuleTest extends TestCase
 {
-    /** @var \SineMacula\RouteLinter\Rules\DuplicateRouteNameRule */
-    private DuplicateRouteNameRule $rule;
-
-    /** @var \SineMacula\RouteLinter\Dto\RuleConfig */
-    private RuleConfig $config;
-
     /**
-     * Set up shared fixtures.
+     * Provide route tables of URI and name with the routes R6 flags.
      *
-     * @return void
+     * @return iterable<string, array{list<array{string, string|null}>, list<array{string, string}>}>
      */
-    #[\Override]
-    protected function setUp(): void
+    public static function provideRouteTables(): iterable
     {
-        parent::setUp();
-
-        $this->rule   = new DuplicateRouteNameRule;
-        $this->config = new RuleConfig([], [], [], []);
+        yield 'distinct names' => [[['users', 'users.index'], ['orders', 'orders.index']], []];
+        yield 'unnamed routes' => [[['users', null], ['orders', null]], []];
+        yield 'one duplicate' => [[['users', 'users.index'], ['people', 'users.index']], [['people', 'users.index']]];
+        yield 'two duplicates' => [[['a', 'shared.name'], ['b', 'shared.name'], ['c', 'shared.name']], [['b', 'shared.name'], ['c', 'shared.name']]];
+        yield 'unnamed route between duplicates' => [[['a', 'shared.name'], ['b', null], ['c', 'shared.name']], [['c', 'shared.name']]];
     }
 
     /**
-     * Test that distinct route names produce no violation.
+     * Test that every registration after the first of a name is flagged, and
+     * unnamed routes never are.
      *
+     * @param  list<array{string, string|null}>  $routes
+     * @param  list<array{string, string}>  $flagged
      * @return void
      */
-    public function testDistinctNamesProduceNothing(): void
+    #[DataProvider('provideRouteTables')]
+    public function testFlagsEachLaterRegistrationOfAName(array $routes, array $flagged): void
     {
-        // Arrange
-        $routes = [
-            $this->route('users', 'users.index'),
-            $this->route('orders', 'orders.index'),
-        ];
+        $normalised = array_map(
+            static fn (array $route): NormalisedRoute => new NormalisedRoute($route[0], ['GET'], $route[1], explode('/', $route[0]), []),
+            $routes,
+        );
 
-        // Act
-        $violations = $this->rule->inspect($routes, $this->config);
+        $violations = (new DuplicateRouteNameRule)->inspect($normalised, new RuleConfig([], [], [], []));
 
-        // Assert
-        self::assertEmpty($violations);
+        self::assertSame(
+            array_map(static fn (array $route): array => ['R6', Severity::ERROR, 'GET ' . $route[0] . ' ' . $route[1], $route[1], null], $flagged),
+            array_map(
+                static fn (Violation $v): array => [$v->ruleId, $v->severity, $v->routeIdentity, $v->offendingSurface, $v->remediationHint],
+                $violations,
+            ),
+        );
     }
 
     /**
-     * Test that unnamed routes are ignored entirely.
-     *
-     * Kills the mutant removing the null-name guard: two unnamed routes must
-     * not collide on a null name.
-     *
-     * @return void
-     */
-    public function testUnnamedRoutesAreIgnored(): void
-    {
-        // Arrange - two unnamed routes
-        $routes = [
-            $this->route('users', null),
-            $this->route('orders', null),
-        ];
-
-        // Act
-        $violations = $this->rule->inspect($routes, $this->config);
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that a reused name flags the second (duplicate) occurrence.
-     *
-     * @return void
-     */
-    public function testDuplicateNameFlagsTheSecondOccurrence(): void
-    {
-        // Arrange - two routes share the name `users.index`
-        $routes = [
-            $this->route('users', 'users.index'),
-            $this->route('people', 'users.index'),
-        ];
-
-        // Act
-        $violations = $this->rule->inspect($routes, $this->config);
-
-        // Assert - attributed to the second registration
-        self::assertCount(1, $violations);
-        self::assertSame('R6', $violations[0]->ruleId);
-        self::assertSame(Severity::ERROR, $violations[0]->severity);
-        self::assertSame('GET people users.index', $violations[0]->routeIdentity);
-        self::assertSame('users.index', $violations[0]->offendingSurface);
-        self::assertNull($violations[0]->remediationHint);
-    }
-
-    /**
-     * Test that three routes sharing a name flag the second and third in order.
-     *
-     * @return void
-     */
-    public function testThreeDuplicatesFlagAllButTheFirst(): void
-    {
-        // Arrange
-        $routes = [
-            $this->route('a', 'shared.name'),
-            $this->route('b', 'shared.name'),
-            $this->route('c', 'shared.name'),
-        ];
-
-        // Act
-        $violations = $this->rule->inspect($routes, $this->config);
-
-        // Assert
-        self::assertCount(2, $violations);
-        self::assertSame('GET b shared.name', $violations[0]->routeIdentity);
-        self::assertSame('GET c shared.name', $violations[1]->routeIdentity);
-    }
-
-    /**
-     * Test that an unnamed route between two duplicates does not halt
-     * detection.
-     *
-     * Kills the mutant turning the null-name `continue` into a `break`: the
-     * duplicate registered after the unnamed route must still be flagged.
-     *
-     * @return void
-     */
-    public function testUnnamedRouteBetweenDuplicatesDoesNotStopDetection(): void
-    {
-        // Arrange - an unnamed route sits between the canonical and the
-        // duplicate
-        $routes = [
-            $this->route('a', 'shared.name'),
-            $this->route('b', null),
-            $this->route('c', 'shared.name'),
-        ];
-
-        // Act
-        $violations = $this->rule->inspect($routes, $this->config);
-
-        // Assert
-        self::assertCount(1, $violations);
-        self::assertSame('GET c shared.name', $violations[0]->routeIdentity);
-    }
-
-    /**
-     * Test that rule id() returns 'R6' and severity() returns Severity::ERROR.
+     * Test that the rule reports as R6 at error severity.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
-        self::assertSame('R6', $this->rule->id());
-        self::assertSame(Severity::ERROR, $this->rule->severity());
-    }
+        $rule = new DuplicateRouteNameRule;
 
-    /**
-     * Build a normalised GET route from a URI and name.
-     *
-     * @param  string  $uri
-     * @param  string|null  $name
-     * @return \SineMacula\RouteLinter\NormalisedRoute
-     */
-    private function route(string $uri, ?string $name): NormalisedRoute
-    {
-        return new NormalisedRoute(
-            uri: $uri,
-            methods: ['GET'],
-            name: $name,
-            segments: explode('/', $uri),
-            parameters: [],
-        );
+        self::assertSame('R6', $rule->id());
+        self::assertSame(Severity::ERROR, $rule->severity());
     }
 }

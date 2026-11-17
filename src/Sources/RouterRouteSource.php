@@ -12,20 +12,14 @@ use SineMacula\RouteLinter\Dto\RouteDescriptor;
 use SineMacula\RouteLinter\Dto\RouteSuppression;
 
 /**
- * Route-source adapter backed by the Laravel router.
- *
- * Enumerates the live route table via `Router::getRoutes()` after a full
- * application boot - the same source that `route:list` consumes - and maps each
- * route to a `RouteDescriptor` DTO. Vendor routes (whose defining class or
- * closure resolves to a file under the `vendor/` directory) are excluded from
- * the returned set; the domain never sees a framework `Route` object.
+ * Reads the app's routes from the router, skipping routes defined in vendor/.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
 final readonly class RouterRouteSource implements RouteSource
 {
-    /** @var string The path segment used to identify vendor-owned files. */
+    /** @var string The path segment that marks a vendor file. */
     private const string VENDOR_SEGMENT = DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR;
 
     /**
@@ -35,7 +29,7 @@ final readonly class RouterRouteSource implements RouteSource
      */
     public function __construct(
 
-        /** Laravel router whose live route table is enumerated */
+        /** The router whose routes are read */
         private Router $router,
     ) {}
 
@@ -63,7 +57,7 @@ final readonly class RouterRouteSource implements RouteSource
     }
 
     /**
-     * Map a single framework route to a descriptor DTO.
+     * Map a framework route to a descriptor.
      *
      * @param  \Illuminate\Routing\Route  $route
      * @return \SineMacula\RouteLinter\Dto\RouteDescriptor
@@ -82,9 +76,7 @@ final readonly class RouterRouteSource implements RouteSource
     }
 
     /**
-     * Resolve the route handler as `Class@method` (or `Class` for invokables),
-     * returning null for closure routes, live or serialised by the route cache,
-     * which have no class to inspect.
+     * Resolve the handler as `Class@method`, or null for a closure route.
      *
      * @param  \Illuminate\Routing\Route  $route
      * @return string|null
@@ -99,27 +91,20 @@ final readonly class RouterRouteSource implements RouteSource
     }
 
     /**
-     * Gather the route's middleware names, discarding any closure middleware
-     * (which cannot be matched against a configured string).
+     * Gather the route's middleware names, dropping closure middleware.
      *
      * @param  \Illuminate\Routing\Route  $route
      * @return array<int, string>
      */
     private function resolveMiddleware(Route $route): array
     {
-        // gatherMiddleware() already returns a de-duplicated, contiguous list;
-        // the filter only narrows the element type to string for the contract.
         return array_filter($route->gatherMiddleware(), 'is_string');
     }
 
     /**
-     * Extract inline suppressions from the route action array.
+     * Read the suppressions the `ignoreRouteLint` macro stored on the route.
      *
-     * Reads the `route-linter::lint-ignore` key written by the
-     * `ignoreRouteLint` macro. Each entry must be an array with a `rules` array
-     * of rule IDs and a `reason` string; entries that do not conform to this
-     * shape are silently skipped so a corrupt route cache never crashes the
-     * linter.
+     * Malformed entries are skipped, so a corrupt route cache cannot crash it.
      *
      * @param  \Illuminate\Routing\Route  $route
      * @return list<\SineMacula\RouteLinter\Dto\RouteSuppression>
@@ -150,12 +135,9 @@ final readonly class RouterRouteSource implements RouteSource
     }
 
     /**
-     * Read the rule IDs an inline suppression entry covers.
+     * Read the rule IDs a suppression covers, or null when it is malformed.
      *
-     * An absent or non-array `rules` value yields the empty list, which covers
-     * every rule. A non-string rule ID marks the whole entry malformed (null):
-     * dropping just that ID could leave an empty list and so widen the
-     * suppression to every rule.
+     * A bad ID voids the entry: dropping it could widen it to every rule.
      *
      * @param  array<mixed>  $entry
      * @return list<string>|null
@@ -180,13 +162,9 @@ final readonly class RouterRouteSource implements RouteSource
     }
 
     /**
-     * Determine whether a route belongs to a vendor package.
+     * Determine whether the route's closure or controller lives in vendor/.
      *
-     * Resolution strategy mirrors `route:list --except-vendor`:
-     * - Closure routes: reflect the closure's defining file.
-     * - Controller routes: reflect the controller class's defining file.
-     * - Unresolvable sources default to app-owned (false) so no app route is
-     *   silently dropped.
+     * Anything unresolvable counts as app-owned, so no app route is dropped.
      *
      * @param  \Illuminate\Routing\Route  $route
      * @return bool
@@ -203,7 +181,7 @@ final readonly class RouterRouteSource implements RouteSource
     }
 
     /**
-     * Determine whether a closure-backed route's defining file is under vendor.
+     * Determine whether a closure is defined in vendor/.
      *
      * @param  \Closure(): void  $closure
      * @return bool
@@ -213,9 +191,6 @@ final readonly class RouterRouteSource implements RouteSource
         try {
             $file = (new \ReflectionFunction($closure))->getFileName();
         } catch (\ReflectionException) { // @codeCoverageIgnore
-            // Unreachable for a real Closure (always reflectable); defaulting
-            // to app-owned is the safe direction - a route is never silently
-            // dropped.
             return false; // @codeCoverageIgnore
         }
 
@@ -223,8 +198,7 @@ final readonly class RouterRouteSource implements RouteSource
     }
 
     /**
-     * Determine whether a controller-backed route's defining class file is
-     * under vendor.
+     * Determine whether the route's controller is defined in vendor/.
      *
      * @param  \Illuminate\Routing\Route  $route
      * @return bool
@@ -241,7 +215,7 @@ final readonly class RouterRouteSource implements RouteSource
     }
 
     /**
-     * Determine whether an absolute file path lives under a vendor directory.
+     * Determine whether a file path lies under a vendor directory.
      *
      * @param  string|null  $file
      * @return bool
@@ -256,16 +230,13 @@ final readonly class RouterRouteSource implements RouteSource
     }
 
     /**
-     * Resolve the absolute file path that defines a given class.
+     * Return the file that defines a class, or null when it cannot be found.
      *
      * @param  string  $class
      * @return string|null
      */
     private function classFile(string $class): ?string
     {
-        // An unresolvable controller class yields null, which isVendorFile()
-        // maps to app-owned - the conservative direction that never drops a
-        // route.
         if (!class_exists($class)) {
             return null;
         }

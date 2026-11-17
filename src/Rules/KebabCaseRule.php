@@ -11,11 +11,7 @@ use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R2: Kebab-case segment enforcement.
- *
- * Flags any literal URI segment that does not conform to kebab-case, i.e. does
- * not match the pattern `^[a-z0-9]+(-[a-z0-9]+)*$`. Route-parameter segments
- * (those wrapped in `{...}`) and empty segments are ignored.
+ * Rule R2: literal segments are kebab-case.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

@@ -8,12 +8,7 @@ use Illuminate\Support\Str;
 use SineMacula\RouteLinter\Contracts\Inflector;
 
 /**
- * Framework-backed inflector adapter.
- *
- * Wraps `Illuminate\Support\Str` singularisation with a configured list of
- * uncountable words. Uncountables short-circuit before the framework inflector
- * so domain nouns like "media" or "data" are never mis-singularised or
- * incorrectly flagged as singular.
+ * Inflector backed by the framework's Str helpers.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -32,10 +27,7 @@ final readonly class FrameworkInflector implements Inflector
     ) {}
 
     /**
-     * Return the singular form of a word, honouring configured uncountables.
-     *
-     * Returns the word unchanged when it is an uncountable word; otherwise
-     * delegates to `Str::singular()`. An empty string is returned as-is.
+     * Return the singular form of a word; uncountables are left unchanged.
      *
      * @param  string  $word
      * @return string
@@ -51,11 +43,7 @@ final readonly class FrameworkInflector implements Inflector
     }
 
     /**
-     * Determine whether a word is already plural.
-     *
-     * Uncountables are always treated as plural-safe and return `true`. For
-     * other words, a word is considered plural when its singular form differs
-     * from the original. An empty string always returns `false`.
+     * Determine whether a word is plural; uncountables count as plural.
      *
      * @param  string  $word
      * @return bool

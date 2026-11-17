@@ -1,11 +1,7 @@
 <?xml version="1.0"?>
 <ruleset name="Project">
 
-    <!-- DisallowMixedTypeHint excluded: the config adapter validates arbitrary
-         user-shaped config (exemption entries, required-middleware maps), so
-         `array<int|string, mixed>` is the correct type, not laziness. Every such
-         value is narrowed with is_array/is_string guards before use, and PHPStan
-         still guards unsafe mixed access. -->
+    <!-- The config adapter validates user-supplied config, so mixed is the honest type there. -->
     <rule ref="SineMaculaLaravelPackage">
         <exclude name="SlevomatCodingStandard.TypeHints.DisallowMixedTypeHint"/>
     </rule>

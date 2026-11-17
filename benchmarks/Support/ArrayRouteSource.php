@@ -7,12 +7,7 @@ namespace Benchmarks\Support;
 use SineMacula\RouteLinter\Contracts\RouteSource;
 
 /**
- * In-memory route-source adapter for the benchmark harness.
- *
- * Returns a fixed, pre-built list of route descriptors so the end-to-end
- * LintRoutes benchmark can exercise the real use case without booting a Laravel
- * application or reflecting over a live router. The descriptor list is supplied
- * once at construction and handed back verbatim on every call.
+ * In-memory route source that returns a fixed descriptor list.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

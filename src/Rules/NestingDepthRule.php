@@ -12,24 +12,16 @@ use SineMacula\RouteLinter\Rules\Support\CollectionSegments;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R11: Nesting-depth smell warning.
+ * Rule R11: routes nest no more collection levels than configured.
  *
- * Flags routes whose URI nests more collection levels than the configured
- * maximum (three by default). A collection level is a segment that names a
- * resource collection, as located by {@see CollectionSegments}: namespace
- * segments and singleton resources are not levels, and neither are `api` or
- * version tokens matching `v\d+`. Nesting beyond the maximum indicates a URI
- * that could be restructured as a top-level or shallower resource, reducing
- * coupling between resource types.
+ * Collection levels are located by {@see CollectionSegments}; `api` and version
+ * tokens such as `v1` are not levels.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
 final readonly class NestingDepthRule implements Rule
 {
-    /** @var array<int, string> Literal prefix segments excluded from the collection-level count. */
-    private const array EXCLUDED_PREFIXES = ['api'];
-
     /**
      * Create a new nesting depth rule.
      *
@@ -37,7 +29,7 @@ final readonly class NestingDepthRule implements Rule
      */
     public function __construct(
 
-        /** Locator of the route's collection segments */
+        /** Locates the route's collection segments */
         private CollectionSegments $collections = new CollectionSegments,
     ) {}
 
@@ -73,9 +65,7 @@ final readonly class NestingDepthRule implements Rule
     #[\Override]
     public function inspect(NormalisedRoute $route, RuleConfig $config): array
     {
-        $depth = $this->collectionDepth($route, $config);
-
-        if ($depth <= $config->nestingMaxDepth) {
+        if ($this->collectionDepth($route, $config) <= $config->nestingMaxDepth) {
             return [];
         }
 
@@ -91,8 +81,7 @@ final readonly class NestingDepthRule implements Rule
     }
 
     /**
-     * Count the collection levels of a route, excluding `api` and version
-     * tokens (`v` followed by one or more digits).
+     * Count the route's collection levels.
      *
      * @param  \SineMacula\RouteLinter\NormalisedRoute  $route
      * @param  \SineMacula\RouteLinter\Dto\RuleConfig  $config
@@ -105,7 +94,7 @@ final readonly class NestingDepthRule implements Rule
         foreach ($this->collections->indexes($route, $config) as $index) {
             $segment = $route->segments[$index];
 
-            if (in_array($segment, self::EXCLUDED_PREFIXES, true) || preg_match('/^v\d+$/i', $segment) === 1) {
+            if ($segment === 'api' || preg_match('/^v\d+$/i', $segment) === 1) {
                 continue;
             }
 

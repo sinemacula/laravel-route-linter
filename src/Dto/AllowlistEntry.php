@@ -5,13 +5,7 @@ declare(strict_types = 1);
 namespace SineMacula\RouteLinter\Dto;
 
 /**
- * One exemption-allowlist entry.
- *
- * Carries the match key (a route name or URI pattern), the written reason that
- * justifies the waiver, and an optional list of rule IDs the entry applies to.
- * An empty `$rules` list means the waiver covers all rules. Emptiness of
- * `reason` is validated upstream by the config adapter; this DTO stores all
- * values exactly as given.
+ * A configured waiver for the routes matching a name or URI pattern.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -30,7 +24,7 @@ final readonly class AllowlistEntry
         /** The route name or URI pattern to waive */
         public string $match,
 
-        /** The required, non-empty written justification for the waiver */
+        /** The written justification for the waiver */
         public string $reason,
 
         /** The rule IDs covered by this entry; empty means all rules */
@@ -38,10 +32,7 @@ final readonly class AllowlistEntry
     ) {}
 
     /**
-     * Determine whether this allowlist entry covers the given rule.
-     *
-     * Returns true when the entry waives all rules (empty list) or when the
-     * given rule ID is explicitly present in the rules list.
+     * Determine whether the entry waives the given rule.
      *
      * @param  string  $ruleId
      * @return bool

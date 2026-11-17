@@ -11,15 +11,10 @@ use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R10: required middleware.
+ * Rule R10: routes matching a configured pattern declare its middleware.
  *
- * Flags routes that match a configured URI pattern but do not declare a
- * required middleware. The policy lives in `route-linter.required_middleware`,
- * keyed by `fnmatch` URI pattern; each pattern maps to the middleware names a
- * matching route must carry. Matching is an exact token comparison against the
- * route's gathered middleware, so parameterised middleware must be configured
- * exactly (e.g. `auth:sanctum`). Ships empty, so the rule is a no-op until
- * configured.
+ * Middleware is compared as exact tokens, so `auth:sanctum` must be configured
+ * in full.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -49,8 +44,7 @@ final class RequiredMiddlewareRule implements Rule
     }
 
     /**
-     * Inspect one normalised route and return one violation per missing
-     * required middleware across every matching pattern.
+     * Return one violation per required middleware the route lacks.
      *
      * @param  \SineMacula\RouteLinter\NormalisedRoute  $route
      * @param  \SineMacula\RouteLinter\Dto\RuleConfig  $config

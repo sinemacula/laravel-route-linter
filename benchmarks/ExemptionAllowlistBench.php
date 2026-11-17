@@ -9,14 +9,7 @@ use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\ExemptionAllowlist;
 
 /**
- * Benchmarks for the ExemptionAllowlist matching hot paths.
- *
- * The allowlist is consulted once per live route (observe) and once per
- * surviving violation (suppresses); both walk every entry running an exact name
- * compare and an `fnmatch()` wildcard test, so cost scales with allowlist size.
- * It is measured at a representative allowlist size along the observe path, the
- * suppress-hit path (an entry matches and covers the rule), and the
- * suppress-miss path (no entry matches - the full unbroken scan).
+ * Benchmarks for exemption allowlist matching.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

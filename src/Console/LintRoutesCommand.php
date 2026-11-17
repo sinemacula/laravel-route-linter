@@ -11,17 +11,7 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
 use SineMacula\RouteLinter\LintRoutes;
 
 /**
- * Artisan command to lint the application route table against RESTful
- * conventions.
- *
- * Invokes the LintRoutes use case, renders the report via the bound
- * LintReporter port, and exits non-zero when the verdict contains any
- * ERROR-severity violations. Warning-severity findings and stale waivers are
- * surfaced but do not gate the exit code. A misconfigured linter
- * (InvalidConfigurationException) is treated as an error-grade configuration
- * failure and exits non-zero immediately. While the route table is cached, the
- * command re-runs itself in a child process that bypasses the cache, so the
- * verdict reflects the current route definitions whatever the cache state.
+ * Lints the route table, failing on any error or invalid configuration.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -62,11 +52,9 @@ final class LintRoutesCommand extends Command
     }
 
     /**
-     * Lint the current route definitions in a child process that bypasses the
-     * route cache.
+     * Lint in a child process that bypasses the route cache.
      *
-     * A child that still finds the routes cached - the application overrides
-     * the cache path or the cached state - fails instead of spawning another.
+     * A child that still finds the routes cached fails rather than recursing.
      *
      * @param  \Illuminate\Foundation\Application  $app
      * @return int

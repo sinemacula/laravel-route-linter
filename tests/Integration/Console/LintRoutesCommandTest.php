@@ -9,15 +9,13 @@ use Illuminate\Routing\AbstractRouteCollection;
 use Illuminate\Routing\Router;
 use Illuminate\Testing\PendingCommand;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Console\LintRoutesCommand;
 use SineMacula\RouteLinter\Console\UncachedLintProcess;
 use Tests\TestCase;
 
 /**
  * Integration tests for the LintRoutesCommand Artisan command.
- *
- * Registers fixture routes on the booted framework router and drives the
- * command via Testbench's artisan() helper, asserting exit codes and output.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -30,7 +28,7 @@ final class LintRoutesCommandTest extends TestCase
     /** @var string The command signature under test. */
     private const string COMMAND = 'route:lint';
 
-    /** @var string The fixture application, whose routes are linted uncached and cached. */
+    /** @var string The fixture application linted uncached and cached. */
     private const string FIXTURE_APPLICATION = __DIR__ . '/../../Fixtures/Application';
 
     /** @var string A child process that writes to both streams and exits with code 3. */
@@ -39,43 +37,50 @@ final class LintRoutesCommandTest extends TestCase
     /** @var string A child process that records the command line it received. */
     private const string ECHO_CHILD = __DIR__ . '/../../Fixtures/ChildProcesses/Echo';
 
-    /** @var array<int, string> Default verb denylist used across tests. */
+    /** @var array<int, string> Verb denylist used across tests. */
     private const array VERB_DENYLIST = [
         'get', 'list', 'create', 'add', 'update', 'edit', 'delete',
         'remove', 'cancel', 'login', 'logout', 'search', 'fetch',
     ];
 
     /**
-     * Test that the command exits non-zero when an error-severity violation is
-     * present.
+     * Provide routes with the exit code linting them gives.
      *
-     * @return void
+     * @return iterable<string, array{string, string, list<string>|null, int}>
      */
-    public function testExitsNonZeroWhenErrorViolationPresent(): void
+    public static function provideExitCodes(): iterable
     {
-        $this->seedConfig();
-
-        $this->getRouter()->get('getUsers', fn () => [])->name('get-users');
-
-        $this->runCommand()->assertExitCode(1);
+        yield 'error' => ['getUsers', 'get-users', null, 1];
+        yield 'clean' => ['users', 'users.index', null, 0];
+        yield 'warning only' => ['users', 'users.getAll', null, 0];
+        yield 'error suppressed inline' => ['getUsers', 'get-users', [], 0];
     }
 
     /**
-     * Test that the command exits zero when the route table is clean.
+     * Test that the command exits non-zero only for unsuppressed errors.
      *
+     * @param  string  $uri
+     * @param  string  $name
+     * @param  list<string>|null  $suppressedRules
+     * @param  int  $exit
      * @return void
      */
-    public function testExitsZeroWhenTableIsClean(): void
+    #[DataProvider('provideExitCodes')]
+    public function testExitCodeReflectsErrorFindings(string $uri, string $name, ?array $suppressedRules, int $exit): void
     {
         $this->seedConfig();
 
-        $this->getRouter()->get('users', fn () => [])->name('users.index');
+        $route = $this->getRouter()->get($uri, fn () => [])->name($name);
 
-        $this->runCommand()->assertExitCode(0);
+        if ($suppressedRules !== null) {
+            $route->ignoreRouteLint($suppressedRules, 'All rules suppressed for this legacy route.'); // @phpstan-ignore method.notFound
+        }
+
+        $this->runCommand()->assertExitCode($exit);
     }
 
     /**
-     * Test that the command prints error findings in the output before failing.
+     * Test that the command prints error findings before failing.
      *
      * @return void
      */
@@ -91,8 +96,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Test that a misconfigured waiver (entry without a reason) exits non-zero
-     * with an error message.
+     * Test that a waiver without a reason fails the command.
      *
      * @return void
      */
@@ -110,34 +114,14 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Test that a route table with only warning-severity findings exits zero.
+     * Test that an unused inline suppression is reported without failing.
      *
      * @return void
      */
-    public function testWarningOnlyTableExitsZero(): void
+    public function testUnusedInlineSuppressionIsReportedWithoutFailing(): void
     {
         $this->seedConfig();
 
-        // A named route whose name does not follow {resource}.{action} -
-        // triggers R8 (warning)
-        $this->getRouter()->get('users', fn () => [])->name('users.getAll');
-
-        $this->runCommand()->assertExitCode(0);
-    }
-
-    /**
-     * Test that a route whose only error is inline-suppressed exits zero, and
-     * that the unused suppression (the route is otherwise clean) is surfaced in
-     * the output but does not change the exit code.
-     *
-     * @return void
-     */
-    public function testInlineSuppressedRouteExitsZeroAndSurfacesStaleSuppression(): void
-    {
-        $this->seedConfig();
-
-        // /users is a clean route; the inline suppression for R1 fires on
-        // nothing
         $this->getRouter()->get('users', fn () => [])
             ->name('users.index')
             // @phpstan-ignore method.notFound
@@ -150,31 +134,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Test that a route whose only error is fully suppressed by an inline
-     * suppression (all rules) exits zero.
-     *
-     * @return void
-     */
-    public function testFullyInlineSuppressedRouteExitsZero(): void
-    {
-        $this->seedConfig();
-
-        // /getUsers triggers R1; inline suppression covers all rules
-        $this->getRouter()->get('getUsers', fn () => [])
-            ->name('get-users')
-            // @phpstan-ignore method.notFound
-            ->ignoreRouteLint([], 'All rules suppressed for this legacy route.');
-
-        $this->runCommand()->assertExitCode(0);
-    }
-
-    /**
      * Test that caching the route table does not change the verdict.
-     *
-     * The fixture routes are linted from the live router, then the table is
-     * cached as `route:cache` does - closures serialised, unnamed routes given
-     * generated names - alongside the fixture's cache file, and linted again.
-     * Both runs must print the same findings and exit with the same code.
      *
      * @return void
      */
@@ -196,7 +156,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Test that the child's output and exit code are passed through unchanged.
+     * Test that a cached run passes the child's output and exit code through.
      *
      * @return void
      */
@@ -215,8 +175,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Test that an environment selected for the command is selected for the
-     * child too.
+     * Test that a cached run passes the selected environment to the child.
      *
      * @return void
      */
@@ -228,8 +187,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Test that the child is told which environment file the command loaded, so
-     * an environment name with its own file beside it is withheld.
+     * Test that a cached run withholds an environment name with its own file.
      *
      * @return void
      */
@@ -241,8 +199,8 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Test that a command with cached configuration, which loaded no
-     * environment file, passes its environment name on.
+     * Test that a cached run with cached configuration passes the environment
+     * name on.
      *
      * @return void
      */
@@ -258,8 +216,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Test that a child which still finds the routes cached fails rather than
-     * spawning another child.
+     * Test that a child which still finds the routes cached fails.
      *
      * @return void
      */
@@ -282,8 +239,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Run the command against the echo child with routes cached and the fixture
-     * environment file loaded, and decode what the child received.
+     * Run a cached lint against the echo child and decode what it received.
      *
      * @param  array<string, string>  $options
      * @param  array<string, string>  $environment
@@ -322,7 +278,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Run the lint-routes command and capture its exit code and output.
+     * Run the command and capture its exit code and output.
      *
      * @return array{exit: int, output: string}
      */
@@ -339,8 +295,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Cache the route table in place, as `route:cache` does, and let the cached
-     * state be detected from the application's route cache file.
+     * Cache the route table in place, as `route:cache` does.
      *
      * @return void
      */
@@ -362,7 +317,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Run the lint-routes command.
+     * Run the command.
      *
      * @return \Illuminate\Testing\PendingCommand
      */
@@ -390,7 +345,7 @@ final class LintRoutesCommandTest extends TestCase
     }
 
     /**
-     * Get the router instance bound to the booted application.
+     * Get the router bound to the booted application.
      *
      * @return \Illuminate\Routing\Router
      */

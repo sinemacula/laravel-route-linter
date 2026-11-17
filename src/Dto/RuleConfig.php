@@ -5,15 +5,7 @@ declare(strict_types = 1);
 namespace SineMacula\RouteLinter\Dto;
 
 /**
- * Inbound configuration bundle from the rule-configuration adapter.
- *
- * Carries the strictly-separate config surfaces handed to every rule: the verb
- * denylist (action verbs that flag a path segment), the per-verb
- * remediation-hint map, the exemption-allowlist entries, the inflector
- * uncountables, the maximum nesting depth, the per-pattern required middleware
- * map, the verb allowlist (words removed from the denylist), and the singleton
- * resource paths. Surfaces are kept separate - verbDenylist, exemptions, and
- * uncountables never share storage - so callers can tune each independently.
+ * The validated configuration handed to every rule.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -40,22 +32,22 @@ final readonly class RuleConfig
         /** Per-verb RESTful-rewrite hints, keyed by the denylisted verb */
         public array $remediationHints,
 
-        /** Per-route exemption waivers; ships empty by default */
+        /** Configured waivers */
         public array $exemptions,
 
         /** Inflector uncountables honoured by the plural and verb rules */
         public array $uncountables,
 
-        /** Maximum collection nesting levels before the nesting-depth rule (R11) warns */
+        /** Maximum collection nesting levels before R11 warns */
         public int $nestingMaxDepth = 3,
 
-        /** Required middleware keyed by URI pattern, honoured by the required-middleware rule (R10) */
+        /** Middleware each matching route must declare, keyed by URI pattern (R10) */
         public array $requiredMiddleware = [],
 
         /** Words removed from the verb denylist, for domain nouns that share a spelling with a verb */
         public array $verbAllowlist = [],
 
-        /** Resource paths whose last segment is a singleton resource, exempt from the collection rules */
+        /** Resource paths whose last segment is a singleton resource */
         public array $singletonResources = [],
     ) {}
 }

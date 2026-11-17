@@ -11,14 +11,7 @@ use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\RouteLintEngine;
 
 /**
- * Benchmarks for the RouteLintEngine per-route orchestrator.
- *
- * Isolates the cost of running the full nine-rule set over a single normalised
- * route, free of the sourcing, suppression, and reporting work the use case
- * layers on top. It is measured along two routes: a clean route every rule
- * clears without emitting a finding (the common case), and a deliberately
- * defective route that trips several rules at once - bounding both the
- * best-case scan and the allocation cost of constructing many violations.
+ * Benchmarks for the per-route rule engine.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
