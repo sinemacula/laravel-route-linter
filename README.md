@@ -205,7 +205,7 @@ mechanically-checkable convention subset only - it is not a proof of true RESTfu
 ## Requirements
 
 - PHP ^8.3
-- Laravel ^12.9
+- Laravel ^12.9 || ^13.0
 
 ## Testing
 
