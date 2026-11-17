@@ -59,8 +59,10 @@ return [
     |---------------------------------------------------------------------------
     |
     | The maximum number of collection levels a URI may nest before the
-    | nesting-depth rule (R11) raises a warning. `api` and version prefixes
-    | (v1, v2, …) are excluded from the count.
+    | nesting-depth rule (R11) raises a warning. Only segments that name a
+    | collection count: namespace segments (a literal followed by another
+    | literal, such as `auth` in `auth/sessions`), singleton resources, `api`,
+    | and version prefixes (v1, v2, …) are not levels.
     |
     */
 
@@ -223,5 +225,26 @@ return [
     */
 
     'uncountables' => ['media', 'data', 'series', 'information', 'news', 'feedback', 'metadata'],
+
+    /*
+    |---------------------------------------------------------------------------
+    | Singleton Resources
+    |---------------------------------------------------------------------------
+    |
+    | Resources that exist once in their context (a user's `profile`, a
+    | connection's `callback`), so their segment is singular by design and is
+    | neither checked by the plural-collections rule (R4) nor counted as a
+    | nesting level (R11). Routes registered by `Route::singleton()` or
+    | `Route::apiSingleton()` are recognised from their `show`, `update`, and
+    | `destroy` routes; list a resource here to cover the rest, such as a
+    | creatable singleton's `store` route or singleton routes renamed with
+    | `names()`. Each path identifies its last segment wherever a route's path
+    | up to that segment ends with it; parameters match any parameter.
+    |
+    |   'singleton_resources' => ['profile', 'teams/{team}/settings'],
+    |
+    */
+
+    'singleton_resources' => [],
 
 ];

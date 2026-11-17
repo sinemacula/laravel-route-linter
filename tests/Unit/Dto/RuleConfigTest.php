@@ -129,4 +129,16 @@ final class RuleConfigTest extends TestCase
 
         self::assertSame(['reset'], $custom->verbAllowlist);
     }
+
+    /**
+     * Test that singletonResources defaults to empty when omitted and
+     * round-trips a custom value when provided.
+     *
+     * @return void
+     */
+    public function testSingletonResourcesDefaultToEmptyAndRoundTrip(): void
+    {
+        self::assertSame([], (new RuleConfig([], [], [], []))->singletonResources);
+        self::assertSame(['profile'], (new RuleConfig([], [], [], [], singletonResources: ['profile']))->singletonResources);
+    }
 }

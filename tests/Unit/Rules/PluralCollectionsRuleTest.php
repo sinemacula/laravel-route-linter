@@ -10,6 +10,7 @@ use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\PluralCollectionsRule;
+use SineMacula\RouteLinter\Violation;
 use Tests\TestCase;
 
 /**
@@ -66,6 +67,29 @@ final class PluralCollectionsRuleTest extends TestCase
         self::assertSame(Severity::ERROR, $violations[0]->severity);
         self::assertSame('user', $violations[0]->offendingSurface);
         self::assertNull($violations[0]->remediationHint);
+    }
+
+    /**
+     * Test that singleton resource routes are not flagged while a singular
+     * collection route is, as registered by `Route::apiSingleton()` beside an
+     * ordinary resource.
+     *
+     * @return void
+     */
+    public function testSingletonResourceRoutesAreNotFlagged(): void
+    {
+        $config = new RuleConfig([], [], [], [], singletonResources: ['profile']);
+
+        $surfaces = fn (string $uri, ?string $name, string $method): array => array_map(
+            static fn (Violation $violation): string => $violation->offendingSurface,
+            $this->rule->inspect(new NormalisedRoute($uri, [$method], $name, explode('/', $uri), []), $config),
+        );
+
+        self::assertSame([], $surfaces('connections/{connection}/callback', 'connections.callback.show', 'GET'));
+        self::assertSame([], $surfaces('profile', 'profile.update', 'PATCH'));
+        self::assertSame([], $surfaces('profile', 'profile.store', 'POST'));
+        self::assertSame(['connection'], $surfaces('connection/{connection}/callback', 'connection.callback.show', 'GET'));
+        self::assertSame(['setting'], $surfaces('setting', null, 'GET'));
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Tests\Unit\Configuration;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Configuration\ConfigRuleConfiguration;
 use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
 use Tests\TestCase;
@@ -217,6 +218,51 @@ final class ConfigRuleConfigurationTest extends TestCase
         self::assertSame([], $result->uncountables);
         self::assertSame(3, $result->nestingMaxDepth);
         self::assertSame([], $result->verbAllowlist);
+        self::assertSame([], $result->singletonResources);
+    }
+
+    /**
+     * Test that load() reads the singleton resource paths, surrounding slashes
+     * included.
+     *
+     * @return void
+     */
+    public function testReadsSingletonResourcesFromConfig(): void
+    {
+        config()->set('route-linter.singleton_resources', ['profile', 'connections/{connection}/callback', '/teams/{team}/settings/']);
+
+        self::assertSame(['profile', 'connections/{connection}/callback', '/teams/{team}/settings/'], (new ConfigRuleConfiguration)->load()->singletonResources);
+    }
+
+    /**
+     * Provide singleton resource paths that identify no segment.
+     *
+     * @return iterable<string, array{string}>
+     */
+    public static function provideSingletonResourcesIdentifyingNoSegment(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'slash only' => ['/'];
+        yield 'ends in a parameter' => ['connections/{connection}'];
+        yield 'ends in a parameter before a slash' => ['connections/{connection}/'];
+    }
+
+    /**
+     * Test that load() rejects a singleton resource path that identifies no
+     * segment: one that is empty or ends in a route parameter.
+     *
+     * @param  string  $path
+     * @return void
+     */
+    #[DataProvider('provideSingletonResourcesIdentifyingNoSegment')]
+    public function testSingletonResourceIdentifyingNoSegmentIsRejected(string $path): void
+    {
+        config()->set('route-linter.singleton_resources', ['profile', $path]);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage(sprintf('Singleton resource "%s" must end in a literal segment.', $path));
+
+        (new ConfigRuleConfiguration)->load();
     }
 
     /**

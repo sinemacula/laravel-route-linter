@@ -9,17 +9,16 @@ use SineMacula\RouteLinter\Contracts\Rule;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
+use SineMacula\RouteLinter\Rules\Support\CollectionSegments;
 use SineMacula\RouteLinter\Violation;
 
 /**
  * Rule R4: Plural-collections enforcement.
  *
- * Flags every literal URI segment that represents a resource collection but is
- * not plural. A segment is treated as a collection when it is immediately
- * followed by a route-parameter segment (`{param}`), or when it is the last
- * literal segment of the path (a top-level collection). Parameter segments and
- * empty segments are never evaluated. Uncountable nouns configured in the
- * active rule config are treated as plural-safe and never flagged.
+ * Flags every literal URI segment that names a resource collection but is not
+ * plural. Collection segments, excluding singleton resources, are located by
+ * {@see CollectionSegments}. Uncountable nouns configured in the active rule
+ * config are treated as plural-safe and never flagged.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -30,11 +29,15 @@ final readonly class PluralCollectionsRule implements Rule
      * Create a new plural collections rule.
      *
      * @param  \SineMacula\RouteLinter\Contracts\Inflector  $inflector
+     * @param  \SineMacula\RouteLinter\Rules\Support\CollectionSegments  $collections
      */
     public function __construct(
 
         /** Inflector port used to test whether a collection segment is plural */
         private Inflector $inflector,
+
+        /** Locator of the route's collection segments */
+        private CollectionSegments $collections = new CollectionSegments,
     ) {}
 
     /**
@@ -70,25 +73,11 @@ final readonly class PluralCollectionsRule implements Rule
     public function inspect(NormalisedRoute $route, RuleConfig $config): array
     {
         $violations = [];
-        $segments   = $route->segments;
-        $total      = count($segments);
 
-        for ($i = 0; $i < $total; $i++) {
-            $segment = $segments[$i];
+        foreach ($this->collections->indexes($route, $config) as $index) {
+            $segment = $route->segments[$index];
 
-            if ($segment === '' || str_starts_with($segment, '{')) {
-                continue;
-            }
-
-            if (!$this->isCollectionSegment($i, $segments)) {
-                continue;
-            }
-
-            if (in_array($segment, $config->uncountables, true)) {
-                continue;
-            }
-
-            if ($this->inflector->isPlural($segment)) {
+            if (in_array($segment, $config->uncountables, true) || $this->inflector->isPlural($segment)) {
                 continue;
             }
 
@@ -102,35 +91,5 @@ final readonly class PluralCollectionsRule implements Rule
         }
 
         return $violations;
-    }
-
-    /**
-     * Determine whether the segment at the given index is a collection segment.
-     *
-     * A segment is a collection when it is immediately followed by a
-     * route-parameter segment, or when every subsequent segment is either empty
-     * or a route parameter (i.e. it is the final literal segment).
-     *
-     * @param  int  $index
-     * @param  array<int, string>  $segments
-     * @return bool
-     */
-    private function isCollectionSegment(int $index, array $segments): bool
-    {
-        $next = $segments[$index + 1] ?? null;
-
-        if ($next !== null && str_starts_with($next, '{')) {
-            return true;
-        }
-
-        // The segment is the final literal segment when every subsequent
-        // segment is either empty or a route parameter.
-        for ($j = $index + 1; $j < count($segments); $j++) {
-            if ($segments[$j] !== '' && !str_starts_with($segments[$j], '{')) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }
