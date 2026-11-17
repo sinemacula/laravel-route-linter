@@ -7,20 +7,10 @@ namespace SineMacula\RouteLinter;
 use SineMacula\RouteLinter\Dto\AllowlistEntry;
 
 /**
- * Domain service that suppresses waived violations and tracks stale entries.
+ * Applies the configured waivers and tracks the ones that went unused.
  *
- * Constructed from the exemption entries supplied by the rule-configuration
- * port, this service answers whether a given route carries a per-rule allowlist
- * suppression, and records which entries were matched so unmatched entries can
- * be reported as stale waivers after the full route table has been inspected.
- * An empty allowlist is the shipped default; in that state no route is
- * suppressed and no stale entries are ever reported.
- *
- * The two-phase protocol is:
- * 1. Call `observe()` once per live route so pattern-match tracking is driven
- *    by the full route table (not just routes that have violations).
- * 2. Call `suppresses()` per violation to test per-rule coverage and record
- *    usage.
+ * Call observe() for every route before suppresses(), so an entry matching a
+ * clean route is not reported as matching nothing.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -40,17 +30,12 @@ final class ExemptionAllowlist
      */
     public function __construct(
 
-        /** The waiver entries supplied by the rule-configuration port */
+        /** The configured waivers */
         private readonly array $entries,
     ) {}
 
     /**
-     * Record that a live route has been observed.
-     *
-     * Marks every entry whose pattern matches this route as having been matched
-     * by a live route. Call once per live route before calling `suppresses()`,
-     * so that pattern-matching for stale detection covers the full route table
-     * independently of whether violations are raised.
+     * Mark every entry matching the route as matched.
      *
      * @param  string|null  $routeName
      * @param  string  $uri
@@ -68,15 +53,7 @@ final class ExemptionAllowlist
     }
 
     /**
-     * Determine whether any allowlist entry suppresses the given rule on this
-     * route.
-     *
-     * Returns true when at least one entry matches by name or URI pattern AND
-     * covers the given rule ID (either the entry waives all rules, or the rule
-     * ID is explicitly in the entry's rules list). Matching entries are also
-     * recorded as having been matched by a live route (equivalent to
-     * `observe()`), and the first suppressing entry is marked as having
-     * suppressed a violation.
+     * Determine whether an entry waives the rule on the route, marking it used.
      *
      * @param  string|null  $routeName
      * @param  string  $uri
@@ -103,10 +80,7 @@ final class ExemptionAllowlist
     }
 
     /**
-     * Return the match keys of entries that never matched any live route during
-     * this run.
-     *
-     * Results are sorted ascending for determinism.
+     * Return the match keys of entries that matched no route, sorted.
      *
      * @return array<int, string>
      */
@@ -128,13 +102,7 @@ final class ExemptionAllowlist
     }
 
     /**
-     * Return descriptive strings for entries that matched a live route but
-     * suppressed no violation.
-     *
-     * An entry in this list did match a live route pattern but none of its
-     * covered rules fired a violation on that route, meaning it is carrying a
-     * waiver that serves no purpose. Results are sorted ascending for
-     * determinism.
+     * Describe the entries that matched a route but suppressed nothing, sorted.
      *
      * @return array<int, string>
      */
@@ -156,10 +124,7 @@ final class ExemptionAllowlist
     }
 
     /**
-     * Determine whether a single allowlist entry matches the given route.
-     *
-     * An entry matches when its `match` value equals the route name exactly, or
-     * when it matches the URI via `fnmatch()` shell-wildcard semantics.
+     * Determine whether an entry names the route or matches its URI pattern.
      *
      * @param  \SineMacula\RouteLinter\Dto\AllowlistEntry  $entry
      * @param  string|null  $routeName

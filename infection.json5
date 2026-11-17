@@ -18,38 +18,17 @@
     mutators: {
         "@default": true,
 
-        // Provably-equivalent mutants, ignored for the gate only. The full run
-        // (infection.full.json5) keeps them visible for audit.
-        DecrementInteger: {
-            ignore: [
-                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
-            ],
-        },
-        IncrementInteger: {
-            ignore: [
-                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
-            ],
-        },
-        UnwrapSubstr: {
-            ignore: [
-                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
-            ],
-        },
+        // Provably equivalent mutants, ignored for the gate only; the full run reports them.
         ReturnRemoval: {
             ignore: [
                 "SineMacula\\RouteLinter\\Inflection\\FrameworkInflector::isPlural",
                 "SineMacula\\RouteLinter\\Output\\ConsoleLintReporter::report",
-                "SineMacula\\RouteLinter\\Rules\\RouteNameRule::conformsToConvention",
-                "SineMacula\\RouteLinter\\Sources\\RouterRouteSource::fileIsVendor",
                 "SineMacula\\RouteLinter\\Support\\RouteLintMacros::register",
             ],
         },
         UnwrapArrayFilter: {
             ignore: [
                 "SineMacula\\RouteLinter\\Rules\\Support\\SegmentNormaliser::normalise",
-                // Defensive type-narrow: gatherMiddleware() errors on non-string
-                // (closure) middleware before this filter, so it never removes.
-                "SineMacula\\RouteLinter\\Sources\\RouterRouteSource::resolveMiddleware",
             ],
         },
         UnwrapArrayValues: {
@@ -61,16 +40,14 @@
         },
         CastString: {
             ignore: [
-                // The child process stringifies every environment value, so
-                // the width reaches it the same with or without the cast.
+                // The child process stringifies every environment value, so the cast is unobservable.
                 "SineMacula\\RouteLinter\\Console\\UncachedLintProcess::environment",
             ],
         },
         TrueValue: {
             ignore: [
                 "SineMacula\\RouteLinter\\RouteLintEngine::__construct",
-                // Seen-name set membership read only via isset(); the stored
-                // value is never inspected, so true vs false cannot be observed.
+                // The seen-name set is read only via isset(), so the stored value is unobservable.
                 "SineMacula\\RouteLinter\\Rules\\DuplicateRouteNameRule::inspect",
             ],
         },

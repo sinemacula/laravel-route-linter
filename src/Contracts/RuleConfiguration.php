@@ -7,12 +7,7 @@ namespace SineMacula\RouteLinter\Contracts;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 
 /**
- * Outbound port for supplying the rule-configuration DTO.
- *
- * Implementers read the strictly-separate config surfaces (verb denylist,
- * remediation hints, exemption allowlist, inflector uncountables, and nesting
- * depth) and assemble them into a single {@see RuleConfig} DTO for consumption
- * by the rule engine.
+ * Supplies the validated rule configuration.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -20,7 +15,7 @@ use SineMacula\RouteLinter\Dto\RuleConfig;
 interface RuleConfiguration
 {
     /**
-     * Build the rule-config DTO from the separate config surfaces.
+     * Load and validate the rule configuration.
      *
      * @return \SineMacula\RouteLinter\Dto\RuleConfig
      *

@@ -5,10 +5,12 @@ declare(strict_types = 1);
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\RouteNameRule;
+use SineMacula\RouteLinter\Violation;
 use Tests\TestCase;
 
 /**
@@ -22,252 +24,59 @@ use Tests\TestCase;
 #[CoversClass(RouteNameRule::class)]
 final class RouteNameRuleTest extends TestCase
 {
-    /** @var \SineMacula\RouteLinter\Rules\RouteNameRule */
-    private RouteNameRule $rule;
-
-    /** @var \SineMacula\RouteLinter\Dto\RuleConfig */
-    private RuleConfig $config;
-
     /**
-     * Set up shared fixtures.
+     * Provide route names with whether R8 flags them.
      *
-     * @return void
+     * @return iterable<string, array{string|null, bool}>
      */
-    #[\Override]
-    protected function setUp(): void
+    public static function provideNames(): iterable
     {
-        parent::setUp();
-
-        $this->rule   = new RouteNameRule;
-        $this->config = new RuleConfig([], [], [], []);
-    }
-
-    /**
-     * Test that a named route not matching {resource}.{action} produces one R8
-     * warning violation.
-     *
-     * @return void
-     */
-    public function testNonConventionalNameIsFlagged(): void
-    {
-        // Arrange - 'getAll' is not in the allowed actions set
-        $route = new NormalisedRoute(
-            uri: 'users',
-            methods: ['GET'],
-            name: 'users.getAll',
-            segments: ['users'],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertCount(1, $violations);
-        self::assertSame('R8', $violations[0]->ruleId);
-        self::assertSame(Severity::WARNING, $violations[0]->severity);
-        self::assertSame('users.getAll', $violations[0]->offendingSurface);
-        self::assertNull($violations[0]->remediationHint);
-    }
-
-    /**
-     * Test that a route named with a conventional {resource}.{action} produces
-     * no R8 violation.
-     *
-     * @return void
-     */
-    public function testConventionalNameIsNotFlagged(): void
-    {
-        // Arrange - 'index' is an allowed action
-        $route = new NormalisedRoute(
-            uri: 'users',
-            methods: ['GET'],
-            name: 'users.index',
-            segments: ['users'],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that an unnamed route produces no R8 violation.
-     *
-     * @return void
-     */
-    public function testUnnamedRouteIsSkipped(): void
-    {
-        // Arrange - name is null; rule must skip without flagging
-        $route = new NormalisedRoute(
-            uri: 'users',
-            methods: ['GET'],
-            name: null,
-            segments: ['users'],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that a nested resource name with a valid action produces no R8
-     * violation.
-     *
-     * @return void
-     */
-    public function testNestedResourceNameIsNotFlagged(): void
-    {
-        // Arrange - users.posts.show has resource users.posts and action show
-        $route = new NormalisedRoute(
-            uri: 'users/{user}/posts/{post}',
-            methods: ['GET'],
-            name: 'users.posts.show',
-            segments: ['users', '{user}', 'posts', '{post}'],
-            parameters: ['user', 'post'],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that a name with no dot separator is flagged as a violation.
-     *
-     * @return void
-     */
-    public function testNameWithoutDotIsFlagged(): void
-    {
-        // Arrange - 'login' has no dot; no resource.action structure
-        $route = new NormalisedRoute(
-            uri: 'login',
-            methods: ['GET'],
-            name: 'login',
-            segments: ['login'],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertCount(1, $violations);
-        self::assertSame('R8', $violations[0]->ruleId);
-        self::assertSame(Severity::WARNING, $violations[0]->severity);
-        self::assertSame('login', $violations[0]->offendingSurface);
-    }
-
-    /**
-     * Test that a name whose only dot is at position zero (empty resource part)
-     * is flagged.
-     *
-     * A name such as '.index' has $lastDot === 0, making the resource part
-     * empty; the rule must flag it. This pins the $lastDot === 0 boundary and
-     * the consequent return false.
-     *
-     * @return void
-     */
-    public function testNameWithLeadingDotIsFlagged(): void
-    {
-        // Arrange - '.index' has the dot at position 0; resource would be empty
-        $route = new NormalisedRoute(
-            uri: 'index',
-            methods: ['GET'],
-            name: '.index',
-            segments: ['index'],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert - the name must be flagged: offendingSurface is the full name
-        self::assertCount(1, $violations);
-        self::assertSame('R8', $violations[0]->ruleId);
-        self::assertSame(Severity::WARNING, $violations[0]->severity);
-        self::assertSame('.index', $violations[0]->offendingSurface);
-    }
-
-    /**
-     * Test that every canonical REST action is accepted without an R8
-     * violation.
-     *
-     * Pins each element of the ALLOWED_ACTIONS set so that mutations swapping
-     * or extending the set are caught by at least one assertion.
-     *
-     * @return void
-     */
-    public function testAllAllowedActionsAreAccepted(): void
-    {
-        // Arrange - the seven canonical actions
-        $allowedActions = ['index', 'show', 'store', 'update', 'destroy', 'create', 'edit'];
-
-        foreach ($allowedActions as $action) {
-            $route = new NormalisedRoute(
-                uri: 'resources',
-                methods: ['GET'],
-                name: 'resources.' . $action,
-                segments: ['resources'],
-                parameters: [],
-            );
-
-            $violations = $this->rule->inspect($route, $this->config);
-
-            self::assertEmpty($violations, "Action '{$action}' should be accepted but produced a violation.");
+        foreach (['index', 'show', 'store', 'update', 'destroy', 'create', 'edit'] as $action) {
+            yield $action => ['resources.' . $action, false];
         }
+
+        yield 'nested resource' => ['users.posts.show', false];
+        yield 'unnamed' => [null, false];
+        yield 'non-resource action' => ['users.getAll', true];
+        yield 'no dot' => ['login', true];
+        yield 'leading dot' => ['.index', true];
+        yield 'one-letter resource' => ['a.list', true];
     }
 
     /**
-     * Test that a disallowed action produces an R8 violation with the full name
-     * as the offending surface.
+     * Test that a route name not of the form `{resource}.{action}`, with a
+     * resource action, is flagged with the name as the surface.
      *
-     * Pins the in_array(action, ALLOWED_ACTIONS) check. Using a single-segment
-     * resource ('a') ensures the resource part is non-empty after any plausible
-     * substr variant.
-     *
+     * @param  string|null  $name
+     * @param  bool  $flagged
      * @return void
      */
-    public function testDisallowedActionOnShortResourceIsFlagged(): void
+    #[DataProvider('provideNames')]
+    public function testFlagsNamesOutsideTheConvention(?string $name, bool $flagged): void
     {
-        // Arrange - a.list has resource a of one char and action list, which is
-        // not allowed
-        $route = new NormalisedRoute(
-            uri: 'a',
-            methods: ['GET'],
-            name: 'a.list',
-            segments: ['a'],
-            parameters: [],
+        $route = new NormalisedRoute('users', ['GET'], $name, ['users'], []);
+
+        $violations = (new RouteNameRule)->inspect($route, new RuleConfig([], [], [], []));
+
+        self::assertSame(
+            $flagged ? [['R8', Severity::WARNING, $name, null]] : [],
+            array_map(
+                static fn (Violation $violation): array => [$violation->ruleId, $violation->severity, $violation->offendingSurface, $violation->remediationHint],
+                $violations,
+            ),
         );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertCount(1, $violations);
-        self::assertSame('R8', $violations[0]->ruleId);
-        self::assertSame(Severity::WARNING, $violations[0]->severity);
-        self::assertSame('a.list', $violations[0]->offendingSurface);
     }
 
     /**
-     * Test that rule id() returns 'R8' and severity() returns
-     * Severity::WARNING.
+     * Test that the rule reports as R8 at warning severity.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
-        self::assertSame('R8', $this->rule->id());
-        self::assertSame(Severity::WARNING, $this->rule->severity());
+        $rule = new RouteNameRule;
+
+        self::assertSame('R8', $rule->id());
+        self::assertSame(Severity::WARNING, $rule->severity());
     }
 }

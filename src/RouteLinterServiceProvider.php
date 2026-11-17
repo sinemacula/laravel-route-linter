@@ -23,14 +23,7 @@ use SineMacula\RouteLinter\Sources\RouterRouteSource;
 use SineMacula\RouteLinter\Support\RouteLintMacros;
 
 /**
- * Registers the route-linter command, config, port bindings, and route macro.
- *
- * Binds the four ports to their default adapters and assembles the
- * RouteLintEngine from the configured rule list, resolving each rule through
- * the container so rules may declare constructor dependencies. The LintRoutes
- * use case is auto-resolved through constructor injection from these bindings.
- * All configuration is read through the RuleConfiguration port, so the adapter
- * is the single place that validates the `route-linter.*` config surface.
+ * Registers the route linter's config, bindings, command and route macro.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -85,11 +78,9 @@ final class RouteLinterServiceProvider extends ServiceProvider
     }
 
     /**
-     * Keep the string entries of a list-typed config value.
+     * Keep the string entries of a list config value.
      *
-     * The RuleConfiguration port rejects a malformed value when the lint runs,
-     * so these bindings only take the well-formed part rather than failing
-     * while the container builds the engine.
+     * Malformed values are rejected when the lint runs, not while resolving.
      *
      * @param  mixed  $value
      * @return array<int, string>
@@ -114,7 +105,7 @@ final class RouteLinterServiceProvider extends ServiceProvider
     }
 
     /**
-     * Keep the string-to-string pairs of a map-typed config value.
+     * Keep the string-to-string pairs of a map config value.
      *
      * @param  mixed  $value
      * @return array<string, string>
@@ -139,14 +130,7 @@ final class RouteLinterServiceProvider extends ServiceProvider
     }
 
     /**
-     * Resolve the configured rule classes into rule instances in declared
-     * order.
-     *
-     * Each entry in `route-linter.rules` must be a class string implementing
-     * the Rule or AggregateRule contract; rules are resolved through the
-     * container so they may declare constructor dependencies. A non-array
-     * config value yields an empty rule set. The engine partitions the resolved
-     * rules by kind, so per-route and cross-route rules share one ordered list.
+     * Resolve the configured rule classes through the container, in order.
      *
      * @param  \Illuminate\Contracts\Foundation\Application  $app
      * @return array<int, \SineMacula\RouteLinter\Contracts\AggregateRule|\SineMacula\RouteLinter\Contracts\Rule>

@@ -10,14 +10,7 @@ use SineMacula\RouteLinter\RouteLintReport;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Console adapter for the LintReporter port.
- *
- * Renders a RouteLintReport to the Artisan command's output: error violations
- * are grouped under an error header, warning violations under a warning header,
- * and stale-waiver entries under a dedicated stale-waivers header. When the
- * report is clean (no errors, warnings, or stale entries) a single success line
- * is written instead. Empty sections are silently skipped; the reporter never
- * influences the exit code.
+ * Writes the lint report to the console, one section per severity.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -31,13 +24,12 @@ final readonly class ConsoleLintReporter implements LintReporter
      */
     public function __construct(
 
-        /** Console output channel the report is rendered to */
+        /** The console output to write to */
         private OutputStyle $output,
     ) {}
 
     /**
-     * Render the report (findings grouped by severity, plus stale-waiver
-     * findings) to the invoking surface.
+     * Render the report, or a success line when it is clean.
      *
      * @param  \SineMacula\RouteLinter\RouteLintReport  $report
      * @return void
@@ -61,8 +53,7 @@ final readonly class ConsoleLintReporter implements LintReporter
     }
 
     /**
-     * Render error-severity violations, skipping the section when the list is
-     * empty.
+     * Render the error violations, if any.
      *
      * @param  array<int, \SineMacula\RouteLinter\Violation>  $errors
      * @return void
@@ -81,8 +72,7 @@ final readonly class ConsoleLintReporter implements LintReporter
     }
 
     /**
-     * Render warning-severity violations, skipping the section when the list is
-     * empty.
+     * Render the warning violations, if any.
      *
      * @param  array<int, \SineMacula\RouteLinter\Violation>  $warnings
      * @return void
@@ -101,7 +91,7 @@ final readonly class ConsoleLintReporter implements LintReporter
     }
 
     /**
-     * Render stale-waiver entries, skipping the section when the list is empty.
+     * Render the stale waivers, if any.
      *
      * @param  array<int, string>  $staleWaivers
      * @return void
@@ -120,11 +110,7 @@ final readonly class ConsoleLintReporter implements LintReporter
     }
 
     /**
-     * Format a single violation as a console line.
-     *
-     * Produces:
-     * `  [R1] GET /users (getUsers) -- Hint: use a noun-based path instead`
-     * When remediationHint is null the hint segment is omitted.
+     * Format a violation, e.g. `  [R1] GET users (get) -- Hint: GET /users`.
      *
      * @param  \SineMacula\RouteLinter\Violation  $violation
      * @return string

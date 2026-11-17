@@ -11,13 +11,7 @@ use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R12: route handler exists.
- *
- * Flags controller-backed routes whose handler class or method cannot be
- * resolved - a route pointing at a renamed or deleted controller action, which
- * would fail at request time. The handler is a `Class@method` string, or a bare
- * `Class` for an invokable controller (resolved against `__invoke`). Closure
- * routes carry no handler and are skipped.
+ * Rule R12: a controller route's handler class and method exist.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -62,8 +56,7 @@ final class RouteHandlerExistsRule implements Rule
 
         [$class, $method] = $this->split($route->handler);
 
-        // method_exists() resolves the class (autoloading it) and returns false
-        // for both an unknown class and a known class missing the method.
+        // False for an unknown class as well as a missing method
         if (method_exists($class, $method)) {
             return [];
         }
@@ -80,8 +73,8 @@ final class RouteHandlerExistsRule implements Rule
     }
 
     /**
-     * Split a handler string into its class and method parts, defaulting the
-     * method to `__invoke` when the handler is a bare invokable class.
+     * Split a handler into class and method, an invokable defaulting to
+     * `__invoke`.
      *
      * @param  string  $handler
      * @return array{0: string, 1: string}

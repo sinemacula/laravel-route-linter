@@ -11,12 +11,7 @@ use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R5: Slash-sanity enforcement.
- *
- * Flags any route URI that contains a trailing slash or a duplicate (empty)
- * slash. One violation is emitted per offending route regardless of how many
- * defects are present. The root path and empty URIs are excluded from
- * inspection because they are not REST collection URIs.
+ * Rule R5: no trailing or duplicate slashes.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

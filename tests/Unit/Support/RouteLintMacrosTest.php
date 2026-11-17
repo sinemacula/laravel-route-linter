@@ -7,6 +7,7 @@ namespace Tests\Unit\Support;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
 use SineMacula\RouteLinter\Support\RouteLintMacros;
 use Tests\TestCase;
@@ -23,22 +24,17 @@ use Tests\TestCase;
 final class RouteLintMacrosTest extends TestCase
 {
     /**
-     * Test that the ignoreRouteLint macro is registered after calling
-     * register().
+     * Test that the service provider registers the macro.
      *
      * @return void
      */
-    public function testMacroIsRegisteredAfterRegisterCall(): void
+    public function testMacroIsRegisteredByTheProvider(): void
     {
-        // The ApiServiceProvider already calls RouteLintMacros::register()
-        // during test bootstrap via getPackageProviders(); confirm the macro
-        // exists.
         self::assertTrue(Route::hasMacro('ignoreRouteLint'));
     }
 
     /**
-     * Test that calling register() more than once does not cause an error and
-     * leaves the macro functional (idempotent registration guard).
+     * Test that register() can be called repeatedly.
      *
      * @return void
      */
@@ -51,20 +47,12 @@ final class RouteLintMacrosTest extends TestCase
     }
 
     /**
-     * Test that calling register() a second time when the macro already exists
-     * does NOT re-register a new closure (kills ReturnRemoval mutant #90).
-     *
-     * Without the early return the macro would be re-registered on each call.
-     * We verify idempotency by checking that a second call leaves the route
-     * action produced by the macro intact - the macro still works and was not
-     * double-appended by the re-registration attempt.
+     * Test that registering again leaves the existing macro working.
      *
      * @return void
      */
-    public function testSecondRegisterCallDoesNotReplaceExistingMacro(): void
+    public function testSecondRegisterCallKeepsTheMacroWorking(): void
     {
-        // Macro is already registered by the service provider boot. Register
-        // again and confirm the macro still functions correctly.
         RouteLintMacros::register();
 
         $router = $this->getRouter();
@@ -81,8 +69,8 @@ final class RouteLintMacrosTest extends TestCase
     }
 
     /**
-     * Test that calling ignoreRouteLint() appends an entry to the
-     * `route-linter::lint-ignore` action key with the correct rules and reason.
+     * Test that the macro appends an entry to the route action and returns the
+     * route.
      *
      * @return void
      */
@@ -99,14 +87,11 @@ final class RouteLintMacrosTest extends TestCase
         self::assertCount(1, $action);
         self::assertSame(['R9'], $action[0]['rules']);
         self::assertSame('Legacy naming kept for backward compatibility.', $action[0]['reason']);
-
-        // Return value must be the route itself for fluent chaining
         self::assertSame($route, $result);
     }
 
     /**
-     * Test that multiple ignoreRouteLint() calls accumulate independent entries
-     * in the action array rather than overwriting.
+     * Test that repeated calls accumulate entries.
      *
      * @return void
      */
@@ -129,39 +114,34 @@ final class RouteLintMacrosTest extends TestCase
     }
 
     /**
-     * Test that an empty reason string throws a InvalidConfigurationException.
+     * Provide reasons that are blank.
      *
-     * @return void
+     * @return iterable<string, array{string}>
      */
-    public function testEmptyReasonThrowsInvalidConfigurationException(): void
+    public static function provideBlankReasons(): iterable
     {
-        $router = $this->getRouter();
-        $route  = $router->get('items', fn () => []);
-
-        $this->expectException(InvalidConfigurationException::class);
-
-        $route->ignoreRouteLint(['R9'], ''); // @phpstan-ignore method.notFound
+        yield 'empty' => [''];
+        yield 'whitespace only' => ['   '];
     }
 
     /**
-     * Test that a whitespace-only reason string throws a
-     * InvalidConfigurationException.
+     * Test that a blank reason is rejected.
      *
+     * @param  string  $reason
      * @return void
      */
-    public function testWhitespaceOnlyReasonThrowsInvalidConfigurationException(): void
+    #[DataProvider('provideBlankReasons')]
+    public function testBlankReasonIsRejected(string $reason): void
     {
-        $router = $this->getRouter();
-        $route  = $router->get('products', fn () => []);
+        $route = $this->getRouter()->get('items', fn () => []);
 
         $this->expectException(InvalidConfigurationException::class);
 
-        $route->ignoreRouteLint([], '   '); // @phpstan-ignore method.notFound
+        $route->ignoreRouteLint(['R9'], $reason); // @phpstan-ignore method.notFound
     }
 
     /**
-     * Test that passing an empty rules array stores an empty list, representing
-     * the "suppress all rules" intent.
+     * Test that an empty rules list is stored as given, meaning all rules.
      *
      * @return void
      */
@@ -179,13 +159,7 @@ final class RouteLintMacrosTest extends TestCase
     }
 
     /**
-     * Test that the stored rules list is a re-indexed (0-based) array (kills
-     * UnwrapArrayValues mutant #91: `$ruleIds` stored directly vs
-     * `array_values($ruleIds)`).
-     *
-     * If `array_values` is removed, an associative input like `['foo' => 'R1']`
-     * would be stored with string keys. With `array_values` the result is
-     * always a 0-indexed list regardless of input key type.
+     * Test that the stored rules are re-indexed as a list.
      *
      * @return void
      */
@@ -194,30 +168,19 @@ final class RouteLintMacrosTest extends TestCase
         $router = $this->getRouter();
         $route  = $router->get('assets', fn () => []);
 
-        // Pass an array with non-sequential / string keys
         $route->ignoreRouteLint(['foo' => 'R1', 'bar' => 'R3'], 'Non-sequential keys.'); // @phpstan-ignore method.notFound
 
         $action = $route->getAction('route-linter::lint-ignore');
 
         self::assertIsArray($action);
         self::assertCount(1, $action);
-
-        $rules = $action[0]['rules'];
-
-        // Must be a 0-based indexed list, not the original associative array
-        self::assertSame([0 => 'R1', 1 => 'R3'], $rules);
+        self::assertSame([0 => 'R1', 1 => 'R3'], $action[0]['rules']);
     }
 
     /**
-     * Test that register() binds the macro when it is absent, exercising the
-     * Route::macro() registration statement itself.
+     * Test that register() binds the macro when it is absent.
      *
-     * The macro is registered once per process and persists as static state, so
-     * every other test reaches register()'s idempotency guard before the
-     * macro() call ever runs. Flushing the registry first guarantees the
-     * registration statement executes under this test; the surrounding
-     * snapshot/restore keeps the flush from leaking into sibling tests in the
-     * same process.
+     * The macro registry is static, so it is flushed here and restored after.
      *
      * @return void
      */
@@ -234,8 +197,6 @@ final class RouteLintMacrosTest extends TestCase
 
             self::assertTrue(Route::hasMacro('ignoreRouteLint'));
 
-            // The freshly-bound closure must still append the entry and return
-            // the route
             $route  = $this->getRouter()->get('flush-test', fn () => []);
             $result = $route->ignoreRouteLint(['R1'], 'Re-registered macro still returns the route.'); // @phpstan-ignore method.notFound
 
@@ -247,7 +208,7 @@ final class RouteLintMacrosTest extends TestCase
     }
 
     /**
-     * Get a fresh router instance for the test.
+     * Get the application router.
      *
      * @return \Illuminate\Routing\Router
      */

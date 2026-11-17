@@ -17,9 +17,6 @@ use Tests\Fixtures\Output\BufferedConsoleOutput;
 /**
  * Integration tests for the UncachedLintProcess child-process runner.
  *
- * Runs fixture artisan scripts as the child to observe the command line and
- * environment it receives, and how its output and exit status are passed back.
- *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  *
@@ -28,7 +25,7 @@ use Tests\Fixtures\Output\BufferedConsoleOutput;
 #[CoversClass(UncachedLintProcess::class)]
 final class UncachedLintProcessTest extends TestCase
 {
-    /** @var string A child that records the command line and environment it received. */
+    /** @var string A child that records the command line and environment it gets. */
     private const string ECHO_CHILD = __DIR__ . '/../../Fixtures/ChildProcesses/Echo';
 
     /** @var string A child that writes to both streams and exits with code 3. */
@@ -37,19 +34,17 @@ final class UncachedLintProcessTest extends TestCase
     /** @var string A child that kills itself with SIGKILL. */
     private const string SIGNALED_CHILD = __DIR__ . '/../../Fixtures/ChildProcesses/Signaled';
 
-    /** @var string The environment file the caller loaded; only a `probe` environment file exists beside it. */
+    /** @var string The environment file the caller loaded; a `probe` file sits beside it. */
     private const string ENVIRONMENT_FILE = self::ECHO_CHILD . '/environment';
 
     /**
-     * Test that the child runs route:lint with the cache bypassed, the caller's
-     * decoration and terminal width, and the explicit environment.
+     * Test that the child runs route:lint with the route cache bypassed.
      *
      * @return void
      */
     public function testRunsRouteLintWithTheRouteCacheBypassed(): void
     {
-        // With no inherited width, the child can only render at the caller's
-        // width if it is passed on
+        // Unset, so the width can only reach the child by being passed on
         $child = $this->withEnvironment(['COLUMNS' => null], fn (): array => $this->echo(new BufferedOutput(OutputInterface::VERBOSITY_NORMAL, true), 'staging'));
 
         self::assertSame(['route:lint', '--no-interaction', '--ansi', '--env=staging'], $child['arguments']);
@@ -59,8 +54,7 @@ final class UncachedLintProcessTest extends TestCase
     }
 
     /**
-     * Test that an undecorated, normal-verbosity caller with no explicit
-     * environment adds no further flags.
+     * Test that a plain caller adds no optional flags.
      *
      * @return void
      */
@@ -101,8 +95,7 @@ final class UncachedLintProcessTest extends TestCase
     }
 
     /**
-     * Test that the child inherits the caller's environment, including values
-     * set at runtime.
+     * Test that the child inherits values set in the environment at runtime.
      *
      * @return void
      */
@@ -114,49 +107,38 @@ final class UncachedLintProcessTest extends TestCase
     }
 
     /**
-     * Test that an environment name with its own environment file beside the
-     * caller's is withheld, so the child loads the file the caller loaded.
+     * Provide environment names with the value the child receives.
      *
-     * @return void
+     * @return iterable<string, array{string|null, string, false|string}>
      */
-    public function testWithholdsAnEnvironmentNameThatWouldSelectAnotherFile(): void
+    public static function provideEnvironmentNames(): iterable
     {
-        $child = $this->withEnvironment(['APP_ENV' => 'probe'], fn (): array => $this->echo(new BufferedOutput, null));
-
-        self::assertFalse($child['appEnv']);
+        yield 'name with its own file' => [self::ENVIRONMENT_FILE, 'probe', false];
+        yield 'name without its own file' => [self::ENVIRONMENT_FILE, 'staging', 'staging'];
+        yield 'cached configuration' => [null, 'probe', 'probe'];
     }
 
     /**
-     * Test that a caller with cached configuration, which loaded no environment
-     * file, passes its environment name on even when that name has a file.
+     * Test that the environment name is withheld only when it would make the
+     * child load an environment file the caller did not.
      *
+     * @param  string|null  $environmentFile
+     * @param  string  $name
+     * @param  false|string  $expected
      * @return void
      */
-    public function testPassesOnTheEnvironmentNameOfACallerThatLoadedNoFile(): void
+    #[DataProvider('provideEnvironmentNames')]
+    public function testPassesOnTheEnvironmentNameUnlessItSelectsAnotherFile(?string $environmentFile, string $name, false|string $expected): void
     {
-        $process = new UncachedLintProcess(self::ECHO_CHILD, null, $this->terminal());
+        $process = new UncachedLintProcess(self::ECHO_CHILD, $environmentFile, $this->terminal());
 
-        $child = $this->withEnvironment(['APP_ENV' => 'probe'], fn (): array => $this->echo(new BufferedOutput, null, $process));
+        $child = $this->withEnvironment(['APP_ENV' => $name], fn (): array => $this->echo(new BufferedOutput, null, $process));
 
-        self::assertSame('probe', $child['appEnv']);
+        self::assertSame($expected, $child['appEnv']);
     }
 
     /**
-     * Test that an environment name without an environment file of its own is
-     * passed on.
-     *
-     * @return void
-     */
-    public function testPassesOnAnEnvironmentNameWithoutAFileOfItsOwn(): void
-    {
-        $child = $this->withEnvironment(['APP_ENV' => 'staging'], fn (): array => $this->echo(new BufferedOutput, null));
-
-        self::assertSame('staging', $child['appEnv']);
-    }
-
-    /**
-     * Test that the child's exit code is returned and both of its streams are
-     * written to a caller without an error output, even when it is quiet.
+     * Test that the child's exit code and output reach a quiet caller.
      *
      * @return void
      */
@@ -173,8 +155,7 @@ final class UncachedLintProcessTest extends TestCase
     }
 
     /**
-     * Test that the child's error stream is written to the caller's error
-     * output when it has one.
+     * Test that the child's error stream goes to the caller's error output.
      *
      * @return void
      */
@@ -189,8 +170,7 @@ final class UncachedLintProcessTest extends TestCase
     }
 
     /**
-     * Test that a child killed by a signal is reported and mapped to the
-     * conventional 128-plus-signal exit code.
+     * Test that a child killed by a signal exits 128 plus the signal.
      *
      * @return void
      */
@@ -205,8 +185,7 @@ final class UncachedLintProcessTest extends TestCase
     }
 
     /**
-     * Build a process for the given child, for a caller that loaded the fixture
-     * environment file and whose terminal is 97 columns wide.
+     * Build a process for the given child.
      *
      * @param  string  $child
      * @return \SineMacula\RouteLinter\Console\UncachedLintProcess
@@ -240,9 +219,6 @@ final class UncachedLintProcessTest extends TestCase
     /**
      * Run the echo child and decode what it recorded.
      *
-     * The child records to a file named by an inherited variable rather than to
-     * its output, so what it received is observable at every verbosity.
-     *
      * @param  \Symfony\Component\Console\Output\BufferedOutput  $output
      * @param  string|null  $environment
      * @param  \SineMacula\RouteLinter\Console\UncachedLintProcess|null  $process
@@ -267,8 +243,7 @@ final class UncachedLintProcessTest extends TestCase
     }
 
     /**
-     * Run a callback with the given process environment variables set (or
-     * unset, for null), restoring their previous values afterwards.
+     * Run a callback with environment variables set, or unset for null.
      *
      * @template TResult
      *

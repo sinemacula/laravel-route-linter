@@ -7,11 +7,7 @@ namespace SineMacula\RouteLinter\Contracts;
 use SineMacula\RouteLinter\RouteLintReport;
 
 /**
- * Outbound port for rendering the lint report to the invoking surface.
- *
- * Implementers receive the fully-assembled {@see RouteLintReport} verdict
- * aggregate and render findings (grouped by severity) plus any stale-waiver
- * entries to their backing output surface (e.g. console, structured log).
+ * Renders a lint report, such as to the console.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -19,8 +15,7 @@ use SineMacula\RouteLinter\RouteLintReport;
 interface LintReporter
 {
     /**
-     * Render the report (findings grouped by severity, plus stale-waiver
-     * findings) to the invoking surface.
+     * Render the report.
      *
      * @param  \SineMacula\RouteLinter\RouteLintReport  $report
      * @return void

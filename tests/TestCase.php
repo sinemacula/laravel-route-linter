@@ -8,11 +8,7 @@ use Orchestra\Testbench\TestCase as OrchestraTestCase;
 use SineMacula\RouteLinter\RouteLinterServiceProvider;
 
 /**
- * Base test case for the route-linter package.
- *
- * Registers the package service provider against a Testbench application. The
- * linter touches neither the database nor the cache, so no further environment
- * setup is required; individual tests seed route-linter config as needed.
+ * Base test case that registers the package against a Testbench application.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

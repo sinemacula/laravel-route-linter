@@ -32,8 +32,7 @@ final class FrameworkInflectorTest extends TestCase
     }
 
     /**
-     * Test that a configured uncountable is returned unchanged by singular()
-     * and is reported as plural-safe by isPlural().
+     * Test that a configured uncountable is kept by singular() and is plural.
      *
      * @return void
      */
@@ -46,7 +45,7 @@ final class FrameworkInflectorTest extends TestCase
     }
 
     /**
-     * Test that isPlural() correctly identifies plural and singular words.
+     * Test that isPlural() tells plural words from singular ones.
      *
      * @return void
      */
@@ -59,8 +58,7 @@ final class FrameworkInflectorTest extends TestCase
     }
 
     /**
-     * Test that an empty string is returned unchanged by singular() and
-     * isPlural() returns false for an empty string.
+     * Test that an empty string is kept by singular() and is not plural.
      *
      * @return void
      */
@@ -79,53 +77,22 @@ final class FrameworkInflectorTest extends TestCase
      */
     public function testUncountableMatchingIsCaseInsensitive(): void
     {
-        $inflector = new FrameworkInflector(['media']);
+        $media = new FrameworkInflector(['media']);
+        $data  = new FrameworkInflector(['data']);
 
-        self::assertSame('Media', $inflector->singular('Media'));
-        self::assertTrue($inflector->isPlural('MEDIA'));
+        self::assertSame('Media', $media->singular('Media'));
+        self::assertTrue($media->isPlural('MEDIA'));
+        self::assertTrue($data->isPlural('DATA'));
+        self::assertTrue($data->isPlural('Data'));
     }
 
     /**
-     * Test that an uncountable word where Str::singular() returns the same
-     * value is still reported as plural-safe by isPlural().
-     *
-     * Targets ReturnRemoval on the uncountable `return true` in isPlural():
-     * without that return, 'data' would fall through to
-     * `Str::singular($word) !== $word`, which evaluates to 'data' !== 'data' =
-     * false, incorrectly reporting 'data' as not plural.
+     * Test that an uncountable whose singular form is itself is still plural.
      *
      * @return void
      */
     public function testUncountableWhoseSingularFormMatchesItselfIsPlural(): void
     {
-        // `Str::singular('data')` returns 'data' (unchanged), so without the
-        // early return the result would be false.
-        $inflector = new FrameworkInflector(['data']);
-
-        self::assertTrue($inflector->isPlural('data'));
-    }
-
-    /**
-     * Test that isPlural() is case-insensitive for uncountable matching -
-     * 'DATA' (uppercase) must be treated as plural-safe when 'data' is
-     * configured.
-     *
-     * Targets UnwrapStrToLower on the uncountable in_array check in isPlural():
-     * without strtolower(), in_array('DATA', ['data']) returns false; the
-     * method then delegates to Str::singular('DATA') which returns 'DATA'
-     * (unchanged), so Str::singular != word evaluates false - isPlural returns
-     * false instead of the expected true.
-     *
-     * @return void
-     */
-    public function testUncountableMatchingIsCaseInsensitiveForWordsThatDoNotChangeSingular(): void
-    {
-        // 'data' is an uncountable whose Str::singular() == itself.
-        // Without strtolower(), 'DATA' would not be found in ['data'] and
-        // Str::singular('DATA') === 'DATA' would make isPlural return false.
-        $inflector = new FrameworkInflector(['data']);
-
-        self::assertTrue($inflector->isPlural('DATA'));
-        self::assertTrue($inflector->isPlural('Data'));
+        self::assertTrue((new FrameworkInflector(['data']))->isPlural('data'));
     }
 }

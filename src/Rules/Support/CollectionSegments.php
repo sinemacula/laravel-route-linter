@@ -10,25 +10,16 @@ use SineMacula\RouteLinter\NormalisedRoute;
 /**
  * Locates the segments of a route that name a resource collection.
  *
- * A literal segment names a collection when a route parameter follows it, or
- * when it is the last literal segment of the path. A literal followed by
- * another literal - a namespace such as `auth` or `admin` - names none.
- *
- * Singleton resources are excluded: one exists in its context, so its segment
- * is singular by design. A singleton is inferred when a route named for a
- * `show`, `update`, or `destroy` action and registered for that action's method
- * ends in a literal segment where an ordinary resource would end in its
- * parameter, as `Route::singleton()` registers. Routes the inference cannot
- * recognise, such as a creatable singleton's `store` route, are covered by the
- * configured singleton resources, each matched against the end of the path up
- * to its segment.
+ * A literal names a collection when a parameter follows it or it is the last
+ * literal; one followed by another literal is a namespace. Singleton segments
+ * are excluded, whether inferred from a singleton member route or configured.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
 final class CollectionSegments
 {
-    /** @var array<string, array<int, string>> The methods each singleton member action is registered for. */
+    /** @var array<string, array<int, string>> The methods of each singleton member action. */
     private const array SINGLETON_ACTIONS = [
         'show'    => ['GET'],
         'update'  => ['PUT', 'PATCH'],
@@ -60,8 +51,8 @@ final class CollectionSegments
     }
 
     /**
-     * Determine whether the literal segment at the given index names a
-     * collection: a parameter follows it, or no literal does.
+     * Determine whether the literal at the given index is followed by a
+     * parameter or by no literal.
      *
      * @param  int  $index
      * @param  array<int, string>  $segments
@@ -81,11 +72,10 @@ final class CollectionSegments
     }
 
     /**
-     * Find the singleton segment of a route registered as a singleton member
-     * action, or null when the route is not one.
+     * Find the segment a singleton member route addresses, or null.
      *
      * An ordinary resource's member route ends in its parameter; a singleton's
-     * ends in the literal segment itself.
+     * ends in a literal.
      *
      * @param  \SineMacula\RouteLinter\NormalisedRoute  $route
      * @return int|null
@@ -104,11 +94,7 @@ final class CollectionSegments
     }
 
     /**
-     * Find the segments the configured singleton resources identify.
-     *
-     * Each resource path identifies its last segment wherever the route's path
-     * up to that segment ends with the resource path, a parameter matching any
-     * parameter.
+     * Find the segments whose path ends with a configured singleton resource.
      *
      * @param  array<int, string>  $segments
      * @param  array<int, string>  $resources
@@ -135,8 +121,7 @@ final class CollectionSegments
     }
 
     /**
-     * Replace every parameter segment with an anonymous `{}`, so paths compare
-     * equal whatever their parameters are named.
+     * Replace each parameter with `{}`, so parameter names do not matter.
      *
      * @param  array<int, string>  $segments
      * @return array<int, string>
@@ -147,7 +132,7 @@ final class CollectionSegments
     }
 
     /**
-     * Determine whether a segment is a literal: neither empty nor a parameter.
+     * Determine whether a segment is neither empty nor a parameter.
      *
      * @param  string  $segment
      * @return bool

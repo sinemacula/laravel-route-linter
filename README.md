@@ -14,39 +14,26 @@
 
 </div>
 
-A deterministic, opt-in Artisan command that lints a Laravel application's route table against a fixed catalogue of
-RESTful URL conventions and route-integrity checks, and exits non-zero on error-severity violations so CI can gate on
-it.
-
-It reads the live route table (`Router::getRoutes()` after a full boot) plus its own config - no model versions, no
-probabilistic inference - so the same routes and config always produce the same verdict. It enforces the
-mechanically-checkable convention subset only; it is not a proof of true RESTfulness.
+An Artisan command that lints a Laravel application's route table against a fixed set of RESTful URL conventions and
+route-integrity checks. It exits non-zero on error-severity violations, so CI can gate on it. It checks only the
+mechanically-checkable subset of the conventions; passing it does not prove an API is RESTful.
 
 ## How It Works
 
-The linter is built around a small set of ports and adapters, so the rule logic carries no framework dependency. One
-invocation walks the whole route table once:
+The rules run against framework-free value objects behind a small set of ports, so they carry no Laravel dependency. One
+run:
 
-1. **Source** the app-owned routes from the live router, excluding vendor routes (the same set `route:list
-   --except-vendor` reports).
-2. **Normalise** each route into a framework-free value object - its URI split into segments, its parameter names, its
-   HTTP methods, its controller handler, and its gathered middleware.
-3. **Inspect** every route with the ordered per-route rules, then run the cross-route (aggregate) rules over the whole
-   set; each rule returns zero or more violations tagged `error` or `warning`.
-4. **Suppress** any violation covered by an inline waiver or a config allowlist entry.
-5. **Report** the findings in a deterministic total order and exit non-zero when any `error`-severity violation
-   survives.
+1. **Sources** the app-owned routes from the router, excluding vendor routes (the set `route:list --except-vendor`
+   reports).
+2. **Normalises** each route: its URI split into segments, parameter names, HTTP methods, controller handler and
+   gathered middleware.
+3. **Inspects** every route with the per-route rules, then runs the cross-route (aggregate) rules over the whole set.
+   Each violation is tagged `error` or `warning`.
+4. **Suppresses** violations covered by an inline waiver or a config allowlist entry.
+5. **Reports** the findings in a fixed order and exits non-zero when any `error` survives.
 
-A few principles hold across the surface:
-
-- **Opt-in and deterministic.** Nothing runs until you call `route:lint`, and the same route table plus the same config
-  yields a byte-identical verdict on every run, independent of route-cache state.
-- **Every waiver is justified and per-rule.** Waivers require a written reason and target specific rules. Unused
-  waivers - and allowlist entries matching no live route - are surfaced as stale entries so they cannot rot (reported,
-  but they do not gate).
-- **Misconfiguration fails loud.** A malformed config value (a non-array where an array is expected, a non-string verb,
-  uncountable or hint, an exemption missing its reason) raises an `InvalidConfigurationException` rather than silently
-  weakening the verdict.
+A malformed config value - a non-array where an array is expected, a non-string word or hint, an exemption without a
+reason - raises an `InvalidConfigurationException` instead of silently weakening the verdict.
 
 ## Rules
 
@@ -60,14 +47,12 @@ A few principles hold across the surface:
 | R6   | error    | No duplicate route name (would break `route()` URL generation)                              |
 | R7   | error    | Standard HTTP methods only                                                                  |
 | R8   | warning  | Named routes follow `{resource}.{action}`                                                   |
-| R9   | warning  | No HTML-only `create` / `edit` action as the final literal segment on an API surface        |
+| R9   | warning  | No HTML-only `create` / `edit` action as the final literal segment                          |
 | R10  | warning  | Routes matching a configured pattern declare the required middleware                        |
 | R11  | warning  | Resource nesting no deeper than the configured number of collection levels (default three)  |
 | R12  | error    | Route handler (controller class / method) exists                                            |
 
-> [!NOTE]
-> Rule IDs are stable across releases - a rule keeps its ID for life, so waivers and CI gates that pin
-> an ID stay valid on upgrade.
+Rule IDs are stable across releases, so waivers that name a rule stay valid on upgrade.
 
 ## Installation
 
@@ -87,44 +72,46 @@ php artisan vendor:publish --tag=route-linter-config
 php artisan route:lint
 ```
 
-Exits non-zero when any **error-severity** violation is present (warnings are reported but do not gate). Run it as a
-step in CI.
+Exits non-zero when any error-severity violation is present or the config is invalid. Warnings are reported but do
+not fail the run.
 
 ## Waiving a Violation
 
-Every waiver requires a written reason and is **per-rule**. Unused waivers (and allowlist entries matching no live
-route) are surfaced as stale entries so they cannot rot - these are reported but do not gate.
+Every waiver needs a written reason and can be scoped to specific rules. Waivers that suppress nothing, and allowlist
+entries that match no live route, are reported as stale entries. Stale entries are reported but do not fail the run.
 
-**Inline (preferred) - co-located at the route:**
+**Inline, at the route:**
 
 ```php
 Route::patch('photos/{photo}/edit', [PhotoController::class, 'edit'])
-    ->ignoreRouteLint(['R9'], 'legacy admin UI - BL-123');   // waives only R9 on this route
+    ->ignoreRouteLint(['R9'], 'Legacy admin UI');      // waives only R9 on this route
 
 Route::get('legacy/getStats', LegacyStatsController::class)
-    ->ignoreRouteLint([], 'frozen v1 contract - BL-200');    // [] = all rules
+    ->ignoreRouteLint([], 'Frozen v1 contract');       // [] = all rules
 ```
 
-Stored in the route action (survives `route:cache`).
+The waiver is stored in the route action, so it survives `route:cache`.
 
-**Config allowlist - for routes you cannot annotate:**
+**Config allowlist, for routes you cannot annotate:**
 
 ```php
 // config/route-linter.php
 'exemptions' => [
-    ['match' => 'photos.edit', 'rules' => ['R9'], 'reason' => 'BL-123'],  // per-rule
-    ['match' => 'legacy.*',                       'reason' => 'BL-200'],  // rules omitted = all
+    ['match' => 'photos.edit', 'rules' => ['R9'], 'reason' => 'Legacy admin UI'],     // per-rule
+    ['match' => 'legacy/*',                       'reason' => 'Frozen v1 contract'],  // rules omitted = all
 ],
 ```
 
+`match` is an exact route name or an `fnmatch` pattern matched against the URI.
+
 ## Tuning
 
-Listing a word in `verb_allowlist` removes it from the verb denylist without redefining the curated list. It is **rule
-tuning**, not a per-route waiver - use it for legitimate domain-noun homographs (e.g. a `password-resets` or `transfers`
-resource). This is global and needs no reason. A published `verb_denylist` replaces the shipped list wholesale, so leave
-it out of your published config to keep receiving the package's additions. The maximum nesting depth enforced by R11 is
-set with `nesting_max_depth` (default `3`); only segments that name a collection count, so namespace prefixes such as
-`auth/` or `admin/` add no depth.
+Listing a word in `verb_allowlist` removes it from the verb denylist without redefining the curated list. It is rule
+tuning, not a per-route waiver: use it for domain nouns that share a verb's spelling (e.g. a `password-resets` or
+`transfers` resource). It applies to every route and needs no reason. A published `verb_denylist` replaces the shipped
+list wholesale, so leave it out of your published config to keep receiving the package's additions. The maximum nesting
+depth enforced by R11 is set with `nesting_max_depth` (default `3`); only segments that name a collection count, so
+namespace prefixes such as `auth/` or `admin/` add no depth.
 
 Singleton resources (`Route::singleton()` / `Route::apiSingleton()`) are singular by design, so R4 and R11 skip their
 segment. Their `show`, `update` and `destroy` routes are recognised automatically; list the resource path in
@@ -144,21 +131,21 @@ must declare; matching is an exact token comparison, so write parameterised midd
 
 ## Extending
 
-The rule set is the product surface, and it is configurable. The `rules` key lists the rules the engine runs, in order;
-each is a class implementing the `Rule` contract and is resolved from the container, so rules may declare constructor
-dependencies. Remove a built-in by deleting its line, or append your own:
+The `rules` key lists the rules the engine runs, in order. Each is a class implementing the `Rule` contract, resolved
+from the container so it may declare constructor dependencies. Remove a built-in rule by deleting its line, or append
+your own:
 
 ```php
 // config/route-linter.php
 'rules' => [
     \SineMacula\RouteLinter\Rules\VerbInPathRule::class,
-    // …the built-in rules…
-    \App\RouteLinting\NoSnakeCaseRule::class,    // your custom rule
+    // ...the built-in rules...
+    \App\RouteLinting\NoSnakeCaseRule::class,
 ],
 ```
 
 A custom rule receives the normalised route - its segments, brace-stripped parameter names, controller handler
-(`Class@method`, or `null` for closures), and gathered middleware - and the active config, and returns zero or more
+(`Class@method`, or `null` for closures) and gathered middleware - with the active config, and returns zero or more
 violations:
 
 ```php
@@ -189,24 +176,20 @@ class NoSnakeCaseRule implements Rule
 }
 ```
 
-For checks that span the whole route table rather than one route at a time - duplicate detection, table-wide invariants
+For checks that span the whole route table, such as duplicate detection, implement `AggregateRule` instead. Its
+`inspect(array $routes, RuleConfig $config)` receives every normalised route at once and runs after the per-route rules.
+List it in the same `rules` key. Attribute each violation to the offending route's `identity()` so waivers still apply.
 
-- implement `AggregateRule` instead. Its `inspect(array $routes, RuleConfig $config)` receives every normalised route at
-once and runs in a single pass after the per-route rules. List it in the same `rules` key; the engine partitions the two
-kinds by contract. Attribute each violation to the offending route's `identity()` so per-rule waivers still apply.
-
-Rule IDs must be unique across both kinds - the engine rejects a duplicate at boot. Output rendering is a port too: bind
-your own `LintReporter` implementation (for example, to emit JSON or SARIF for CI) to replace the default console
-reporter.
+Rule IDs must be unique across both kinds; a duplicate raises an `InvalidConfigurationException` when the engine is
+built. To change the output, for example to emit JSON or SARIF, bind your own `LintReporter` implementation.
 
 ## Determinism
 
-The same route table plus the same config yields a byte-identical verdict on every run, independent of route-cache
-state. A cached table has lost what the rules depend on - closures are serialised and unnamed routes carry random
-generated names - so while the routes are cached, `route:lint` re-runs itself in a child process with the route cache
-bypassed and lints the current route definitions. The child boots as a fresh `php artisan` would, from the same process
-environment and any `--env` you pass; the cache file is never read or modified. The linter enforces the
-mechanically-checkable convention subset only - it is not a proof of true RESTfulness.
+The same route definitions and config give the same output on every run, whether or not routes are cached. A cached
+table has lost what the rules depend on: closures are serialised and unnamed routes carry random generated names. So
+while routes are cached, `route:lint` re-runs itself in a child process with the route cache bypassed. The child boots
+as a fresh `php artisan` would, with the same process environment and any `--env` you pass. The cache file is never read
+or modified.
 
 ## Requirements
 
@@ -216,29 +199,27 @@ mechanically-checkable convention subset only - it is not a proof of true RESTfu
 ## Testing
 
 ```bash
-composer test                # Run the test suite in parallel using Paratest
-composer test:coverage       # With clover coverage report
-composer test:mutation       # Mutation-testing gate (Infection) - the enforced MSI floor
-composer test:mutation:full  # Full mutation suite, no thresholds (scheduled audit run)
-composer check               # Static analysis and lint checks via qlty
-composer format              # Format the codebase via qlty
-composer smells              # Advisory code smells (duplication, complexity)
-composer bench               # Run the PHPBench benchmarks
+composer test                # Test suite, in parallel via Paratest
+composer test:coverage       # Test suite with a clover coverage report
+composer test:mutation       # Mutation-testing gate (Infection), scoped to the diff against master
+composer test:mutation:full  # Full mutation run, no thresholds
+composer check               # Static analysis and linting via qlty
+composer format              # Formatting via qlty
+composer smells              # Code smells (duplication, complexity) via qlty
+composer bench               # PHPBench benchmarks
 ```
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for a list of notable changes.
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## Contributing
 
-Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on branching, commits, code
-quality, and pull requests.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 
-If you discover a security vulnerability, please report it responsibly. See [SECURITY.md](SECURITY.md) for the
-disclosure policy and contact details.
+Report vulnerabilities privately; see [SECURITY.md](SECURITY.md).
 
 ## License
 

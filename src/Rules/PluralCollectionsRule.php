@@ -13,12 +13,10 @@ use SineMacula\RouteLinter\Rules\Support\CollectionSegments;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R4: Plural-collections enforcement.
+ * Rule R4: collection segments are plural.
  *
- * Flags every literal URI segment that names a resource collection but is not
- * plural. Collection segments, excluding singleton resources, are located by
- * {@see CollectionSegments}. Uncountable nouns configured in the active rule
- * config are treated as plural-safe and never flagged.
+ * Collection segments are located by {@see CollectionSegments}; configured
+ * uncountables count as plural.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -33,10 +31,10 @@ final readonly class PluralCollectionsRule implements Rule
      */
     public function __construct(
 
-        /** Inflector port used to test whether a collection segment is plural */
+        /** Decides whether a segment is plural */
         private Inflector $inflector,
 
-        /** Locator of the route's collection segments */
+        /** Locates the route's collection segments */
         private CollectionSegments $collections = new CollectionSegments,
     ) {}
 

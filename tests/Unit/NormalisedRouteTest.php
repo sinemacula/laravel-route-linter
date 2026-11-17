@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\NormalisedRoute;
 use Tests\TestCase;
 
@@ -20,74 +21,32 @@ use Tests\TestCase;
 final class NormalisedRouteTest extends TestCase
 {
     /**
-     * Test that methods are sorted ascending regardless of construction order.
+     * Provide routes with their expected identity.
      *
-     * @return void
+     * @return iterable<string, array{string, list<string>, string|null, string}>
      */
-    public function testMethodsAreSortedDeterministically(): void
+    public static function provideIdentities(): iterable
     {
-        $route = new NormalisedRoute(
-            uri: 'users',
-            methods: ['POST', 'GET'],
-            name: null,
-            segments: ['users'],
-            parameters: [],
-        );
-
-        self::assertStringStartsWith('GET,POST ', $route->identity());
+        yield 'methods sorted' => ['users', ['POST', 'GET'], null, 'GET,POST users'];
+        yield 'uri with parameter' => ['users/{user}', ['GET'], null, 'GET users/{user}'];
+        yield 'name appended' => ['users', ['HEAD', 'GET'], 'users.index', 'GET,HEAD users users.index'];
+        yield 'unnamed' => ['orders', ['GET'], null, 'GET orders'];
     }
 
     /**
-     * Test that the URI is included in the identity string.
+     * Test that the identity is the sorted methods, the URI and any name.
      *
+     * @param  string  $uri
+     * @param  list<string>  $methods
+     * @param  string|null  $name
+     * @param  string  $expected
      * @return void
      */
-    public function testUriIsIncludedInIdentity(): void
+    #[DataProvider('provideIdentities')]
+    public function testIdentityJoinsSortedMethodsUriAndName(string $uri, array $methods, ?string $name, string $expected): void
     {
-        $route = new NormalisedRoute(
-            uri: 'users/{user}',
-            methods: ['GET'],
-            name: null,
-            segments: ['users', '{user}'],
-            parameters: ['user'],
-        );
+        $route = new NormalisedRoute($uri, $methods, $name, explode('/', $uri), []);
 
-        self::assertSame('GET users/{user}', $route->identity());
-    }
-
-    /**
-     * Test that a named route appends the name after the URI.
-     *
-     * @return void
-     */
-    public function testNamedRouteAppendsNameToIdentity(): void
-    {
-        $route = new NormalisedRoute(
-            uri: 'users',
-            methods: ['HEAD', 'GET'],
-            name: 'users.index',
-            segments: ['users'],
-            parameters: [],
-        );
-
-        self::assertSame('GET,HEAD users users.index', $route->identity());
-    }
-
-    /**
-     * Test that an unnamed route omits the name from the identity.
-     *
-     * @return void
-     */
-    public function testUnnamedRouteOmitsNameFromIdentity(): void
-    {
-        $route = new NormalisedRoute(
-            uri: 'orders',
-            methods: ['GET'],
-            name: null,
-            segments: ['orders'],
-            parameters: [],
-        );
-
-        self::assertSame('GET orders', $route->identity());
+        self::assertSame($expected, $route->identity());
     }
 }

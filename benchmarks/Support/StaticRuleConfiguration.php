@@ -8,12 +8,7 @@ use SineMacula\RouteLinter\Contracts\RuleConfiguration;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 
 /**
- * In-memory rule-configuration adapter for the benchmark harness.
- *
- * Hands back a pre-built {@see RuleConfig} so the end-to-end LintRoutes
- * benchmark measures the linting hot path in isolation, without touching the
- * Laravel config repository or the `route-linter.*` config section. The config
- * is supplied once at construction and returned verbatim on every load.
+ * In-memory rule configuration that returns a fixed config.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

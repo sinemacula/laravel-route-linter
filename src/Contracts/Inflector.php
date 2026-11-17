@@ -5,12 +5,7 @@ declare(strict_types = 1);
 namespace SineMacula\RouteLinter\Contracts;
 
 /**
- * Outbound port for word inflection, honouring configured uncountables.
- *
- * Isolates the domain's singularisation and plurality checks from the framework
- * inflector. The adapter honours the uncountables list supplied by the rule
- * configuration so domain nouns like "media" or "data" are never
- * mis-singularised.
+ * Word inflection that honours the configured uncountables.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -18,7 +13,7 @@ namespace SineMacula\RouteLinter\Contracts;
 interface Inflector
 {
     /**
-     * Return the singular form of a word, honouring configured uncountables.
+     * Return the singular form of a word.
      *
      * @param  string  $word
      * @return string
@@ -26,8 +21,7 @@ interface Inflector
     public function singular(string $word): string;
 
     /**
-     * Determine whether a word is already plural (uncountables are treated as
-     * plural-safe).
+     * Determine whether a word is plural; uncountables count as plural.
      *
      * @param  string  $word
      * @return bool

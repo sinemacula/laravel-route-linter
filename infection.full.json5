@@ -16,8 +16,7 @@
     initialTestsPhpOptions: "-d memory_limit=1G",
     timeout: 30,
     mutators: {
-        // Full audit run: all @default mutators, no ignores, so provably-equivalent
-        // mutants stay visible. The gate (infection.json5) ignores the reviewed ones.
+        // No ignores, so the mutants the gate ignores as equivalent stay visible.
         "@default": true
     }
 }
