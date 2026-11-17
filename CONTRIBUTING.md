@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions are welcome via GitHub pull requests. This guide covers the expectations for working on this package.
+Contributions are welcome as GitHub pull requests.
 
 ## Requirements
 
@@ -31,7 +31,7 @@ Branch from `master` using the appropriate prefix:
 
 ### Commits
 
-This project uses [Conventional Commits](https://www.conventionalcommits.org/). Prefix your commit messages accordingly:
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```text
 feat: add a custom route-linting rule
@@ -42,51 +42,47 @@ chore: update qlty configuration
 
 ### Code Quality
 
-All code must pass static analysis before submission:
+Run these through qlty before opening a pull request:
 
 ```bash
-composer check    # Static analysis and lint checks via qlty (PHPStan, PHP-CS-Fixer, CodeSniffer)
-composer format   # Format the codebase via qlty
-composer smells    # Advisory code smells (duplication, complexity)
+composer check    # Static analysis and linting
+composer format   # Formatting
+composer smells   # Code smells (duplication, complexity)
 ```
 
 ### Testing
 
-Run the full test suite before submitting:
-
 ```bash
-composer test                # Run the test suite in parallel using Paratest
-composer test:coverage       # With clover coverage report
-composer test:mutation       # Mutation-testing gate (Infection) - the enforced MSI floor
-composer test:mutation:full  # Full mutation suite, no thresholds (scheduled audit run)
+composer test                # Test suite, in parallel via Paratest
+composer test:coverage       # Test suite with a clover coverage report
+composer test:mutation       # Mutation-testing gate (Infection), scoped to the diff against master
+composer test:mutation:full  # Full mutation run, no thresholds
 ```
 
 Single test file or method:
 
 ```bash
 vendor/bin/phpunit tests/Unit/Rules/VerbInPathRuleTest.php
-vendor/bin/phpunit --filter testFlagsActionVerbInPathSegment tests/Unit/Rules/VerbInPathRuleTest.php
+vendor/bin/phpunit --filter testFlagsGetUsersWithRemediationHint tests/Unit/Rules/VerbInPathRuleTest.php
 ```
 
 ### Standards
 
-- PHPStan level 8 compliance
-- Full type hints on all public method parameters and return types
-- PHPDoc on all methods and classes
-- New code is expected to ship with tests covering the behavioural surface; the package's mutation-testing gate
-  (`composer test:mutation`) is the enforced floor
+- PHPStan level 9, as run by qlty
+- Full type hints on parameters and return types
+- PHPDoc on all classes, methods, properties and constants
+- Tests for new behaviour; the mutation gate (`composer test:mutation`) requires every mutant in the diff to be killed
 
 ## Pull Requests
 
-- Keep changes minimal and scoped to a single concern
-- Do not change static analysis or formatting configuration without prior discussion
+- Keep each pull request to a single concern
+- Discuss changes to static analysis or formatting configuration first
 - Include tests for new or changed behaviour
-- Ensure `composer check` and `composer test` pass
+- `composer check` and `composer test` must pass
 
 ## Security
 
-If you discover a security vulnerability, please report it directly to Sine Macula rather than opening a public issue.
-See [SECURITY.md](SECURITY.md) for details.
+Report vulnerabilities privately, not as public issues; see [SECURITY.md](SECURITY.md).
 
 ## License
 
