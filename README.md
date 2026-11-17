@@ -199,7 +199,7 @@ state. It enforces the mechanically-checkable convention subset only - it is not
 ## Requirements
 
 - PHP ^8.3
-- Laravel ^12.9
+- Laravel ^12.9 || ^13.0
 
 ## Testing
 
