@@ -9,13 +9,7 @@ use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\Inflection\FrameworkInflector;
 
 /**
- * Benchmarks for the FrameworkInflector adapter hot paths.
- *
- * The inflector wraps the framework singulariser, which is the most expensive
- * primitive the plural-collections and verb-in-path rules invoke per segment.
- * Both entry points are measured along their two branches: the configured
- * uncountable short-circuit (a list scan that never reaches the framework) and
- * the countable path that actually drives singularisation.
+ * Benchmarks for the framework inflector.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -37,8 +31,7 @@ final class InflectorBench
     }
 
     /**
-     * Benchmark singularising a countable plural through the framework
-     * inflector.
+     * Benchmark singularising a countable plural.
      *
      * @return void
      */

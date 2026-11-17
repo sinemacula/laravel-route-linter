@@ -27,21 +27,14 @@ use SineMacula\RouteLinter\Rules\VerbInPathRule;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Shared fixture builders for the route-linter benchmark suite.
- *
- * Mirrors the production wiring assembled by the service provider - the same
- * rule set, in the same fixed order, fed the same shipped default config (verb
- * denylist, remediation hints, uncountables) - so the benchmarks measure the
- * real hot paths rather than a toy configuration. All builders are pure and
- * deterministic: the generated route tables, allowlists, and violation sets are
- * a fixed function of their size argument, so two runs measure identical work.
+ * Fixture builders shared by the benchmarks.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
 trait RouteLinterFixtures
 {
-    /** @var array<int, string> The shipped default verb denylist (mirrors config/route-linter.php). */
+    /** @var array<int, string> A subset of the shipped verb denylist. */
     private const array VERB_DENYLIST = [
         'get', 'create', 'update', 'delete', 'edit', 'store', 'fetch', 'list',
         'show', 'cancel', 'activate', 'deactivate', 'login', 'logout', 'register',
@@ -49,7 +42,7 @@ trait RouteLinterFixtures
         'download', 'upload', 'import', 'export', 'validate', 'generate', 'refresh',
     ];
 
-    /** @var array<string, string> The shipped default per-verb remediation hints (mirrors config/route-linter.php). */
+    /** @var array<string, string> A subset of the shipped remediation hints. */
     private const array REMEDIATION_HINTS = [
         'login'    => 'POST /auth',
         'logout'   => 'DELETE /auth',
@@ -64,23 +57,23 @@ trait RouteLinterFixtures
         'transfer' => 'PATCH /{resources}/{resource}, or model the transfer as its own resource',
     ];
 
-    /** @var array<int, string> The shipped default inflector uncountables (mirrors config/route-linter.php). */
+    /** @var array<int, string> The shipped inflector uncountables. */
     private const array UNCOUNTABLES = ['media', 'data', 'series', 'information', 'news', 'feedback', 'metadata'];
 
-    /** @var array<int, string> Plural resource nouns cycled to vary the generated route tables. */
+    /** @var array<int, string> Plural resource nouns cycled through the generated routes. */
     private const array RESOURCES = [
         'users', 'orders', 'products', 'invoices', 'payments',
         'addresses', 'documents', 'sessions', 'categories', 'teams',
     ];
 
-    /** @var string Conventional API version prefix prepended to the generated route URIs. */
+    /** @var string The URI prefix of the generated routes. */
     private const string API_PREFIX = 'api/v1/';
 
-    /** @var string Conventional resource-identifier parameter segment. */
+    /** @var string The resource identifier segment. */
     private const string ID_PARAM = '/{id}';
 
     /**
-     * Build a framework inflector primed with the shipped uncountables.
+     * Build an inflector with the shipped uncountables.
      *
      * @return \SineMacula\RouteLinter\Inflection\FrameworkInflector
      */
@@ -90,7 +83,7 @@ trait RouteLinterFixtures
     }
 
     /**
-     * Build a verb denylist primed with the shipped default verbs and hints.
+     * Build the fixture verb denylist.
      *
      * @return \SineMacula\RouteLinter\Rules\Support\VerbDenylist
      */
@@ -100,7 +93,7 @@ trait RouteLinterFixtures
     }
 
     /**
-     * Build the rule-config DTO from the shipped defaults.
+     * Build the fixture rule config.
      *
      * @param  array<int, \SineMacula\RouteLinter\Dto\AllowlistEntry>  $exemptions
      * @return \SineMacula\RouteLinter\Dto\RuleConfig
@@ -116,8 +109,8 @@ trait RouteLinterFixtures
     }
 
     /**
-     * Assemble the full rule engine in the same fixed order as the service
-     * provider.
+     * Assemble an engine from nine of the built-in rules, in their shipped
+     * order.
      *
      * @param  \SineMacula\RouteLinter\Contracts\Inflector  $inflector
      * @return \SineMacula\RouteLinter\RouteLintEngine
@@ -138,11 +131,7 @@ trait RouteLinterFixtures
     }
 
     /**
-     * Normalise a raw URI into a NormalisedRoute the same way the use case
-     * does.
-     *
-     * Splits on `/` preserving empty segments, then extracts brace-wrapped
-     * parameter names - identical to the private pipeline in {@see LintRoutes}.
+     * Normalise a raw URI the way the use case does.
      *
      * @param  string  $uri
      * @param  array<int, string>  $methods
@@ -172,10 +161,7 @@ trait RouteLinterFixtures
     }
 
     /**
-     * Build a route table of fully RESTful, violation-free routes.
-     *
-     * Represents the steady-state cost a passing CI run pays: every route is
-     * inspected by all nine rules but none produce a finding.
+     * Build a table of violation-free routes.
      *
      * @param  int  $size
      * @return array<int, \SineMacula\RouteLinter\Dto\RouteDescriptor>
@@ -192,12 +178,7 @@ trait RouteLinterFixtures
     }
 
     /**
-     * Build a realistic route table mixing clean routes with recurring defects.
-     *
-     * Roughly one route in four is a defect drawn from a fixed catalogue that
-     * exercises every error and warning rule, plus an inline suppression - so
-     * the benchmark covers the violation, suppression, and reporting paths the
-     * clean table never reaches.
+     * Build a table in which every fourth route is defective.
      *
      * @param  int  $size
      * @return array<int, \SineMacula\RouteLinter\Dto\RouteDescriptor>
@@ -216,23 +197,20 @@ trait RouteLinterFixtures
     }
 
     /**
-     * Build the exemption allowlist paired with the mixed route table.
-     *
-     * One entry waives a live violation (exercising the matched-and-used path);
-     * the other matches no live route (exercising the stale-waiver path).
+     * Build the mixed table's allowlist: one entry used, one stale.
      *
      * @return array<int, \SineMacula\RouteLinter\Dto\AllowlistEntry>
      */
     private function mixedExemptions(): array
     {
         return [
-            new AllowlistEntry('things.index', 'BL-1 non-standard verb is a vendor health probe', ['R7']),
-            new AllowlistEntry('legacy.*', 'BL-2 retired surface awaiting removal'),
+            new AllowlistEntry('things.index', 'Non-standard verb is a vendor health probe', ['R7']),
+            new AllowlistEntry('legacy.*', 'Retired surface awaiting removal'),
         ];
     }
 
     /**
-     * Build a representative allowlist of mixed name and URI-glob entries.
+     * Build an allowlist alternating route-name and URI-glob entries.
      *
      * @param  int  $size
      * @return array<int, \SineMacula\RouteLinter\Dto\AllowlistEntry>
@@ -244,19 +222,15 @@ trait RouteLinterFixtures
         for ($i = 0; $i < $size; $i++) {
             $resource  = self::RESOURCES[$i % count(self::RESOURCES)];
             $entries[] = $i % 2 === 0
-                ? new AllowlistEntry($resource . '.index', 'BL-' . $i . ' named-route waiver', ['R4'])
-                : new AllowlistEntry(self::API_PREFIX . $resource . '/*', 'BL-' . $i . ' glob waiver');
+                ? new AllowlistEntry($resource . '.index', 'Named-route waiver ' . $i, ['R4'])
+                : new AllowlistEntry(self::API_PREFIX . $resource . '/*', 'Glob waiver ' . $i);
         }
 
         return $entries;
     }
 
     /**
-     * Build a representative set of violations for the report-ordering
-     * benchmark.
-     *
-     * Identities, rule IDs, and severities are spread across the set so the
-     * deterministic composite-key sort has real comparison work to do.
+     * Build violations spread across identities, rules and severities.
      *
      * @param  int  $count
      * @return array<int, \SineMacula\RouteLinter\Violation>
@@ -282,10 +256,7 @@ trait RouteLinterFixtures
     }
 
     /**
-     * Build one fully RESTful, violation-free route for the given resource.
-     *
-     * Cycles the five core resource actions so the generated table carries a
-     * realistic spread of methods, depths, and route names.
+     * Build a violation-free route, cycling the five resource actions.
      *
      * @param  string  $resource
      * @param  int  $i
@@ -303,11 +274,7 @@ trait RouteLinterFixtures
     }
 
     /**
-     * Build one defective route from a fixed catalogue of recurring violations.
-     *
-     * Cycles six defects spanning verb-in-path, casing, plurality, non-standard
-     * methods, HTML-form actions, and excessive nesting; the HTML-form variant
-     * also carries an inline suppression that fires.
+     * Build a defective route, cycling six kinds of defect.
      *
      * @param  int  $i
      * @return \SineMacula\RouteLinter\Dto\RouteDescriptor
@@ -320,7 +287,7 @@ trait RouteLinterFixtures
             2 => new RouteDescriptor('api/v1/user/{user}', ['GET', 'HEAD'], 'user.show', false),
             3 => new RouteDescriptor('api/v1/things', ['GET', 'PURGE'], 'things.index', false),
             4 => new RouteDescriptor('api/v1/products/edit', ['GET', 'HEAD'], 'products.edit', false, suppressions: [
-                new RouteSuppression(['R9'], 'BL-3 legacy HTML form pending migration'),
+                new RouteSuppression(['R9'], 'Legacy HTML form pending migration'),
             ]),
             default => new RouteDescriptor(
                 'api/v1/teams/{team}/projects/{project}/tasks/{task}/comments',

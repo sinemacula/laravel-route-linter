@@ -9,14 +9,7 @@ use PhpBench\Attributes as Bench;
 use SineMacula\RouteLinter\RouteLintReport;
 
 /**
- * Benchmarks for the RouteLintReport deterministic-ordering hot paths.
- *
- * The report guarantees byte-identical output across runs by re-sorting on
- * every read: errors() and warnings() filter by severity and sort by the
- * routeIdentity / ruleId / offendingSurface composite key, while staleWaivers()
- * sorts its entries. Each accessor is measured over a representative
- * accumulated finding set so the filter-and-sort cost is captured at the size a
- * large, defect-heavy route table would produce.
+ * Benchmarks for the report's ordered accessors.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -47,7 +40,7 @@ final class RouteLintReportBench
         }
 
         for ($i = 0; $i < self::STALE_WAIVER_COUNT; $i++) {
-            $this->report->addStaleWaiver('BL-' . ($i % 7) . ' waiver for ' . self::RESOURCES[$i % count(self::RESOURCES)]);
+            $this->report->addStaleWaiver('Waiver ' . ($i % 7) . ' for ' . self::RESOURCES[$i % count(self::RESOURCES)]);
         }
     }
 
