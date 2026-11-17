@@ -672,17 +672,18 @@ final class RouterRouteSourceTest extends TestCase
 
     /**
      * Test that a route whose `uses` action is a serialized closure (as
-     * produced by `route:cache`) is treated as app-owned.
+     * produced by `route:cache`) is treated as an app-owned closure route.
      *
      * A cached closure route carries a serialized-closure string in `uses`, so
      * it is neither a live Closure nor a controller action:
      * getControllerClass() returns null. The adapter must default such a route
      * to app-owned rather than dropping it, exercising the
-     * null-controller-class guard.
+     * null-controller-class guard, and must report no handler, as for a live
+     * closure.
      *
      * @return void
      */
-    public function testRouteWithSerializedClosureActionIsTreatedAsAppOwned(): void
+    public function testRouteWithSerializedClosureActionIsTreatedAsAppOwnedClosure(): void
     {
         $router = $this->getRouter();
 
@@ -696,9 +697,18 @@ final class RouterRouteSourceTest extends TestCase
         $source      = new RouterRouteSource($router);
         $descriptors = $source->appRoutes();
 
-        $names = array_map(static fn (RouteDescriptor $d) => $d->name, $descriptors);
+        $byName = [];
 
-        self::assertContains('cached.closure', $names, 'A serialized-closure route must default to app-owned.');
+        foreach ($descriptors as $descriptor) {
+            if ($descriptor->name === null) {
+                continue;
+            }
+
+            $byName[$descriptor->name] = $descriptor;
+        }
+
+        self::assertArrayHasKey('cached.closure', $byName, 'A serialized-closure route must default to app-owned.');
+        self::assertNull($byName['cached.closure']->handler, 'A serialized-closure route must have no handler.');
     }
 
     /**
