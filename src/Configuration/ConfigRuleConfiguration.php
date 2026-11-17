@@ -14,12 +14,12 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
  * Config-backed adapter for the RuleConfiguration port.
  *
  * Reads the `route-linter.*` config section and assembles the strictly-separate
- * surfaces - verb denylist, remediation hints, exemption allowlist, inflector
- * uncountables, nesting depth, and required middleware - into a
- * {@see RuleConfig} DTO. The adapter is the single place that validates the
- * config schema: a non-array value for an array-typed key, a non-string entry
- * in a word list or hint map, an exemption entry missing its match or written
- * reason, or a malformed required-middleware entry, raises an
+ * surfaces - verb denylist and allowlist, remediation hints, exemption
+ * allowlist, inflector uncountables, nesting depth, and required middleware -
+ * into a {@see RuleConfig} DTO. The adapter is the single place that validates
+ * the config schema: a non-array value for an array-typed key, a non-string
+ * entry in a word list or hint map, an exemption entry missing its match or
+ * written reason, or a malformed required-middleware entry, raises an
  * {@see InvalidConfigurationException} immediately rather than being silently
  * coerced to a value that would weaken the lint verdict.
  *
@@ -45,6 +45,7 @@ final class ConfigRuleConfiguration implements RuleConfiguration
             uncountables: $this->stringListConfig('route-linter.uncountables'),
             nestingMaxDepth: $this->intConfig('route-linter.nesting_max_depth', 3),
             requiredMiddleware: $this->buildRequiredMiddleware($this->arrayConfig('route-linter.required_middleware')),
+            verbAllowlist: $this->stringListConfig('route-linter.verb_allowlist'),
         );
     }
 

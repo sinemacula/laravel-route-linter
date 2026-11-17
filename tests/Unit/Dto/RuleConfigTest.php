@@ -101,4 +101,32 @@ final class RuleConfigTest extends TestCase
 
         self::assertSame(5, $custom->nestingMaxDepth);
     }
+
+    /**
+     * Test that verbAllowlist defaults to empty when omitted and round-trips a
+     * custom value when provided.
+     *
+     * @return void
+     */
+    public function testVerbAllowlistDefaultsToEmptyAndRoundTrips(): void
+    {
+        $default = new RuleConfig(
+            verbDenylist: [],
+            remediationHints: [],
+            exemptions: [],
+            uncountables: [],
+        );
+
+        self::assertSame([], $default->verbAllowlist);
+
+        $custom = new RuleConfig(
+            verbDenylist: [],
+            remediationHints: [],
+            exemptions: [],
+            uncountables: [],
+            verbAllowlist: ['reset'],
+        );
+
+        self::assertSame(['reset'], $custom->verbAllowlist);
+    }
 }

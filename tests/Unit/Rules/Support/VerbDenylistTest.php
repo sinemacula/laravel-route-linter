@@ -107,6 +107,22 @@ final class VerbDenylistTest extends TestCase
     }
 
     /**
+     * Test that an allowed word is removed from the denylist case-insensitively
+     * while every other denylisted verb stays.
+     *
+     * @return void
+     */
+    public function testAllowedWordIsRemovedFromTheDenylist(): void
+    {
+        $denylist = new VerbDenylist(['get', 'Reset', 'cancel'], [], ['RESET', 'archive']);
+
+        self::assertFalse($denylist->contains('reset'));
+        self::assertTrue($denylist->contains('get'));
+        self::assertTrue($denylist->contains('cancel'));
+        self::assertFalse($denylist->contains('archive'));
+    }
+
+    /**
      * Test that an empty denylist means contains() always returns false.
      *
      * @return void
