@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0](https://github.com/sinemacula/laravel-route-linter/compare/v1.2.1...v1.3.0) (2026-11-17)
+
+
+### Features
+
+* add a verb allowlist for domain nouns that share a verb's spelling ([#88](https://github.com/sinemacula/laravel-route-linter/issues/88)) ([2bd4103](https://github.com/sinemacula/laravel-route-linter/commit/2bd410348d6e1c2d1e32be6a8346452ce59312da))
+
+
+### Bug Fixes
+
+* exempt singleton resources and namespace segments from the collection rules ([#90](https://github.com/sinemacula/laravel-route-linter/issues/90)) ([0382202](https://github.com/sinemacula/laravel-route-linter/commit/0382202a0d4f01f08e62844764b1348f80ab483e))
+* lint the current route definitions when the route table is cached ([#87](https://github.com/sinemacula/laravel-route-linter/issues/87)) ([b22d887](https://github.com/sinemacula/laravel-route-linter/commit/b22d887b95c89c684ff1f49f37fad5db93558842))
+
 ## [1.2.1](https://github.com/sinemacula/laravel-route-linter/compare/v1.2.0...v1.2.1) (2026-11-10)
 
 
