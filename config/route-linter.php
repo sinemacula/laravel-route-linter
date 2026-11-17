@@ -90,9 +90,10 @@ return [
     |---------------------------------------------------------------------------
     |
     | Action verbs that flag a path segment, grouped by their canonical fix. The
-    | list is curated and tunable: add or remove words. Removing a word here is
-    | rule tuning, NOT a per-route exemption - use it for legitimate domain-noun
-    | homographs (e.g. a "transfer" resource, a stock "share", a chess "move").
+    | list is curated and tunable: add words here, and clear domain-noun
+    | homographs through the verb allowlist below. A published copy of this key
+    | replaces the package's list, so delete it from your published config to
+    | keep receiving the package's additions.
     |
     */
 
@@ -127,6 +128,24 @@ return [
         'purchase', 'pay', 'share', 'like', 'follow', 'unfollow', 'vote', 'rate', 'review',
         'bookmark', 'favorite',
     ],
+
+    /*
+    |---------------------------------------------------------------------------
+    | Verb Allowlist
+    |---------------------------------------------------------------------------
+    |
+    | Words removed from the verb denylist without redefining it, for domain
+    | nouns that share a spelling with a verb (e.g. a "password-resets"
+    | resource, a stock "share", a chess "move"). Each word is matched against
+    | the singular form of every path word. This is rule tuning, NOT a per-route
+    | exemption - it applies to every route; waive a single route through the
+    | exemption allowlist instead.
+    |
+    |   'verb_allowlist' => ['reset', 'transfer'],
+    |
+    */
+
+    'verb_allowlist' => [],
 
     /*
     |---------------------------------------------------------------------------

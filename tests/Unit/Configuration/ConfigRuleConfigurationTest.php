@@ -216,6 +216,35 @@ final class ConfigRuleConfigurationTest extends TestCase
         self::assertSame([], $result->exemptions);
         self::assertSame([], $result->uncountables);
         self::assertSame(3, $result->nestingMaxDepth);
+        self::assertSame([], $result->verbAllowlist);
+    }
+
+    /**
+     * Test that load() reads the verb allowlist.
+     *
+     * @return void
+     */
+    public function testReadsVerbAllowlistFromConfig(): void
+    {
+        config()->set('route-linter.verb_allowlist', ['reset', 'transfer']);
+
+        self::assertSame(['reset', 'transfer'], (new ConfigRuleConfiguration)->load()->verbAllowlist);
+    }
+
+    /**
+     * Test that load() fails loud when the verb allowlist holds a non-string
+     * entry, rather than silently allowing nothing.
+     *
+     * @return void
+     */
+    public function testNonStringVerbAllowlistEntryIsRejected(): void
+    {
+        config()->set('route-linter.verb_allowlist', ['reset', 7]);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Config "route-linter.verb_allowlist" must be a list of strings; got int.');
+
+        (new ConfigRuleConfiguration)->load();
     }
 
     /**

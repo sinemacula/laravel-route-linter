@@ -8,10 +8,10 @@ namespace SineMacula\RouteLinter\Rules\Support;
  * Membership oracle and remediation-hint lookup for the verb denylist.
  *
  * Answers two questions: is a given normalised candidate word a denylisted
- * action verb, and what RESTful rewrite hint is associated with it? The
- * denylist is the single global tuning surface - removing a verb from
- * construction makes contains() return false for it, without needing per-route
- * exemptions.
+ * action verb, and what RESTful rewrite hint is associated with it? Allowed
+ * words are subtracted from the denylist at construction, so a domain noun that
+ * shares a spelling with a verb can be cleared globally without redefining the
+ * curated list or adding per-route exemptions.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -26,6 +26,7 @@ final class VerbDenylist
      *
      * @param  array<int, string>  $verbs
      * @param  array<string, string>  $hints
+     * @param  array<int, string>  $allowed
      */
     public function __construct(
 
@@ -34,10 +35,13 @@ final class VerbDenylist
 
         /** Per-verb RESTful-rewrite hints, keyed by the denylisted verb */
         private readonly array $hints,
+
+        // Words removed from the denylist, matched case-insensitively
+        array $allowed = [],
     ) {
-        $this->verbIndex = array_fill_keys(
-            array_map('strtolower', $verbs),
-            true,
+        $this->verbIndex = array_diff_key(
+            array_fill_keys(array_map('strtolower', $verbs), true),
+            array_fill_keys(array_map('strtolower', $allowed), true),
         );
     }
 
