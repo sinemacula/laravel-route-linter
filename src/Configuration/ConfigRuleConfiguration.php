@@ -15,13 +15,13 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
  *
  * Reads the `route-linter.*` config section and assembles the strictly-separate
  * surfaces - verb denylist and allowlist, remediation hints, exemption
- * allowlist, inflector uncountables, nesting depth, and required middleware -
- * into a {@see RuleConfig} DTO. The adapter is the single place that validates
- * the config schema: a non-array value for an array-typed key, a non-string
- * entry in a word list or hint map, an exemption entry missing its match or
- * written reason, or a malformed required-middleware entry, raises an
- * {@see InvalidConfigurationException} immediately rather than being silently
- * coerced to a value that would weaken the lint verdict.
+ * allowlist, inflector uncountables, nesting depth, required middleware, and
+ * singleton resources - into a {@see RuleConfig} DTO. The adapter is the single
+ * place that validates the config schema: a non-array value for an array-typed
+ * key, a non-string entry in a word list or hint map, an exemption entry
+ * missing its match or written reason, or a malformed required-middleware
+ * entry, raises an {@see InvalidConfigurationException} immediately rather than
+ * being silently coerced to a value that would weaken the lint verdict.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -46,6 +46,7 @@ final class ConfigRuleConfiguration implements RuleConfiguration
             nestingMaxDepth: $this->intConfig('route-linter.nesting_max_depth', 3),
             requiredMiddleware: $this->buildRequiredMiddleware($this->arrayConfig('route-linter.required_middleware')),
             verbAllowlist: $this->stringListConfig('route-linter.verb_allowlist'),
+            singletonResources: $this->singletonResources($this->stringListConfig('route-linter.singleton_resources')),
         );
     }
 
@@ -141,6 +142,31 @@ final class ConfigRuleConfiguration implements RuleConfiguration
         }
 
         return $value;
+    }
+
+    /**
+     * Validate the configured singleton resource paths.
+     *
+     * A path identifies a singleton by its last segment, so a path that is
+     * empty or ends in a route parameter identifies none and is rejected.
+     *
+     * @param  array<int, string>  $paths
+     * @return array<int, string>
+     *
+     * @throws \SineMacula\RouteLinter\Exceptions\InvalidConfigurationException
+     */
+    private function singletonResources(array $paths): array
+    {
+        foreach ($paths as $path) {
+            $segments = explode('/', trim($path, '/'));
+            $last     = end($segments);
+
+            if ($last === '' || str_starts_with($last, '{')) {
+                throw new InvalidConfigurationException(sprintf('Singleton resource "%s" must end in a literal segment.', $path));
+            }
+        }
+
+        return $paths;
     }
 
     /**

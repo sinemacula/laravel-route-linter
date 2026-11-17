@@ -26,6 +26,8 @@ use SineMacula\RouteLinter\Rules\Support\SegmentNormaliser;
 use SineMacula\RouteLinter\Rules\Support\VerbDenylist;
 use SineMacula\RouteLinter\Rules\VerbInPathRule;
 use SineMacula\RouteLinter\Sources\RouterRouteSource;
+use SineMacula\RouteLinter\Violation;
+use Tests\Fixtures\Controllers\RouteLintController;
 use Tests\Fixtures\Rules\GlobalAggregateRule;
 use Tests\Fixtures\Rules\ParameterEchoRule;
 use Tests\TestCase;
@@ -876,6 +878,45 @@ final class LintRoutesTest extends TestCase
 
         self::assertSame([], $report->errors(), 'Both duplicate R6 violations should be suppressed.');
         self::assertSame([], $report->staleWaivers(), 'Both aggregate waivers fired and must not be stale.');
+    }
+
+    /**
+     * Test that singleton resources and namespaced resources, as the framework
+     * registers them, pass the plural-collections and nesting-depth rules,
+     * while a singular collection route is still flagged.
+     *
+     * The creatable singleton's `store` route is covered by the configured
+     * singleton resources; every other singleton route is recognised from its
+     * registration.
+     *
+     * @return void
+     */
+    public function testSingletonAndNamespacedResourcesPassTheCollectionRules(): void
+    {
+        $this->seedDefaultConfig();
+        config()->set('route-linter.singleton_resources', ['profile']);
+
+        $router = $this->getRouter();
+        $router->apiResource('connections', RouteLintController::class)->only('index');
+        $router->apiSingleton('connections.callback', RouteLintController::class)->only('show');
+        $router->apiSingleton('profile', RouteLintController::class)->creatable();
+        $router->group(['prefix' => 'auth/sso'], static function (Router $router): void {
+            $router->apiResource('connections.domains', RouteLintController::class)->only('store');
+            $router->apiSingleton('connections.metadata', RouteLintController::class)->only('show');
+        });
+        $router->get('setting', fn () => [])->name('setting.index');
+
+        $report = $this->buildUseCase($router)->lint();
+
+        $findings = array_map(
+            static fn (Violation $violation): string => $violation->ruleId . ' ' . $violation->routeIdentity,
+            array_values(array_filter(
+                array_merge($report->errors(), $report->warnings()),
+                static fn (Violation $violation): bool => in_array($violation->ruleId, ['R4', 'R11'], true),
+            )),
+        );
+
+        self::assertSame(['R4 GET,HEAD setting setting.index'], $findings);
     }
 
     /**

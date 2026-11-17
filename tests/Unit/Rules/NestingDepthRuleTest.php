@@ -102,208 +102,155 @@ final class NestingDepthRuleTest extends TestCase
     }
 
     /**
-     * Test that 'api' and version prefix segments are excluded from the depth
-     * count.
-     *
-     * api/v1/users/{user}/posts/{post}/comments/{comment}/likes/{like} has four
-     * resource literals after excluding 'api' and 'v1', so it is flagged.
-     * Conversely api/v1/users/{user}/posts/{post}/comments/{comment} has three
-     * and must not be flagged.
+     * Test that `api` and version tokens are not counted as levels, even where
+     * a parameter follows them.
      *
      * @return void
      */
-    public function testApiVersionPrefixExcludedFromDepth(): void
+    public function testApiAndVersionTokensAreNotLevels(): void
     {
-        // Arrange - four resource levels with api/v1 prefix (flagged)
-        $fourLevelUri   = 'api/v1/users/{user}/posts/{post}/comments/{comment}/likes/{like}';
-        $fourLevelRoute = new NormalisedRoute(
-            uri: $fourLevelUri,
+        $clean = new NormalisedRoute(
+            uri: 'api/{tenant}/v1/{locale}/users/{user}/posts/{post}/comments',
             methods: ['GET'],
             name: null,
-            segments: ['api', 'v1', 'users', '{user}', 'posts', '{post}', 'comments', '{comment}', 'likes', '{like}'],
-            parameters: ['user', 'post', 'comment', 'like'],
+            segments: ['api', '{tenant}', 'v1', '{locale}', 'users', '{user}', 'posts', '{post}', 'comments'],
+            parameters: ['tenant', 'locale', 'user', 'post'],
         );
-
-        // Arrange - three resource levels with api/v1 prefix (clean)
-        $threeLevelRoute = new NormalisedRoute(
-            uri: 'api/v1/users/{user}/posts/{post}/comments/{comment}',
+        $flagged = new NormalisedRoute(
+            uri: 'api/{tenant}/v1/{locale}/users/{user}/posts/{post}/comments/{comment}/likes',
             methods: ['GET'],
             name: null,
-            segments: ['api', 'v1', 'users', '{user}', 'posts', '{post}', 'comments', '{comment}'],
-            parameters: ['user', 'post', 'comment'],
+            segments: ['api', '{tenant}', 'v1', '{locale}', 'users', '{user}', 'posts', '{post}', 'comments', '{comment}', 'likes'],
+            parameters: ['tenant', 'locale', 'user', 'post', 'comment'],
         );
 
-        // Act
-        $flaggedViolations = $this->rule->inspect($fourLevelRoute, $this->config);
-        $cleanViolations   = $this->rule->inspect($threeLevelRoute, $this->config);
-
-        // Assert - four levels after prefix exclusion triggers warning
-        self::assertCount(1, $flaggedViolations);
-        self::assertSame($fourLevelUri, $flaggedViolations[0]->offendingSurface);
-
-        // Assert - three levels after prefix exclusion is clean
-        self::assertEmpty($cleanViolations);
+        self::assertEmpty($this->rule->inspect($clean, $this->config));
+        self::assertCount(1, $this->rule->inspect($flagged, $this->config));
     }
 
     /**
-     * Test that a route with four literals but fewer route parameters is
-     * correctly flagged.
+     * Test that namespace segments - literals followed by another literal - are
+     * not counted as levels.
      *
-     * This kills the LogicalOrNegation mutant (#46) that inverts the
-     * segment-skip condition so that literals are skipped and parameters are
-     * counted instead. With only two parameters but four literal segments, the
-     * original produces a violation while the mutant (counting params, not
-     * literals) produces none.
+     * `admin/settings` groups the routes, so only users, posts and comments are
+     * collection levels.
      *
      * @return void
      */
-    public function testFourLiteralsWithFewerParamsIsFlagged(): void
+    public function testNamespaceSegmentsAreNotLevels(): void
     {
-        // Arrange - four literal segments (users, posts, comments, tags) and
-        // two params
-        $uri   = 'users/{user}/posts/comments/tags';
         $route = new NormalisedRoute(
-            uri: $uri,
+            uri: 'admin/settings/users/{user}/posts/{post}/comments/{comment}',
             methods: ['GET'],
             name: null,
-            segments: ['users', '{user}', 'posts', 'comments', 'tags'],
-            parameters: ['user'],
+            segments: ['admin', 'settings', 'users', '{user}', 'posts', '{post}', 'comments', '{comment}'],
+            parameters: ['user', 'post', 'comment'],
         );
 
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert - four literal segments exceeds the threshold of three
-        self::assertCount(1, $violations);
-        self::assertSame('R11', $violations[0]->ruleId);
-        self::assertSame(Severity::WARNING, $violations[0]->severity);
-        self::assertSame($uri, $violations[0]->offendingSurface);
+        self::assertEmpty($this->rule->inspect($route, $this->config));
     }
 
     /**
      * Test that route-parameter segments are not counted toward nesting depth.
      *
-     * This kills the LogicalOrSingleSubExprNegation mutant (#47) that changes
-     * the condition so non-parameter segments (literals) are skipped and
-     * parameters are counted. Four parameters with only three literal segments:
-     * original counts three (no violation), mutant counts four (violation).
-     *
      * @return void
      */
     public function testParameterSegmentsAreNotCountedTowardDepth(): void
     {
-        // Arrange - three literal segments (users, posts, comments) and four
-        // params
         $route = new NormalisedRoute(
-            uri: '{a}/{b}/users/{c}/posts/comments/{d}',
+            uri: '{a}/{b}/users/{c}/posts/{d}/comments/{e}',
             methods: ['GET'],
             name: null,
-            segments: ['{a}', '{b}', 'users', '{c}', 'posts', 'comments', '{d}'],
-            parameters: ['a', 'b', 'c', 'd'],
+            segments: ['{a}', '{b}', 'users', '{c}', 'posts', '{d}', 'comments', '{e}'],
+            parameters: ['a', 'b', 'c', 'd', 'e'],
         );
 
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert - only three literal segments; must not trigger R11
-        self::assertEmpty($violations);
+        self::assertEmpty($this->rule->inspect($route, $this->config));
     }
 
     /**
-     * Test that a segment containing 'v2' in a non-prefix position is counted
-     * in the depth.
-     *
-     * Kills PregMatchRemoveCaret mutant (#48): without the leading anchor the
-     * regex '/v\d+$/i' would also match 'xv2', causing that segment to be
-     * skipped. With the correct anchored regex '/^v\d+$/i' only pure version
-     * tokens are excluded.
+     * Test that a segment merely containing a version token is counted as a
+     * level.
      *
      * @return void
      */
-    public function testSegmentContainingVersionStringIsCountedAsLiteral(): void
+    public function testSegmentContainingVersionStringIsCountedAsLevel(): void
     {
-        // Arrange - 'xv2' looks version-like but is not a pure version token;
-        // four literals including 'xv2' must all be counted to trigger R11
-        $uri   = 'users/posts/comments/xv2';
         $route = new NormalisedRoute(
-            uri: $uri,
+            uri: 'users/{user}/posts/{post}/comments/{comment}/xv2',
             methods: ['GET'],
             name: null,
-            segments: ['users', 'posts', 'comments', 'xv2'],
-            parameters: [],
+            segments: ['users', '{user}', 'posts', '{post}', 'comments', '{comment}', 'xv2'],
+            parameters: ['user', 'post', 'comment'],
         );
 
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert - all four segments are literal, depth = 4 > 3
-        self::assertCount(1, $violations);
-        self::assertSame('R11', $violations[0]->ruleId);
-        self::assertSame($uri, $violations[0]->offendingSurface);
+        self::assertCount(1, $this->rule->inspect($route, $this->config));
     }
 
     /**
-     * Test that a segment beginning with a version token but having a suffix is
-     * counted as a literal.
-     *
-     * Kills PregMatchRemoveDollar mutant (#49): without the trailing anchor the
-     * regex '/^v\d+/i' would match 'v2extra', skipping that segment. With the
-     * correct fully-anchored regex '/^v\d+$/i', 'v2extra' is not a version
-     * prefix and is counted.
+     * Test that a segment starting with a version token but carrying a suffix
+     * is counted as a level.
      *
      * @return void
      */
-    public function testVersionPrefixWithSuffixIsCountedAsLiteral(): void
+    public function testVersionPrefixWithSuffixIsCountedAsLevel(): void
     {
-        // Arrange - 'v2extra' starts with a version-like token but is not a
-        // pure version; four literals including 'v2extra' must all be counted
-        // to trigger R11
-        $uri   = 'users/posts/comments/v2extra';
         $route = new NormalisedRoute(
-            uri: $uri,
+            uri: 'users/{user}/posts/{post}/comments/{comment}/v2extra',
             methods: ['GET'],
             name: null,
-            segments: ['users', 'posts', 'comments', 'v2extra'],
-            parameters: [],
+            segments: ['users', '{user}', 'posts', '{post}', 'comments', '{comment}', 'v2extra'],
+            parameters: ['user', 'post', 'comment'],
         );
 
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert - depth = 4 > 3; 'v2extra' must not be excluded
-        self::assertCount(1, $violations);
-        self::assertSame($uri, $violations[0]->offendingSurface);
+        self::assertCount(1, $this->rule->inspect($route, $this->config));
     }
 
     /**
-     * Test that an uppercase version token (e.g. 'V2') is excluded from the
-     * depth count.
-     *
-     * Kills PregMatchRemoveFlags mutant (#50): without the 'i' flag, the regex
-     * '/^v\d+$/' would not match 'V2', causing it to be counted as a literal
-     * segment. With the case-insensitive flag, 'V2' is a valid version prefix
-     * and is excluded.
+     * Test that an uppercase version token is not counted as a level.
      *
      * @return void
      */
-    public function testUppercaseVersionTokenIsExcludedFromDepth(): void
+    public function testUppercaseVersionTokenIsNotALevel(): void
     {
-        // Arrange - three literal resource segments plus uppercase 'V2' prefix;
-        // 'V2' must be excluded so depth = 3, which is exactly the threshold
-        // (no violation)
         $route = new NormalisedRoute(
-            uri: 'V2/users/posts/comments',
+            uri: 'V2/{locale}/users/{user}/posts/{post}/comments',
             methods: ['GET'],
             name: null,
-            segments: ['V2', 'users', 'posts', 'comments'],
-            parameters: [],
+            segments: ['V2', '{locale}', 'users', '{user}', 'posts', '{post}', 'comments'],
+            parameters: ['locale', 'user', 'post'],
         );
 
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
+        self::assertEmpty($this->rule->inspect($route, $this->config));
+    }
 
-        // Assert - 'V2' excluded; depth = 3; must not produce a violation
-        self::assertEmpty($violations);
+    /**
+     * Test that a singleton resource is not counted as a level, whether
+     * inferred from a singleton member route or declared in config.
+     *
+     * @return void
+     */
+    public function testSingletonResourceIsNotALevel(): void
+    {
+        $inferred = new NormalisedRoute(
+            uri: 'users/{user}/posts/{post}/comments/{comment}/summary',
+            methods: ['GET'],
+            name: 'users.posts.comments.summary.show',
+            segments: ['users', '{user}', 'posts', '{post}', 'comments', '{comment}', 'summary'],
+            parameters: ['user', 'post', 'comment'],
+        );
+        $declared = new NormalisedRoute(
+            uri: 'users/{user}/posts/{post}/comments/{comment}/summary',
+            methods: ['POST'],
+            name: 'users.posts.comments.summary.store',
+            segments: ['users', '{user}', 'posts', '{post}', 'comments', '{comment}', 'summary'],
+            parameters: ['user', 'post', 'comment'],
+        );
+        $config = new RuleConfig([], [], [], [], singletonResources: ['comments/{comment}/summary']);
+
+        self::assertEmpty($this->rule->inspect($inferred, $this->config));
+        self::assertCount(1, $this->rule->inspect($declared, $this->config));
+        self::assertEmpty($this->rule->inspect($declared, $config));
     }
 
     /**

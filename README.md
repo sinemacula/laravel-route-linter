@@ -55,7 +55,7 @@ A few principles hold across the surface:
 | R1   | error    | No action verb in a path segment (incl. compound / pluralised), with a RESTful-rewrite hint |
 | R2   | error    | Segments are kebab-case                                                                     |
 | R3   | error    | Segments are lowercase                                                                      |
-| R4   | error    | Collection segments are plural (honours configured uncountables)                            |
+| R4   | error    | Collection segments are plural (honours configured uncountables; singletons are exempt)     |
 | R5   | error    | No trailing or duplicate slashes                                                            |
 | R6   | error    | No duplicate route name (would break `route()` URL generation)                              |
 | R7   | error    | Standard HTTP methods only                                                                  |
@@ -123,7 +123,13 @@ Listing a word in `verb_allowlist` removes it from the verb denylist without red
 tuning**, not a per-route waiver - use it for legitimate domain-noun homographs (e.g. a `password-resets` or `transfers`
 resource). This is global and needs no reason. A published `verb_denylist` replaces the shipped list wholesale, so leave
 it out of your published config to keep receiving the package's additions. The maximum nesting depth enforced by R11 is
-set with `nesting_max_depth` (default `3`).
+set with `nesting_max_depth` (default `3`); only segments that name a collection count, so namespace prefixes such as
+`auth/` or `admin/` add no depth.
+
+Singleton resources (`Route::singleton()` / `Route::apiSingleton()`) are singular by design, so R4 and R11 skip their
+segment. Their `show`, `update` and `destroy` routes are recognised automatically; list the resource path in
+`singleton_resources` (e.g. `'profile'` or `'connections/{connection}/callback'`) to cover the rest, such as a creatable
+singleton's `store` route.
 
 R10 (required middleware) is opt-in and ships empty. Map an `fnmatch` URI pattern to the middleware a matching route
 must declare; matching is an exact token comparison, so write parameterised middleware in full:
