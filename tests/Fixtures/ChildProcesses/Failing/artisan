@@ -1,0 +1,9 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types = 1);
+
+fwrite(STDOUT, "Linted on stdout.\n");
+fwrite(STDERR, "Failed on stderr.\n");
+
+exit(3);

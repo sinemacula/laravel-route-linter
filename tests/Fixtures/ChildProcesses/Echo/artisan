@@ -1,0 +1,13 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types = 1);
+
+file_put_contents((string) getenv('ROUTE_LINTER_ECHO_FILE'), json_encode([
+    'arguments'   => array_slice($argv, 1),
+    'routesCache' => getenv('APP_ROUTES_CACHE'),
+    'columns'     => getenv('COLUMNS'),
+    'marker'      => getenv('ROUTE_LINTER_UNCACHED'),
+    'appEnv'      => getenv('APP_ENV'),
+    'inherited'   => getenv('ROUTE_LINTER_INHERITED_PROBE'),
+], JSON_THROW_ON_ERROR));

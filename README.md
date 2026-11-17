@@ -202,12 +202,16 @@ reporter.
 ## Determinism
 
 The same route table plus the same config yields a byte-identical verdict on every run, independent of route-cache
-state. It enforces the mechanically-checkable convention subset only - it is not a proof of true RESTfulness.
+state. A cached table has lost what the rules depend on - closures are serialised and unnamed routes carry random
+generated names - so while the routes are cached, `route:lint` re-runs itself in a child process with the route cache
+bypassed and lints the current route definitions. The child boots as a fresh `php artisan` would, from the same process
+environment and any `--env` you pass; the cache file is never read or modified. The linter enforces the
+mechanically-checkable convention subset only - it is not a proof of true RESTfulness.
 
 ## Requirements
 
 - PHP ^8.3
-- Laravel ^12.9
+- Laravel ^12.9 || ^13.0
 
 ## Testing
 
