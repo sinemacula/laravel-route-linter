@@ -5,10 +5,12 @@ declare(strict_types = 1);
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\ApiResourceAlignmentRule;
+use SineMacula\RouteLinter\Violation;
 use Tests\TestCase;
 
 /**
@@ -22,272 +24,57 @@ use Tests\TestCase;
 #[CoversClass(ApiResourceAlignmentRule::class)]
 final class ApiResourceAlignmentRuleTest extends TestCase
 {
-    /** @var \SineMacula\RouteLinter\Rules\ApiResourceAlignmentRule */
-    private ApiResourceAlignmentRule $rule;
-
-    /** @var \SineMacula\RouteLinter\Dto\RuleConfig */
-    private RuleConfig $config;
-
     /**
-     * Set up shared fixtures.
+     * Provide URIs with the surfaces R9 flags on them.
      *
-     * @return void
+     * @return iterable<string, array{string, list<string>}>
      */
-    #[\Override]
-    protected function setUp(): void
+    public static function provideRoutes(): iterable
     {
-        parent::setUp();
-
-        $this->rule   = new ApiResourceAlignmentRule;
-        $this->config = new RuleConfig([], [], [], []);
+        yield 'edit' => ['photos/{photo}/edit', ['edit']];
+        yield 'create' => ['photos/create', ['create']];
+        yield 'edit before a parameter' => ['users/edit/{user}', ['edit']];
+        yield 'create before a parameter' => ['photos/create/{photo}', ['create']];
+        yield 'create before a trailing slash' => ['photos/create/', ['create']];
+        yield 'show' => ['photos/{photo}', []];
+        yield 'create not last' => ['create/items', []];
+        yield 'parameters only' => ['{tenant}/{user}', []];
     }
 
     /**
-     * Test that a route whose final segment is 'edit' produces one R9 warning
-     * violation.
+     * Test that the final literal segment is flagged when it is an HTML-only
+     * action.
      *
+     * @param  string  $uri
+     * @param  list<string>  $surfaces
      * @return void
      */
-    public function testEditActionIsFlagged(): void
+    #[DataProvider('provideRoutes')]
+    public function testFlagsHtmlOnlyFinalAction(string $uri, array $surfaces): void
     {
-        // Arrange - GET /photos/{photo}/edit; 'edit' is the final literal
-        // segment
-        $route = new NormalisedRoute(
-            uri: 'photos/{photo}/edit',
-            methods: ['GET'],
-            name: 'photos.edit',
-            segments: ['photos', '{photo}', 'edit'],
-            parameters: ['photo'],
+        $route = new NormalisedRoute($uri, ['GET'], null, explode('/', $uri), []);
+
+        $violations = (new ApiResourceAlignmentRule)->inspect($route, new RuleConfig([], [], [], []));
+
+        self::assertSame(
+            array_map(static fn (string $surface): array => ['R9', Severity::WARNING, $surface, null], $surfaces),
+            array_map(
+                static fn (Violation $violation): array => [$violation->ruleId, $violation->severity, $violation->offendingSurface, $violation->remediationHint],
+                $violations,
+            ),
         );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertCount(1, $violations);
-        self::assertSame('R9', $violations[0]->ruleId);
-        self::assertSame(Severity::WARNING, $violations[0]->severity);
-        self::assertSame('edit', $violations[0]->offendingSurface);
-        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
-     * Test that a route whose final segment is 'create' produces one R9 warning
-     * violation.
-     *
-     * @return void
-     */
-    public function testCreateActionIsFlagged(): void
-    {
-        // Arrange - GET /photos/create; 'create' is the final literal segment
-        $route = new NormalisedRoute(
-            uri: 'photos/create',
-            methods: ['GET'],
-            name: 'photos.create',
-            segments: ['photos', 'create'],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertCount(1, $violations);
-        self::assertSame('R9', $violations[0]->ruleId);
-        self::assertSame(Severity::WARNING, $violations[0]->severity);
-        self::assertSame('create', $violations[0]->offendingSurface);
-        self::assertNull($violations[0]->remediationHint);
-    }
-
-    /**
-     * Test that the canonical show route GET /photos/{photo} produces no R9
-     * violation.
-     *
-     * The final segment is the route parameter `{photo}`, not a literal
-     * 'create' or 'edit'.
-     *
-     * @return void
-     */
-    public function testCanonicalShowIsNotFlagged(): void
-    {
-        // Arrange - GET /photos/{photo}; final segment is a parameter
-        $route = new NormalisedRoute(
-            uri: 'photos/{photo}',
-            methods: ['GET'],
-            name: 'photos.show',
-            segments: ['photos', '{photo}'],
-            parameters: ['photo'],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that a literal 'create' in a non-terminal position does not produce
-     * a violation.
-     *
-     * Only the final literal segment is checked to keep precision high.
-     *
-     * @return void
-     */
-    public function testNonFinalCreateSegmentIsNotFlagged(): void
-    {
-        // Arrange - 'create' is not the last literal; 'items' follows it
-        $route = new NormalisedRoute(
-            uri: 'create/items',
-            methods: ['GET'],
-            name: null,
-            segments: ['create', 'items'],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that 'edit' followed by a route parameter is still flagged as the
-     * final literal segment.
-     *
-     * Kills the continue-to-break mutant (#41): without continue the loop would
-     * stop on the first parameter segment encountered in reverse order,
-     * returning null instead of scanning back to find 'edit'. The violation
-     * must still be produced.
-     *
-     * @return void
-     */
-    public function testEditBeforeTrailingParamIsFlagged(): void
-    {
-        // Arrange - GET /users/edit/{user}; reversed segments are {user}, edit,
-        // then users. The param {user} must be skipped to reach edit as the
-        // last literal segment
-        $route = new NormalisedRoute(
-            uri: 'users/edit/{user}',
-            methods: ['GET'],
-            name: 'users.edit',
-            segments: ['users', 'edit', '{user}'],
-            parameters: ['user'],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert - 'edit' is the final literal segment and must be flagged
-        self::assertCount(1, $violations);
-        self::assertSame('R9', $violations[0]->ruleId);
-        self::assertSame(Severity::WARNING, $violations[0]->severity);
-        self::assertSame('edit', $violations[0]->offendingSurface);
-    }
-
-    /**
-     * Test that 'create' followed by a route parameter is still flagged as the
-     * final literal segment.
-     *
-     * Provides additional coverage for the continue-to-break mutant (#41) and
-     * also kills the LogicalOr-to-LogicalAnd mutant (#40) on the skip
-     * condition: if the condition were 'empty AND param', the empty segment
-     * would not be skipped and would be returned instead of 'create'.
-     *
-     * @return void
-     */
-    public function testCreateBeforeTrailingParamIsFlagged(): void
-    {
-        // Arrange - GET /photos/create/{photo}; reversed order is {photo},
-        // create, then photos
-        $route = new NormalisedRoute(
-            uri: 'photos/create/{photo}',
-            methods: ['GET'],
-            name: 'photos.create',
-            segments: ['photos', 'create', '{photo}'],
-            parameters: ['photo'],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert - 'create' is the final literal segment and must be flagged
-        self::assertCount(1, $violations);
-        self::assertSame('R9', $violations[0]->ruleId);
-        self::assertSame(Severity::WARNING, $violations[0]->severity);
-        self::assertSame('create', $violations[0]->offendingSurface);
-    }
-
-    /**
-     * Test that a trailing empty segment does not prevent detection of a
-     * preceding 'create'.
-     *
-     * Kills the LogicalOr->LogicalAnd mutant (#40) on the skip condition: if
-     * the condition were '$segment === "" && str_starts_with($segment, "{")'
-     * (impossible to satisfy), the empty segment would not be skipped and would
-     * be returned as the last literal, masking the 'create' violation.
-     *
-     * @return void
-     */
-    public function testTrailingEmptySegmentDoesNotMaskCreateViolation(): void
-    {
-        // Arrange - trailing slash produces an empty segment after 'create';
-        // reversed: ['', 'create', 'photos'] - empty must be skipped to reach
-        // 'create'
-        $route = new NormalisedRoute(
-            uri: 'photos/create/',
-            methods: ['GET'],
-            name: 'photos.create',
-            segments: ['photos', 'create', ''],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert - 'create' is still the final meaningful literal
-        self::assertCount(1, $violations);
-        self::assertSame('R9', $violations[0]->ruleId);
-        self::assertSame('create', $violations[0]->offendingSurface);
-    }
-
-    /**
-     * Test that a route with no literal segment (every segment is a parameter)
-     * produces no violation, exercising the null return from
-     * lastLiteralSegment().
-     *
-     * @return void
-     */
-    public function testRouteWithNoLiteralSegmentIsNotFlagged(): void
-    {
-        // Arrange - every segment is a route parameter, so there is no literal
-        // to test
-        $route = new NormalisedRoute(
-            uri: '{tenant}/{user}',
-            methods: ['GET'],
-            name: null,
-            segments: ['{tenant}', '{user}'],
-            parameters: ['tenant', 'user'],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert - lastLiteralSegment() scans every segment, finds none, and
-        // returns null
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that rule id() returns 'R9' and severity() returns
-     * Severity::WARNING.
+     * Test that the rule reports as R9 at warning severity.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
-        self::assertSame('R9', $this->rule->id());
-        self::assertSame(Severity::WARNING, $this->rule->severity());
+        $rule = new ApiResourceAlignmentRule;
+
+        self::assertSame('R9', $rule->id());
+        self::assertSame(Severity::WARNING, $rule->severity());
     }
 }

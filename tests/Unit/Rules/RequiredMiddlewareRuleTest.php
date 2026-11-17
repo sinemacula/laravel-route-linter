@@ -5,10 +5,12 @@ declare(strict_types = 1);
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\RequiredMiddlewareRule;
+use SineMacula\RouteLinter\Violation;
 use Tests\TestCase;
 
 /**
@@ -22,69 +24,15 @@ use Tests\TestCase;
 #[CoversClass(RequiredMiddlewareRule::class)]
 final class RequiredMiddlewareRuleTest extends TestCase
 {
-    /** @var \SineMacula\RouteLinter\Rules\RequiredMiddlewareRule */
-    private RequiredMiddlewareRule $rule;
-
     /**
-     * Set up shared fixtures.
+     * Test that a missing middleware is flagged with its pattern in the hint.
      *
      * @return void
      */
-    #[\Override]
-    protected function setUp(): void
+    public function testFlagsMissingMiddleware(): void
     {
-        parent::setUp();
+        $violations = $this->inspect(['admin/*' => ['auth']], 'admin/users', ['throttle']);
 
-        $this->rule = new RequiredMiddlewareRule;
-    }
-
-    /**
-     * Test that an empty required-middleware config produces no violation.
-     *
-     * @return void
-     */
-    public function testEmptyConfigProducesNothing(): void
-    {
-        // Act
-        $violations = $this->rule->inspect($this->route('admin/users', ['auth']), $this->config([]));
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that a route matching a pattern and declaring the required
-     * middleware is not flagged.
-     *
-     * @return void
-     */
-    public function testPresentMiddlewareIsNotFlagged(): void
-    {
-        // Arrange
-        $config = $this->config(['admin/*' => ['auth']]);
-
-        // Act
-        $violations = $this->rule->inspect($this->route('admin/users', ['auth']), $config);
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that a route matching a pattern but missing the required middleware
-     * is flagged with a remediation hint.
-     *
-     * @return void
-     */
-    public function testMissingMiddlewareIsFlagged(): void
-    {
-        // Arrange
-        $config = $this->config(['admin/*' => ['auth']]);
-
-        // Act
-        $violations = $this->rule->inspect($this->route('admin/users', ['throttle']), $config);
-
-        // Assert
         self::assertCount(1, $violations);
         self::assertSame('R10', $violations[0]->ruleId);
         self::assertSame(Severity::WARNING, $violations[0]->severity);
@@ -94,130 +42,65 @@ final class RequiredMiddlewareRuleTest extends TestCase
     }
 
     /**
-     * Test that a route not matching any pattern is not flagged even when it
-     * lacks the middleware.
+     * Provide required-middleware maps and routes with the middleware R10
+     * flags.
      *
-     * Kills the mutant negating the fnmatch guard: a non-matching route must be
-     * skipped.
-     *
-     * @return void
+     * @return iterable<string, array{array<string, array<int, string>>, string, list<string>, list<string>}>
      */
-    public function testNonMatchingRouteIsNotFlagged(): void
+    public static function provideRoutes(): iterable
     {
-        // Arrange - the route is under api/, not admin/
-        $config = $this->config(['admin/*' => ['auth']]);
-
-        // Act
-        $violations = $this->rule->inspect($this->route('api/users', []), $config);
-
-        // Assert
-        self::assertEmpty($violations);
+        yield 'no patterns' => [[], 'admin/users', ['auth'], []];
+        yield 'middleware present' => [['admin/*' => ['auth']], 'admin/users', ['auth'], []];
+        yield 'no matching pattern' => [['admin/*' => ['auth']], 'api/users', [], []];
+        yield 'one of two missing' => [['admin/*' => ['auth', 'can:access-admin']], 'admin/users', ['auth'], ['can:access-admin']];
+        yield 'two matching patterns' => [['admin/*' => ['auth'], 'admin/users/*' => ['can:manage-users']], 'admin/users/5', [], ['auth', 'can:manage-users']];
+        yield 'match after a miss' => [['api/*' => ['throttle'], 'admin/*' => ['auth']], 'admin/users', [], ['auth']];
     }
 
     /**
-     * Test that every missing middleware in a matching pattern is flagged.
+     * Test that each middleware a matching pattern requires and the route lacks
+     * is flagged, in pattern order.
      *
+     * @param  array<string, array<int, string>>  $required
+     * @param  string  $uri
+     * @param  list<string>  $middleware
+     * @param  list<string>  $surfaces
      * @return void
      */
-    public function testEveryMissingMiddlewareIsFlagged(): void
+    #[DataProvider('provideRoutes')]
+    public function testFlagsEachMissingMiddleware(array $required, string $uri, array $middleware, array $surfaces): void
     {
-        // Arrange - two required, only one present
-        $config = $this->config(['admin/*' => ['auth', 'can:access-admin']]);
+        $violations = $this->inspect($required, $uri, $middleware);
 
-        // Act
-        $violations = $this->rule->inspect($this->route('admin/users', ['auth']), $config);
-
-        // Assert - only the absent `can:access-admin` is flagged
-        self::assertCount(1, $violations);
-        self::assertSame('can:access-admin', $violations[0]->offendingSurface);
+        self::assertSame($surfaces, array_map(static fn (Violation $violation): string => $violation->offendingSurface, $violations));
     }
 
     /**
-     * Test that violations accumulate across every matching pattern.
-     *
-     * @return void
-     */
-    public function testViolationsAccumulateAcrossPatterns(): void
-    {
-        // Arrange - the route matches both patterns and declares neither
-        $config = $this->config([
-            'admin/*'       => ['auth'],
-            'admin/users/*' => ['can:manage-users'],
-        ]);
-
-        // Act
-        $violations = $this->rule->inspect($this->route('admin/users/5', []), $config);
-
-        // Assert
-        self::assertCount(2, $violations);
-        self::assertSame('auth', $violations[0]->offendingSurface);
-        self::assertSame('can:manage-users', $violations[1]->offendingSurface);
-    }
-
-    /**
-     * Test that a pattern matched only after an earlier non-matching pattern is
-     * still evaluated.
-     *
-     * Kills the mutant turning the non-match `continue` into a `break`: a later
-     * matching pattern must not be skipped because an earlier one missed.
-     *
-     * @return void
-     */
-    public function testLaterMatchingPatternAfterNonMatchIsFlagged(): void
-    {
-        // Arrange - the route matches the second pattern but not the first
-        $config = $this->config([
-            'api/*'   => ['throttle'],
-            'admin/*' => ['auth'],
-        ]);
-
-        // Act
-        $violations = $this->rule->inspect($this->route('admin/users', []), $config);
-
-        // Assert - the second pattern still produced its violation
-        self::assertCount(1, $violations);
-        self::assertSame('auth', $violations[0]->offendingSurface);
-    }
-
-    /**
-     * Test that rule id() returns 'R10' and severity() returns
-     * Severity::WARNING.
+     * Test that the rule reports as R10 at warning severity.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
-        self::assertSame('R10', $this->rule->id());
-        self::assertSame(Severity::WARNING, $this->rule->severity());
+        $rule = new RequiredMiddlewareRule;
+
+        self::assertSame('R10', $rule->id());
+        self::assertSame(Severity::WARNING, $rule->severity());
     }
 
     /**
-     * Build a normalised GET route from a URI and middleware list.
+     * Inspect a GET route, named after its URI, against a required-middleware
+     * map.
      *
+     * @param  array<string, array<int, string>>  $required
      * @param  string  $uri
      * @param  array<int, string>  $middleware
-     * @return \SineMacula\RouteLinter\NormalisedRoute
+     * @return array<int, \SineMacula\RouteLinter\Violation>
      */
-    private function route(string $uri, array $middleware): NormalisedRoute
+    private function inspect(array $required, string $uri, array $middleware): array
     {
-        return new NormalisedRoute(
-            uri: $uri,
-            methods: ['GET'],
-            name: str_replace('/', '.', $uri),
-            segments: explode('/', $uri),
-            parameters: [],
-            middleware: $middleware,
-        );
-    }
+        $route = new NormalisedRoute($uri, ['GET'], str_replace('/', '.', $uri), explode('/', $uri), [], middleware: $middleware);
 
-    /**
-     * Build a rule config carrying the given required-middleware map.
-     *
-     * @param  array<string, array<int, string>>  $requiredMiddleware
-     * @return \SineMacula\RouteLinter\Dto\RuleConfig
-     */
-    private function config(array $requiredMiddleware): RuleConfig
-    {
-        return new RuleConfig([], [], [], [], 3, $requiredMiddleware);
+        return (new RequiredMiddlewareRule)->inspect($route, new RuleConfig([], [], [], [], requiredMiddleware: $required));
     }
 }

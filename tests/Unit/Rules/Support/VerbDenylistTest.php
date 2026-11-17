@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Tests\Unit\Rules\Support;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Rules\Support\VerbDenylist;
 use Tests\TestCase;
 
@@ -20,162 +21,75 @@ use Tests\TestCase;
 final class VerbDenylistTest extends TestCase
 {
     /**
-     * Test that contains() returns true for a word that is in the denylist.
+     * Provide denylists, allowed words and a word with its expected membership.
      *
-     * @return void
+     * @return iterable<string, array{list<string>, list<string>, string, bool}>
      */
-    public function testContainsDenylistedVerb(): void
+    public static function provideMembership(): iterable
     {
-        // Arrange
-        $denylist = new VerbDenylist(['get', 'post', 'delete'], []);
-
-        // Act & Assert
-        self::assertTrue($denylist->contains('get'));
-        self::assertTrue($denylist->contains('post'));
-        self::assertTrue($denylist->contains('delete'));
+        yield 'listed' => [['get', 'post', 'delete'], [], 'post', true];
+        yield 'first listed' => [['get', 'post', 'delete'], [], 'get', true];
+        yield 'last listed' => [['get', 'post', 'delete'], [], 'delete', true];
+        yield 'not listed' => [['get', 'post'], [], 'users', false];
+        yield 'homograph not listed' => [['get', 'post'], [], 'transfer', false];
+        yield 'uppercase listing' => [['GET', 'Post'], [], 'get', true];
+        yield 'uppercase word' => [['GET', 'Post'], [], 'GET', true];
+        yield 'mixed-case listing' => [['GET', 'Post'], [], 'post', true];
+        yield 'uppercase word for a mixed-case listing' => [['GET', 'Post'], [], 'POST', true];
+        yield 'allowed' => [['get', 'Reset', 'cancel'], ['RESET', 'archive'], 'reset', false];
+        yield 'not allowed' => [['get', 'Reset', 'cancel'], ['RESET', 'archive'], 'get', true];
+        yield 'last not allowed' => [['get', 'Reset', 'cancel'], ['RESET', 'archive'], 'cancel', true];
+        yield 'allowed but never listed' => [['get', 'Reset', 'cancel'], ['RESET', 'archive'], 'archive', false];
+        yield 'empty denylist' => [[], [], 'get', false];
+        yield 'empty word' => [[], [], '', false];
     }
 
     /**
-     * Test that contains() returns false for a word not in the denylist.
+     * Test that membership is case-insensitive and excludes allowed words.
      *
+     * @param  list<string>  $verbs
+     * @param  list<string>  $allowed
+     * @param  string  $word
+     * @param  bool  $expected
      * @return void
      */
-    public function testDoesNotContainAbsentVerb(): void
+    #[DataProvider('provideMembership')]
+    public function testContains(array $verbs, array $allowed, string $word, bool $expected): void
     {
-        // Arrange
-        $denylist = new VerbDenylist(['get', 'post'], []);
-
-        // Act & Assert
-        self::assertFalse($denylist->contains('users'));
-        self::assertFalse($denylist->contains('transfer'));
+        self::assertSame($expected, (new VerbDenylist($verbs, [], $allowed))->contains($word));
     }
 
     /**
-     * Test that constructing without a verb makes contains() return false for
-     * it (homograph removal - removing from denylist is the tuning surface).
+     * Provide words with their expected hint.
      *
-     * @return void
+     * @return iterable<string, array{string, string|null}>
      */
-    public function testRemovingWordMakesContainsFalse(): void
+    public static function provideHints(): iterable
     {
-        // Arrange - denylist constructed without 'transfer'
-        $denylist = new VerbDenylist(['get', 'post', 'delete'], []);
-
-        // Act & Assert - 'transfer' was never added, so it must not be present
-        self::assertFalse($denylist->contains('transfer'));
+        yield 'hinted' => ['login', 'Use POST /sessions instead.'];
+        yield 'second hinted' => ['logout', 'Use DELETE /sessions/{session} instead.'];
+        yield 'uppercase' => ['LOGIN', 'Use POST /sessions instead.'];
+        yield 'capitalised' => ['Login', 'Use POST /sessions instead.'];
+        yield 'listed without a hint' => ['fetch', null];
+        yield 'not listed' => ['unknown', null];
     }
 
     /**
-     * Test that contains() is case-insensitive, normalising both sides to
-     * lowercase.
+     * Test that the hint lookup is case-insensitive and null for a verb with no
+     * hint.
      *
+     * @param  string  $word
+     * @param  string|null  $hint
      * @return void
      */
-    public function testContainsIsCaseInsensitive(): void
+    #[DataProvider('provideHints')]
+    public function testHint(string $word, ?string $hint): void
     {
-        // Arrange
-        $denylist = new VerbDenylist(['GET', 'Post'], []);
-
-        // Act & Assert
-        self::assertTrue($denylist->contains('get'));
-        self::assertTrue($denylist->contains('GET'));
-        self::assertTrue($denylist->contains('post'));
-        self::assertTrue($denylist->contains('POST'));
-    }
-
-    /**
-     * Test that hint() returns the configured remediation hint for a known
-     * verb.
-     *
-     * @return void
-     */
-    public function testHintReturnsConfiguredHintOrNull(): void
-    {
-        // Arrange
         $denylist = new VerbDenylist(
-            ['login', 'logout'],
+            ['login', 'logout', 'fetch'],
             ['login' => 'Use POST /sessions instead.', 'logout' => 'Use DELETE /sessions/{session} instead.'],
         );
 
-        // Act & Assert - mapped verbs return their hint
-        self::assertSame('Use POST /sessions instead.', $denylist->hint('login'));
-        self::assertSame('Use DELETE /sessions/{session} instead.', $denylist->hint('logout'));
-
-        // A verb in the denylist but absent from hints returns null
-        $denylistWithoutHint = new VerbDenylist(['get'], []);
-        self::assertNull($denylistWithoutHint->hint('get'));
-    }
-
-    /**
-     * Test that an allowed word is removed from the denylist case-insensitively
-     * while every other denylisted verb stays.
-     *
-     * @return void
-     */
-    public function testAllowedWordIsRemovedFromTheDenylist(): void
-    {
-        $denylist = new VerbDenylist(['get', 'Reset', 'cancel'], [], ['RESET', 'archive']);
-
-        self::assertFalse($denylist->contains('reset'));
-        self::assertTrue($denylist->contains('get'));
-        self::assertTrue($denylist->contains('cancel'));
-        self::assertFalse($denylist->contains('archive'));
-    }
-
-    /**
-     * Test that an empty denylist means contains() always returns false.
-     *
-     * @return void
-     */
-    public function testEmptyDenylistAlwaysReturnsFalse(): void
-    {
-        // Arrange
-        $denylist = new VerbDenylist([], []);
-
-        // Act & Assert
-        self::assertFalse($denylist->contains('get'));
-        self::assertFalse($denylist->contains('post'));
-        self::assertFalse($denylist->contains(''));
-    }
-
-    /**
-     * Test that hint() returns null for an unmapped verb regardless of denylist
-     * membership.
-     *
-     * @return void
-     */
-    public function testHintReturnsNullForUnmappedVerb(): void
-    {
-        // Arrange - verb is in denylist but has no hint entry
-        $denylist = new VerbDenylist(['fetch'], []);
-
-        // Act & Assert
-        self::assertNull($denylist->hint('fetch'));
-        self::assertNull($denylist->hint('unknown'));
-    }
-
-    /**
-     * Test that hint() is case-insensitive - the lookup applies strtolower() so
-     * that 'LOGIN' resolves to the same hint as 'login'.
-     *
-     * Targets UnwrapStrToLower on hint(): without lowercasing, 'LOGIN' would
-     * not match the 'login' key in the hints array and would return null
-     * instead of the configured hint string.
-     *
-     * @return void
-     */
-    public function testHintIsCaseInsensitive(): void
-    {
-        // Arrange
-        $denylist = new VerbDenylist(
-            ['login'],
-            ['login' => 'Use POST /sessions instead.'],
-        );
-
-        // Act & Assert - uppercase lookup must resolve the same hint as
-        // lowercase
-        self::assertSame('Use POST /sessions instead.', $denylist->hint('LOGIN'));
-        self::assertSame('Use POST /sessions instead.', $denylist->hint('Login'));
-        self::assertSame('Use POST /sessions instead.', $denylist->hint('login'));
+        self::assertSame($hint, $denylist->hint($word));
     }
 }

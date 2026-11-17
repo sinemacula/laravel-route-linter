@@ -20,14 +20,12 @@ use Tests\TestCase;
 final class RouteDescriptorTest extends TestCase
 {
     /**
-     * Test that all four properties round-trip correctly, including isVendor
-     * for both true and false, and that name may be null.
+     * Test that the properties round-trip for named and unnamed routes.
      *
      * @return void
      */
     public function testExposesUriMethodsNameAndVendorFlag(): void
     {
-        // Arrange & Act - named route, non-vendor
         $named = new RouteDescriptor(
             uri: 'users/{user}',
             methods: ['GET', 'HEAD'],
@@ -35,13 +33,11 @@ final class RouteDescriptorTest extends TestCase
             isVendor: false,
         );
 
-        // Assert
         self::assertSame('users/{user}', $named->uri);
         self::assertSame(['GET', 'HEAD'], $named->methods);
         self::assertSame('users.show', $named->name);
         self::assertFalse($named->isVendor);
 
-        // Arrange & Act - unnamed vendor route
         $vendor = new RouteDescriptor(
             uri: 'vendor/package/resource',
             methods: ['POST'],
@@ -49,7 +45,6 @@ final class RouteDescriptorTest extends TestCase
             isVendor: true,
         );
 
-        // Assert
         self::assertSame('vendor/package/resource', $vendor->uri);
         self::assertSame(['POST'], $vendor->methods);
         self::assertNull($vendor->name);

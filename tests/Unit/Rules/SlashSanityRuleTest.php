@@ -5,10 +5,12 @@ declare(strict_types = 1);
 namespace Tests\Unit\Rules;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SineMacula\RouteLinter\Dto\RuleConfig;
 use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Rules\SlashSanityRule;
+use SineMacula\RouteLinter\Violation;
 use Tests\TestCase;
 
 /**
@@ -22,181 +24,55 @@ use Tests\TestCase;
 #[CoversClass(SlashSanityRule::class)]
 final class SlashSanityRuleTest extends TestCase
 {
-    /** @var \SineMacula\RouteLinter\Rules\SlashSanityRule */
-    private SlashSanityRule $rule;
-
-    /** @var \SineMacula\RouteLinter\Dto\RuleConfig */
-    private RuleConfig $config;
-
     /**
-     * Set up shared fixtures.
+     * Provide URIs with the surfaces R5 flags on them.
      *
-     * @return void
+     * @return iterable<string, array{string, list<string>}>
      */
-    #[\Override]
-    protected function setUp(): void
+    public static function provideRoutes(): iterable
     {
-        parent::setUp();
-
-        $this->rule   = new SlashSanityRule;
-        $this->config = new RuleConfig([], [], [], []);
+        yield 'trailing slash' => ['users/', ['users/']];
+        yield 'duplicate slash' => ['users//posts', ['users//posts']];
+        yield 'both defects' => ['users//posts/', ['users//posts/']];
+        yield 'clean' => ['users/{user}', []];
+        yield 'root path' => ['/', []];
+        yield 'empty path' => ['', []];
     }
 
     /**
-     * Test that a URI with a trailing slash produces one R5 error violation.
+     * Test that a URI with a trailing or duplicate slash is flagged once, with
+     * the URI as the surface.
      *
+     * @param  string  $uri
+     * @param  list<string>  $surfaces
      * @return void
      */
-    public function testTrailingSlashIsFlagged(): void
+    #[DataProvider('provideRoutes')]
+    public function testFlagsTrailingAndDuplicateSlashes(string $uri, array $surfaces): void
     {
-        // Arrange
-        $route = new NormalisedRoute(
-            uri: 'users/',
-            methods: ['GET'],
-            name: null,
-            segments: ['users', ''],
-            parameters: [],
+        $route = new NormalisedRoute($uri, ['GET'], null, explode('/', $uri), []);
+
+        $violations = (new SlashSanityRule)->inspect($route, new RuleConfig([], [], [], []));
+
+        self::assertSame(
+            array_map(static fn (string $surface): array => ['R5', Severity::ERROR, $surface, null], $surfaces),
+            array_map(
+                static fn (Violation $violation): array => [$violation->ruleId, $violation->severity, $violation->offendingSurface, $violation->remediationHint],
+                $violations,
+            ),
         );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertCount(1, $violations);
-        self::assertSame('R5', $violations[0]->ruleId);
-        self::assertSame(Severity::ERROR, $violations[0]->severity);
-        self::assertSame('users/', $violations[0]->offendingSurface);
-        self::assertNull($violations[0]->remediationHint);
     }
 
     /**
-     * Test that a URI with a duplicate slash produces one R5 error violation.
-     *
-     * @return void
-     */
-    public function testDuplicateSlashIsFlagged(): void
-    {
-        // Arrange
-        $route = new NormalisedRoute(
-            uri: 'users//posts',
-            methods: ['GET'],
-            name: null,
-            segments: ['users', '', 'posts'],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertCount(1, $violations);
-        self::assertSame('R5', $violations[0]->ruleId);
-        self::assertSame(Severity::ERROR, $violations[0]->severity);
-        self::assertSame('users//posts', $violations[0]->offendingSurface);
-        self::assertNull($violations[0]->remediationHint);
-    }
-
-    /**
-     * Test that a URI with both a duplicate and a trailing slash emits only one
-     * violation.
-     *
-     * @return void
-     */
-    public function testBothDefectsEmitOneViolation(): void
-    {
-        // Arrange
-        $route = new NormalisedRoute(
-            uri: 'users//posts/',
-            methods: ['GET'],
-            name: null,
-            segments: ['users', '', 'posts', ''],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert - one violation regardless of defect count
-        self::assertCount(1, $violations);
-    }
-
-    /**
-     * Test that a clean URI produces no R5 violation.
-     *
-     * @return void
-     */
-    public function testCleanUriIsNotFlagged(): void
-    {
-        // Arrange
-        $route = new NormalisedRoute(
-            uri: 'users/{user}',
-            methods: ['GET'],
-            name: null,
-            segments: ['users', '{user}'],
-            parameters: ['user'],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that the root path produces no R5 violation.
-     *
-     * @return void
-     */
-    public function testRootPathIsNotFlagged(): void
-    {
-        // Arrange
-        $route = new NormalisedRoute(
-            uri: '/',
-            methods: ['GET'],
-            name: null,
-            segments: ['', ''],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that an empty URI produces no R5 violation.
-     *
-     * @return void
-     */
-    public function testEmptyUriIsNotFlagged(): void
-    {
-        // Arrange
-        $route = new NormalisedRoute(
-            uri: '',
-            methods: ['GET'],
-            name: null,
-            segments: [],
-            parameters: [],
-        );
-
-        // Act
-        $violations = $this->rule->inspect($route, $this->config);
-
-        // Assert
-        self::assertEmpty($violations);
-    }
-
-    /**
-     * Test that rule id() returns 'R5' and severity() returns Severity::ERROR.
+     * Test that the rule reports as R5 at error severity.
      *
      * @return void
      */
     public function testRuleMetadata(): void
     {
-        self::assertSame('R5', $this->rule->id());
-        self::assertSame(Severity::ERROR, $this->rule->severity());
+        $rule = new SlashSanityRule;
+
+        self::assertSame('R5', $rule->id());
+        self::assertSame(Severity::ERROR, $rule->severity());
     }
 }

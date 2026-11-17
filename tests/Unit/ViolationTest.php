@@ -21,14 +21,12 @@ use Tests\TestCase;
 final class ViolationTest extends TestCase
 {
     /**
-     * Test that all constructor arguments are exposed verbatim on the value
-     * object.
+     * Test that every constructor argument is exposed as given.
      *
      * @return void
      */
     public function testExposesAllPropertiesAsGiven(): void
     {
-        // Arrange & Act
         $violation = new Violation(
             ruleId: 'R1',
             severity: Severity::ERROR,
@@ -37,7 +35,6 @@ final class ViolationTest extends TestCase
             remediationHint: 'GET /users',
         );
 
-        // Assert
         self::assertSame('R1', $violation->ruleId);
         self::assertSame(Severity::ERROR, $violation->severity);
         self::assertSame('GET getUsers get-users', $violation->routeIdentity);
@@ -46,14 +43,12 @@ final class ViolationTest extends TestCase
     }
 
     /**
-     * Test that the remediation hint is nullable and stored as null when
-     * omitted.
+     * Test that the remediation hint may be null.
      *
      * @return void
      */
     public function testRemediationHintMayBeNull(): void
     {
-        // Arrange & Act
         $violation = new Violation(
             ruleId: 'R5',
             severity: Severity::WARNING,
@@ -62,7 +57,6 @@ final class ViolationTest extends TestCase
             remediationHint: null,
         );
 
-        // Assert
         self::assertSame(Severity::WARNING, $violation->severity);
         self::assertNull($violation->remediationHint);
     }
