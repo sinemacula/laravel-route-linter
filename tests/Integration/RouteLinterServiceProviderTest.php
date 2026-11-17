@@ -166,6 +166,37 @@ final class RouteLinterServiceProviderTest extends TestCase
     }
 
     /**
+     * Test that an allowlist-only override clears a homograph from the shipped
+     * verb denylist without replacing it.
+     *
+     * `password-resets` is a noun resource whose singular `reset` is a shipped
+     * denylisted verb. Allowing `reset` must clear R1 for it while the rest of
+     * the shipped list - `cancel` here - still flags.
+     *
+     * @return void
+     */
+    public function testVerbAllowlistClearsAHomographFromTheShippedDenylist(): void
+    {
+        assert($this->app !== null);
+
+        config()->set('route-linter.verb_allowlist', ['reset']);
+
+        $engine = $this->app->make(RouteLintEngine::class);
+        $config = $this->app->make(RuleConfiguration::class)->load();
+
+        $verbs = static fn (string $uri, string $name): array => array_map(
+            static fn (Violation $violation): string => $violation->offendingSurface,
+            array_values(array_filter(
+                $engine->inspect(new NormalisedRoute($uri, ['POST'], $name, explode('/', $uri), []), $config),
+                static fn (Violation $violation): bool => $violation->ruleId === 'R1',
+            )),
+        );
+
+        self::assertSame([], $verbs('password-resets', 'password-resets.store'));
+        self::assertSame(['cancel'], $verbs('orders/{order}/cancel', 'orders.cancel'));
+    }
+
+    /**
      * Test that the package config is registered for publishing under its tag,
      * sourced from the real config file.
      *

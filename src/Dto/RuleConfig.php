@@ -10,9 +10,10 @@ namespace SineMacula\RouteLinter\Dto;
  * Carries the strictly-separate config surfaces handed to every rule: the verb
  * denylist (action verbs that flag a path segment), the per-verb
  * remediation-hint map, the exemption-allowlist entries, the inflector
- * uncountables, the maximum nesting depth, and the per-pattern required
- * middleware map. Surfaces are kept separate - verbDenylist, exemptions, and
- * uncountables never share storage - so callers can tune each independently.
+ * uncountables, the maximum nesting depth, the per-pattern required middleware
+ * map, and the verb allowlist (words removed from the denylist). Surfaces are
+ * kept separate - verbDenylist, exemptions, and uncountables never share
+ * storage - so callers can tune each independently.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -28,6 +29,7 @@ final readonly class RuleConfig
      * @param  array<int, string>  $uncountables
      * @param  int  $nestingMaxDepth
      * @param  array<string, array<int, string>>  $requiredMiddleware
+     * @param  array<int, string>  $verbAllowlist
      */
     public function __construct(
 
@@ -48,5 +50,8 @@ final readonly class RuleConfig
 
         /** Required middleware keyed by URI pattern, honoured by the required-middleware rule (R10) */
         public array $requiredMiddleware = [],
+
+        /** Words removed from the verb denylist, for domain nouns that share a spelling with a verb */
+        public array $verbAllowlist = [],
     ) {}
 }
