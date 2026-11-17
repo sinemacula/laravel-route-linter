@@ -63,7 +63,7 @@ Single test file or method:
 
 ```bash
 vendor/bin/phpunit tests/Unit/Rules/VerbInPathRuleTest.php
-vendor/bin/phpunit --filter testFlagsGetUsersWithRemediationHint tests/Unit/Rules/VerbInPathRuleTest.php
+vendor/bin/phpunit --filter testFlagsEachDistinctVerb tests/Unit/Rules/VerbInPathRuleTest.php
 ```
 
 ### Standards
