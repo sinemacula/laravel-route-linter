@@ -5,11 +5,7 @@ declare(strict_types = 1);
 namespace SineMacula\RouteLinter\Contracts;
 
 /**
- * Outbound port for enumerating the application's owned routes.
- *
- * Implementers enumerate every app-owned route after a full boot, excluding
- * vendor routes the application cannot change. The domain never reads the
- * framework router directly - all route sourcing flows through this port.
+ * Supplies the application's own routes, excluding vendor routes.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -17,8 +13,7 @@ namespace SineMacula\RouteLinter\Contracts;
 interface RouteSource
 {
     /**
-     * Enumerate every app-owned route, excluding vendor routes the app cannot
-     * change.
+     * Enumerate every app-owned route.
      *
      * @return array<int, \SineMacula\RouteLinter\Dto\RouteDescriptor>
      */

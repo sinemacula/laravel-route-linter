@@ -8,12 +8,7 @@ use Illuminate\Routing\Route;
 use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
 
 /**
- * Registers route macros used by the route-lint suppression feature.
- *
- * The static `register()` entry point is idempotent - it checks for an existing
- * macro before binding - so it is safe to call from service-provider `boot()`
- * methods without risk of double-registration across test resets or multiple
- * provider loads.
+ * Registers the `ignoreRouteLint` route macro.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -21,9 +16,7 @@ use SineMacula\RouteLinter\Exceptions\InvalidConfigurationException;
 final class RouteLintMacros
 {
     /**
-     * Register all route-lint macros onto the Illuminate Route class.
-     *
-     * Idempotent: skips registration when the macro already exists.
+     * Register the macro unless it is already registered.
      *
      * @return void
      */
@@ -33,24 +26,8 @@ final class RouteLintMacros
             return;
         }
 
-        /*
-         * Suppress one or more route-lint rules for this route.
-         *
-         * Pass an empty `$ruleIds` array to suppress all rules. Multiple calls
-         * accumulate; each call appends an independent suppression entry to the
-         * route action. Data is stored as plain arrays so it survives
-         * `route:cache` serialisation.
-         *
-         * @param  list<string>  $ruleIds  Rule IDs to suppress; an empty list
-         *   means all rules.
-         * @param  string  $reason  Non-empty written justification for this
-         *   suppression.
-         * @return \Illuminate\Routing\Route
-         *
-         * @throws InvalidConfigurationException
-         */
+        // Stored as plain arrays in the route action so it survives route:cache
         Route::macro('ignoreRouteLint', function (array $ruleIds, string $reason): Route {
-            // The macro closure is bound to the Illuminate Route instance.
             if (trim($reason) === '') {
                 throw new InvalidConfigurationException('A non-empty reason is required for ignoreRouteLint().');
             }
