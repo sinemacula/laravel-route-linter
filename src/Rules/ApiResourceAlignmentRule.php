@@ -11,21 +11,14 @@ use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R9: apiResource-alignment warning.
- *
- * Flags HTML-only form actions (`create` and `edit`) that appear as the final
- * literal segment of a URI on an API surface. These segments correspond to
- * Laravel's `create` and `edit` resource actions, which render HTML forms and
- * have no valid place in a JSON API. The check is restricted to the final
- * literal segment to keep precision high and avoid false positives on resource
- * names that happen to contain these strings in a non-terminal position.
+ * Rule R9: the last literal segment is not an HTML-only `create` or `edit`.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
  */
 final class ApiResourceAlignmentRule implements Rule
 {
-    /** @var array<int, string> HTML-only action segments that must not appear as the final literal URI segment on an API surface. */
+    /** @var array<int, string> Resource actions that render HTML forms. */
     private const array HTML_ONLY_ACTIONS = ['create', 'edit'];
 
     /**
@@ -78,8 +71,7 @@ final class ApiResourceAlignmentRule implements Rule
     }
 
     /**
-     * Return the final non-empty, non-parameter segment, or null when none
-     * exists.
+     * Return the last literal segment, or null when there is none.
      *
      * @param  array<int, string>  $segments
      * @return string|null

@@ -13,15 +13,10 @@ use SineMacula\RouteLinter\Rules\Support\VerbDenylist;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Error-severity rule R1: flags action verbs embedded in URI path segments.
+ * Rule R1: no action verb in a path segment.
  *
- * Reduces the route URI to candidate words via the SegmentNormaliser pipeline
- * (split, drop parameters, drop version/prefix, decompose compound, lowercase,
- * singularise), then tests each candidate against the VerbDenylist. Each
- * distinct denylisted verb found across the route's segments produces one
- * error-severity Violation carrying the verb as the offending surface and the
- * configured RESTful-rewrite hint. A clean plural collection such as `/users`
- * normalises to the noun `user` which is not a verb and is never flagged.
+ * Each distinct verb found among the normalised path words is reported once,
+ * with its remediation hint.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
@@ -36,10 +31,10 @@ final readonly class VerbInPathRule implements Rule
      */
     public function __construct(
 
-        /** Pipeline that reduces a URI to candidate verb-test words */
+        /** Reduces the URI to candidate words */
         private SegmentNormaliser $normaliser,
 
-        /** Membership oracle and hint lookup for denylisted verbs */
+        /** The denylisted verbs and their hints */
         private VerbDenylist $denylist,
     ) {}
 
@@ -66,8 +61,7 @@ final readonly class VerbInPathRule implements Rule
     }
 
     /**
-     * Inspect the route for action verbs in path segments and return one
-     * violation per distinct offender.
+     * Inspect one normalised route and return one violation per distinct verb.
      *
      * @param  \SineMacula\RouteLinter\NormalisedRoute  $route
      * @param  \SineMacula\RouteLinter\Dto\RuleConfig  $config

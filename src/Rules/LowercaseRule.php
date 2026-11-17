@@ -11,11 +11,7 @@ use SineMacula\RouteLinter\NormalisedRoute;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R3: Lowercase-only segment enforcement.
- *
- * Flags any literal URI segment that contains one or more uppercase ASCII
- * letters (A–Z). Route-parameter segments (those wrapped in `{...}`) and empty
- * segments are ignored.
+ * Rule R3: literal segments are lowercase.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.

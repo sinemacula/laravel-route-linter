@@ -10,12 +10,10 @@ use SineMacula\RouteLinter\Enums\Severity;
 use SineMacula\RouteLinter\Violation;
 
 /**
- * Rule R6: duplicate route name.
+ * Rule R6: no route name reused by a later route.
  *
- * Flags named routes that reuse a name already taken by an earlier route. URL
- * generation (`route('name')`) resolves a name to whichever route registered it
- * last, so the earlier route's name is silently unreachable. The violation is
- * attributed to the duplicate (later) occurrence; unnamed routes are ignored.
+ * `route()` resolves a name to the route registered last, so the earlier one
+ * becomes unreachable.
  *
  * @author      Ben Carey <bdmc@sinemacula.co.uk>
  * @copyright   2026 Sine Macula Limited.
