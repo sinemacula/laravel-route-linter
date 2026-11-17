@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace SineMacula\RouteLinter\Sources;
 
 use Illuminate\Routing\Route;
+use Illuminate\Routing\RouteAction;
 use Illuminate\Routing\Router;
 use SineMacula\RouteLinter\Contracts\RouteSource;
 use SineMacula\RouteLinter\Dto\RouteDescriptor;
@@ -82,14 +83,15 @@ final readonly class RouterRouteSource implements RouteSource
 
     /**
      * Resolve the route handler as `Class@method` (or `Class` for invokables),
-     * returning null for closure routes (which have no class to inspect).
+     * returning null for closure routes, live or serialised by the route cache,
+     * which have no class to inspect.
      *
      * @param  \Illuminate\Routing\Route  $route
      * @return string|null
      */
     private function resolveHandler(Route $route): ?string
     {
-        if ($route->getAction('uses') instanceof \Closure) {
+        if ($route->getAction('uses') instanceof \Closure || RouteAction::containsSerializedClosure($route->action)) {
             return null;
         }
 
